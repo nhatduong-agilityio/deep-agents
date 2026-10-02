@@ -10,6 +10,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "diagrams": "node scripts/render-diagrams.mjs",
     "prepare": "husky"
   },
   "dependencies": {
@@ -37,6 +38,7 @@
     "tsx": "4.23.15",
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.0",
+    "@mermaid-js/mermaid-cli": "12.0.0",
     "vitest": "5.0.3"
   },
   "lint-staged": {

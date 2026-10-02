@@ -90,30 +90,23 @@ flowchart LR
 ## Message Flow Inside the Graph (FSC pattern)
 
 ```mermaid
-flowchart TD
+flowchart LR
     subgraph BAD["WITHOUT FSC — context bloat"]
-        M1["HumanMessage: analyze docs"]
-        T1["AIMessage: tool_call read_file(doc1)"]
-        TM1["ToolMessage: full 10KB content of doc1"]
-        T2["AIMessage: tool_call read_file(doc2)"]
-        TM2["ToolMessage: full 10KB content of doc2"]
-        M2["AIMessage: tool_call write_file(summary)"]
-        NOTE1["⚠️ All content stays in context — context bloat on long runs"]
-        M1 --> T1 --> TM1 --> T2 --> TM2 --> M2 --> NOTE1
+        M1["HumanMessage"] --> T1["read_file(doc1)"]
+        T1 --> TM1["ToolMessage: full 10KB content"]
+        TM1 --> T2["read_file(doc2)"]
+        T2 --> TM2["ToolMessage: full 10KB content"]
+        TM2 --> M2["write_file(summary)"]
+        M2 --> NOTE1["⚠️ all raw content stays in context"]
     end
 
     subgraph GOOD["WITH FSC — paths only"]
-        N1["HumanMessage: analyze docs"]
-        N2["AIMessage: tool_call write_todos(...)"]
-        N3["ToolMessage: todos written"]
-        N4["AIMessage: tool_call read_file(doc1)"]
-        N5["ToolMessage: content used immediately"]
-        N6["AIMessage: tool_call write_file(findings/theme-1.md)"]
-        N7["ToolMessage: wrote findings/theme-1.md"]
-        N8["AIMessage: tool_call clear_tool_uses_20250919"]
-        N9["ToolMessage: cleared — context freed ~84%"]
-        NOTE2["✓ Only paths remain in context — controlled token growth"]
-        N1 --> N2 --> N3 --> N4 --> N5 --> N6 --> N7 --> N8 --> N9 --> NOTE2
+        N1["HumanMessage"] --> N2["write_todos(...)"]
+        N2 --> N3["read_file(doc1)"]
+        N3 --> N4["write_file(findings/theme-1.md)"]
+        N4 --> N5["ToolMessage: wrote path only"]
+        N5 --> N6["clear_tool_uses"]
+        N6 --> NOTE2["✓ only paths in context — ~84% token reduction"]
     end
 ```
 

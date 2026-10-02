@@ -9,28 +9,31 @@ graph TB
     subgraph FE["Frontend — apps/web (T-FS-02)"]
         Browser["Browser"]
         App["App.tsx"]
-        Hook["useStream()\n@langchain/react 1.2.0"]
+        Hook["useStream — @langchain/react 1.2.0"]
         Browser --> App --> Hook
     end
 
     subgraph BE["Backend — LangGraph Server (T-FS-01)"]
-        LGS["langgraphjs dev\nlocalhost:2024"]
-        Agent["createDeepAgent()\ndeepagents 1.14.1"]
+        LGS["langgraphjs dev — localhost:2024"]
+        Agent["createDeepAgent() — deepagents 1.14.1"]
         LGS --> Agent
     end
 
     subgraph Runtime["Agent Runtime — LangGraph 1.4.18"]
         Graph["Compiled Graph"]
-        Todos["write_todos\n(built-in)"]
+        Todos["write_todos (built-in)"]
         FS["FilesystemMiddleware"]
         SA["SubAgentMiddleware"]
-        BGA["counter.ts\nBudget Guard"]
-        Graph --> Todos & FS & SA & BGA
+        BGA["counter.ts — Budget Guard"]
+        Graph --> Todos
+        Graph --> FS
+        Graph --> SA
+        Graph --> BGA
     end
 
     subgraph LLM["LLM Providers"]
-        Gemini["Gemini Flash\ngemini-2.0-flash-001\nprimary — all multi-turn loops"]
-        Groq["Groq\nsingle-call only\njudge · summarize"]
+        Gemini["Gemini Flash — gemini-2.0-flash-001\nprimary — all multi-turn loops"]
+        Groq["Groq — single-call only\njudge and summarize"]
     end
 
     subgraph Obs["Observability"]
@@ -38,8 +41,8 @@ graph TB
     end
 
     subgraph Storage["Storage (by task)"]
-        Disk["FilesystemBackend\ndisk-persistent\nT-DA-03 experiments"]
-        Mem["StateBackend\nin-memory per thread\nT-FS-01 demo"]
+        Disk["FilesystemBackend\ndisk-persistent — T-DA-03 experiments"]
+        Mem["StateBackend\nin-memory per thread — T-FS-01 demo"]
     end
 
     Hook -->|"POST /runs/stream (SSE)"| LGS
@@ -47,7 +50,8 @@ graph TB
     Graph -->|tool calls| Gemini
     Graph -->|single call| Groq
     Graph -.->|async trace| LSM
-    Graph --> Disk & Mem
+    Graph --> Disk
+    Graph --> Mem
 ```
 
 ## Technology Stack
@@ -55,7 +59,7 @@ graph TB
 ```mermaid
 graph LR
     subgraph Node["Node 24 / pnpm 11"]
-        TS["TypeScript 5.9.3\nNodeNext ESM"]
+        TS["TypeScript 5.9.3 — NodeNext ESM"]
     end
 
     subgraph AgentLayer["Agent Layer"]
@@ -65,8 +69,8 @@ graph LR
     end
 
     subgraph ModelLayer["Model Layer"]
-        GG["@langchain/google-genai 2.3.2\nGemini Flash"]
-        GR["@langchain/groq 1.3.1\nGroq"]
+        GG["@langchain/google-genai 2.3.2 — Gemini Flash"]
+        GR["@langchain/groq 1.3.1 — Groq"]
     end
 
     subgraph ServerLayer["Server Layer"]
@@ -88,27 +92,30 @@ graph LR
         SM["langsmith 0.10.7"]
     end
 
-    TS --> DA & API & RC
-    DA --> GG & GR
+    TS --> DA
+    TS --> API
+    TS --> RC
+    DA --> GG
+    DA --> GR
     DA --> SM
 ```
 
 ## Deployment Topology (T-FS-03)
 
 ```mermaid
-graph TB
-    subgraph Prod["Production"]
-        CDN["CDN / Vercel\nVite static build\nVITE_API_URL=prod-url"]
-        Docker["Docker Container\nlanggraphjs dockerfile\n+ PostgreSQL checkpointer"]
-        PG["PostgreSQL / Redis\ndurable execution\ncrash recovery + HITL"]
-        CDN -->|"REST + SSE\nauth header"| Docker
-        Docker --> PG
+graph LR
+    subgraph Dev["Development"]
+        FEDev["pnpm dev:web — localhost:5173"]
+        BEDev["pnpm dev:server — localhost:2024"]
+        FEDev -->|"CORS allow"| BEDev
     end
 
-    subgraph Dev["Development"]
-        FEDev["pnpm dev:web\nlocalhost:5173"]
-        BEDev["pnpm dev:server\nlocalhost:2024"]
-        FEDev -->|"CORS allow"| BEDev
+    subgraph Prod["Production"]
+        CDN["CDN / Vercel\nVite static build"]
+        Docker["Docker Container\nlanggraphjs dockerfile"]
+        PG["PostgreSQL / Redis\ndurable execution + HITL"]
+        CDN -->|"REST + SSE + auth header"| Docker
+        Docker --> PG
     end
 
     Dev -.->|"same agent code"| Prod
