@@ -1,0 +1,14 @@
+# LLM Guard input/output guard sidecar.
+# Start with: docker compose --profile guardrails up
+# Activated when GUARDRAIL_ENABLED=true in .env
+
+services:
+  llm-guard:
+    image: ghcr.io/protectai/llm-guard-api:latest
+    profiles:
+      - guardrails
+    ports:
+      - '8000:8000'
+    environment:
+      AUTH_REQUIRED: 'false'
+      LOG_LEVEL: 'info'
