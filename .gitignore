@@ -1,5 +1,7 @@
 node_modules/
 dist/
+docs/diagrams/img/*.svg
+docs/diagrams/img/*.png
 apps/web/dist/
 .env
 *.log

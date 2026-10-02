@@ -54,8 +54,12 @@ graph LR
         CHK["pre_completion_checklist\nT-DA-06"]
     end
 
-    FM & SM & WT --> Agent["Agent Node"]
-    TH & CL & CHK -.->|"added per experiment"| Agent
+    FM --> Agent["Agent Node"]
+    SM --> Agent
+    WT --> Agent
+    TH -.->|"added per experiment"| Agent
+    CL -.->|"added per experiment"| Agent
+    CHK -.->|"added per experiment"| Agent
 ```
 
 ## Budget Guard (BGA Pattern) — counter.ts
