@@ -12,3 +12,4 @@ Index of all design decisions made in this project. Each DDR is a numbered file:
 | DDR-003 | LLM Provider Policy (CAMS)                           | Accepted | 2026-10-02 |
 | DDR-004 | No Custom HTTP Server — LangGraph Server + useStream | Accepted | 2026-10-02 |
 | DDR-005 | Measurement Discipline                               | Accepted | 2026-10-02 |
+| DDR-011 | Gemini Tool Schema Filtering via wrapModelCall       | Accepted | 2026-10-02 |

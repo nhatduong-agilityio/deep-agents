@@ -93,14 +93,14 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ---
 
-## T-DA-01 — Scaffold + Reality Check
+## T-DA-01 — Scaffold + Reality Check `[x]`
 
 **Scope:** `src/agent.ts`, `src/lib/backoff.ts`, `src/lib/counter.ts`; `deepagents@1.14.1` already installed
 
 **Definition of Done:**
 
 - [ ] `createDeepAgent` instantiates without error; LangSmith trace ID logged to console
-- [ ] Tool-list JSON dump saved at `docs/tool-list-default.json`; `write_todos` confirmed present in default agent (built-in — no opt-in middleware required; `REQUIRED_MIDDLEWARE_NAMES = { FilesystemMiddleware, SubAgentMiddleware }`)
+- [ ] Tool-list JSON dump saved at `docs/tool-list-default.json`; `write_todos` confirmed present (requires explicit `todoListMiddleware()` for Google model profiles — `REQUIRED_MIDDLEWARE_NAMES` is empty for `google-genai:` prefix in `deepagents@1.14.1`)
 - [ ] 429 backoff helper unit-tested against mock 429 response
 - [ ] `src/lib/counter.ts` tracks **4 dimensions** per run: token count, estimated cost (USD), wall-clock time (ms), tool-call count — all checked pre-step (Budget-Guarded Autonomy pattern)
 - [ ] Pinned `deepagents` version + actual Gemini Flash model ID recorded in `docs/PROGRESS.md`; both added as trace metadata on every run
