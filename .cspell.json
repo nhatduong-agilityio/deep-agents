@@ -1,0 +1,26 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": [
+    "checkpointer",
+    "deepagents",
+    "langchain",
+    "langfuse",
+    "langgraph",
+    "langgraphjs",
+    "langsmith",
+    "LANGCHAIN",
+    "obra",
+    "parameterised",
+    "Groq",
+    "Qwen",
+    "Tavily",
+    "CETC",
+    "vitest",
+    "pnpm",
+    "mmdc",
+    "mermaid",
+    "worktrees"
+  ],
+  "ignorePaths": ["node_modules", "pnpm-lock.yaml", ".agents", "docs/diagrams/img"]
+}

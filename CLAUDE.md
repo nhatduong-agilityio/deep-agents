@@ -51,6 +51,24 @@ Current resume point: see `docs/PROGRESS.md`.
 | Frontend          | `@langchain/react` + Vite  | `1.2.0` + `8.3.2` |
 | Runtime           | Node 24 / pnpm 11          | —                 |
 
+## Installed skills (`.claude/skills/`)
+
+| Skill                            | Source             | Purpose                                                     |
+| -------------------------------- | ------------------ | ----------------------------------------------------------- |
+| `verification-before-completion` | `obra/superpowers` | Runs typecheck + tests before any DoD item is checked       |
+| `systematic-debugging`           | `obra/superpowers` | 4-phase root-cause analysis for broken experiments / traces |
+| `subagent-driven-development`    | `obra/superpowers` | 2-stage spec + quality review for sub-agent output          |
+| `test-driven-development`        | `obra/superpowers` | RED-GREEN-REFACTOR discipline for unit code                 |
+| `requesting-code-review`         | `obra/superpowers` | Dispatches fresh-context review sub-agent before closing    |
+| `finishing-a-development-branch` | `obra/superpowers` | Test suite → 4-option merge/PR menu                         |
+
+## PostToolUse hooks (`.claude/settings.local.json` — machine-local, not committed)
+
+| Matcher       | Command                                                                  |
+| ------------- | ------------------------------------------------------------------------ |
+| `Edit\|Write` | `pnpm typecheck 2>&1 \| head -20` — catches TS errors immediately        |
+| `Bash`        | `pnpm eslint <changed .ts files> 2>&1 \| head -20` — lint on file change |
+
 ## Key patterns (from agentic-design.ai)
 
 - **PTR** (Plan & TODO Recitation) — `write_todos` recitation; cap at ≤10 items to control token overhead

@@ -1,7 +1,10 @@
 node_modules/
 dist/
-docs/diagrams/img/*.svg
-docs/diagrams/img/*.png
+
+# machine-local Claude Code tooling
+.agents/
+.claude/skills/
+skills-lock.json
 apps/web/dist/
 .env
 *.log

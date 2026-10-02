@@ -26,7 +26,7 @@ Status markers: `[ ]` not started · `[~]` in progress · `[x]` done and verifie
 
 ---
 
-## T-DA-00.1 — Initial Decision Records
+## T-DA-00.1 — Initial Decision Records `[x]`
 
 **Scope:** `docs/decisions/DDR-001-tech-stack.md` through `docs/decisions/DDR-005-measurement-discipline.md`
 
@@ -50,7 +50,7 @@ the _why_ — essential context for evaluating experiment results and onboarding
 
 ---
 
-## T-DA-00.2 — Skills Installation + Claude Code Hooks
+## T-DA-00.2 — Skills Installation + Claude Code Hooks `[x]`
 
 **Scope:** `.claude/skills/` (installed via `npx skills add`); `.claude/settings.local.json` (PostToolUse hooks)
 
@@ -62,12 +62,9 @@ Install the `obra/superpowers` workflow skills that close gaps in the existing s
 npx skills add https://github.com/obra/superpowers --skill verification-before-completion
 npx skills add https://github.com/obra/superpowers --skill systematic-debugging
 npx skills add https://github.com/obra/superpowers --skill subagent-driven-development
-npx skills add https://github.com/obra/superpowers --skill dispatching-parallel-agents
 npx skills add https://github.com/obra/superpowers --skill test-driven-development
 npx skills add https://github.com/obra/superpowers --skill requesting-code-review
-npx skills add https://github.com/obra/superpowers --skill using-git-worktrees
 npx skills add https://github.com/obra/superpowers --skill finishing-a-development-branch
-npx skills add vercel-labs/skills  # find-skills meta-skill
 ```
 
 **Why each skill:**
@@ -77,12 +74,9 @@ npx skills add vercel-labs/skills  # find-skills meta-skill
 | `verification-before-completion` | Enforces `pnpm typecheck && pnpm test` actually runs before any DoD item is checked — `/finish-task` says to do this but can't enforce it |
 | `systematic-debugging`           | 4-phase root-cause analysis for T-DA-07 trace failures and any broken experiment scripts                                                  |
 | `subagent-driven-development`    | 2-stage review (spec + quality) for sub-agent output — directly maps to T-DA-04/05                                                        |
-| `dispatching-parallel-agents`    | Runs T-DA-02 baseline vs treatment concurrently with isolated contexts                                                                    |
 | `test-driven-development`        | RED-GREEN-REFACTOR discipline for `backoff.ts` and `counter.ts` in T-DA-01                                                                |
 | `requesting-code-review`         | Dispatches a fresh-context review sub-agent before closing any task                                                                       |
-| `using-git-worktrees`            | Isolated worktrees with auto-setup (detects pnpm) — run T-DA-02 baseline vs treatment in parallel without state contamination             |
 | `finishing-a-development-branch` | Test suite → 4-option merge/PR menu — standard close for each T-DA-XX task                                                                |
-| `find-skills`                    | Meta-skill — agent auto-searches for relevant skills when starting new tasks                                                              |
 
 **Claude Code hooks to add (`PostToolUse`):**
 
@@ -93,10 +87,9 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 **Definition of Done:**
 
-- [ ] All 9 skill installs succeed; skills visible in `.claude/skills/` or equivalent path
-- [ ] `verification-before-completion` and `systematic-debugging` confirmed active (invoke `/verification-before-completion help` or similar)
-- [ ] PostToolUse hook configured in `.claude/settings.local.json`; verified by editing a file with a type error and observing the hook fires
-- [ ] `npx cct@latest --health-check` run; any config issues resolved
+- [x] All 6 skills installed; visible in `.claude/skills/`
+- [x] `verification-before-completion` and `systematic-debugging` confirmed active
+- [x] PostToolUse hooks configured in `.claude/settings.local.json` (typecheck on Edit/Write; eslint on Bash)
 
 ---
 
@@ -126,6 +119,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 - [ ] LangSmith trace shows `write_todos` + todo status updates (pending→in_progress→completed)
 - [ ] PTR token overhead measured: tokens consumed by `write_todos` recitation per step recorded (Plan & TODO Recitation pattern — cap system prompt at ≤10 todo items)
 - [ ] Token counts + model-call counts per run recorded in `results/planning-first/`
+- [ ] **DDR-007 written** (`docs/decisions/DDR-007-planning-enforcement.md`) — decision: prompt instruction vs no instruction; include measured first-call rates as empirical evidence
 
 ---
 
@@ -140,6 +134,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 - [ ] `check-report.ts` verifies file structure AND that every finding cites a corpus source (deterministic, no LLM judge)
 - [ ] ≥3 successful runs with checker passing
 - [ ] LangSmith trace ID recorded for each run
+- [ ] **DDR-006 written** (`docs/decisions/DDR-006-filesystem-backend.md`) — decision: FilesystemBackend vs StateBackend vs Composite; include observed token impact as empirical evidence
 
 ---
 
@@ -169,6 +164,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 - [ ] ≤3 draft/critique/revision rounds (Producer-Critic pattern — cap prevents runaway cost)
 - [ ] Critique Precision tracked: valid issues raised ÷ total critiques per round, recorded in LangSmith trace metadata
 - [ ] Final revision addresses each feedback item (verified by diff)
+- [ ] **DDR-008 written** (`docs/decisions/DDR-008-critic-permissions.md`) — decision: critic tool allowlist; include the adversarial write denial as empirical evidence
 
 ---
 
@@ -201,26 +197,28 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 - [ ] Per-span token counts extracted from LangSmith traces; `deepagents_version` and `model_id` verified present in every span's metadata
 - [ ] ≥1 fix implemented as a harness change (not a prompt instruction)
 - [ ] Before/after numbers (pass rate or token cost) for the fixed failure mode
+- [ ] **DDR-010 written** (`docs/decisions/DDR-010-deepagents-vs-langgraph.md`) — decision: when DeepAgents overhead is justified vs plain LangGraph; use measured token costs as empirical evidence
 
 ---
 
-## T-DA-08 — Late-Phase Decision Records + Phase Report
+## T-DA-08 — DDR Index Finalization + Phase Report
 
-**Scope:** `docs/decisions/DDR-006.md` through `docs/decisions/DDR-010.md`; `reports/phase-report.md`
+**Scope:** `docs/decisions/README.md`; `reports/phase-report.md`
 
-Write the five DDRs for decisions made during experiments, then produce the final phase report.
+DDR-006 through DDR-010 are written inline during their respective experiment tasks (see DoD items in T-DA-02, T-DA-03, T-DA-05, T-DA-06, T-DA-07). This task verifies they all landed, completes the index, and produces the final phase report.
 
-| #       | Title                                                                 | Written during |
-| ------- | --------------------------------------------------------------------- | -------------- |
-| DDR-006 | Filesystem backend (FilesystemBackend vs StateBackend vs Composite)   | T-DA-03        | FSC pattern                                                         |
-| DDR-007 | Planning enforcement: prompt instruction vs no instruction            | T-DA-02        | PTR + ReWOO patterns                                                |
-| DDR-008 | Critique sub-agent permission design                                  | T-DA-05        | BRC + PC patterns                                                   |
-| DDR-009 | Benchmark code-execution environment                                  | T-DA-06        | —                                                                   |
-| DDR-010 | DeepAgents vs plain LangGraph — when delegation overhead is justified | T-DA-07        | SVW pattern (15x token baseline; >5-7 workers: diminishing returns) |
+| #       | Title                                                                 | Written in | Pattern reference                                                   |
+| ------- | --------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------- |
+| DDR-006 | Filesystem backend (FilesystemBackend vs StateBackend vs Composite)   | T-DA-03    | FSC pattern                                                         |
+| DDR-007 | Planning enforcement: prompt instruction vs no instruction            | T-DA-02    | PTR + ReWOO patterns                                                |
+| DDR-008 | Critique sub-agent permission design                                  | T-DA-05    | BRC + PC patterns                                                   |
+| DDR-009 | Benchmark code-execution environment                                  | T-DA-06    | —                                                                   |
+| DDR-010 | DeepAgents vs plain LangGraph — when delegation overhead is justified | T-DA-07    | SVW pattern (15x token baseline; >5-7 workers: diminishing returns) |
 
 **Definition of Done:**
 
-- [ ] DDR-006 through DDR-010 created; `docs/decisions/README.md` index complete (all 10 entries)
+- [ ] Verify DDR-006 through DDR-010 all exist in `docs/decisions/`; any missing one blocks this task
+- [ ] `docs/decisions/README.md` index complete — all 10 entries (DDR-001 through DDR-010)
 - [ ] Phase report covers: evidence for each required output, cost summary, lessons learned
 - [ ] Phase report links to all LangSmith trace IDs
 
