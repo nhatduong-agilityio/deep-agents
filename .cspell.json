@@ -20,7 +20,8 @@
     "pnpm",
     "mmdc",
     "mermaid",
-    "worktrees"
+    "worktrees",
+    "genai"
   ],
   "ignorePaths": ["node_modules", "pnpm-lock.yaml", ".agents", "docs/diagrams/img"]
 }

@@ -34,7 +34,7 @@ Current resume point: see `docs/PROGRESS.md`.
 - **All deps pinned exact** — no `^` or `~`; run `npm show <pkg> version` before adding anything
 - **Gemini Flash alias** (`gemini-2.0-flash`) for exploration only; pin versioned ID for all measured runs
 - **Groq** = single-call roles only (LLM judge, summarization)
-- **No todoListMiddleware** — `write_todos` is built-in by default in `deepagents@1.14.1`; `REQUIRED_MIDDLEWARE_NAMES = { FilesystemMiddleware, SubAgentMiddleware }`
+- **`todoListMiddleware` required for Google models** — `write_todos` is NOT auto-applied for `google-genai:` model prefixes; add `todoListMiddleware()` explicitly. (Reality-checked T-DA-01: `REQUIRED_MIDDLEWARE_NAMES` is empty for Google model profiles.)
 - **LangSmith** is the tracer — not LangFuse. Auto-traces when `LANGCHAIN_TRACING_V2=true`
 - **Sequential runs** — no parallel API calls; back off on HTTP 429; count model calls per run
 

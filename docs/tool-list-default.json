@@ -1,0 +1,44 @@
+{
+  "tools": [
+    {
+      "name": "ls",
+      "middleware": "FilesystemMiddleware"
+    },
+    {
+      "name": "read_file",
+      "middleware": "FilesystemMiddleware"
+    },
+    {
+      "name": "write_file",
+      "middleware": "FilesystemMiddleware"
+    },
+    {
+      "name": "edit_file",
+      "middleware": "FilesystemMiddleware"
+    },
+    {
+      "name": "delete",
+      "middleware": "FilesystemMiddleware"
+    },
+    {
+      "name": "glob",
+      "middleware": "FilesystemMiddleware"
+    },
+    {
+      "name": "grep",
+      "middleware": "FilesystemMiddleware"
+    },
+    {
+      "name": "execute",
+      "middleware": "FilesystemMiddleware"
+    },
+    {
+      "name": "task",
+      "middleware": "subAgentMiddleware"
+    },
+    {
+      "name": "write_todos",
+      "middleware": "todoListMiddleware"
+    }
+  ]
+}
