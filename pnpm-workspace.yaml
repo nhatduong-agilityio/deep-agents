@@ -1,0 +1,5 @@
+allowBuilds:
+  esbuild: false
+minimumReleaseAgeExclude:
+  - langsmith@0.10.7
+  - '@types/node@26.6.4'
