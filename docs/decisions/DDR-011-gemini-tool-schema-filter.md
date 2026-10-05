@@ -84,6 +84,64 @@ Criteria that decided it:
   filter runs redundantly on every step — acceptable because the operation is O(n)
   on a small, fixed tool list.
 
+## Sub-agent middleware inheritance — critical finding
+
+`deepagents@1.14.1`'s `mergeMiddlewareStack` uses **`appendNew: false`** for the
+general-purpose sub-agent. This means when the main agent spawns a sub-agent via the
+`task` tool, the sub-agent builds its own middleware stack from defaults only:
+`[FilesystemMiddleware, SummarizationMiddleware, PatchToolCallsMiddleware]`.
+
+The parent's `geminiToolFilter` is **not passed through**. Without it, the sub-agent
+sends the full tool list (including `grep` with `exclusiveMinimum: 0`) to Gemini on
+its first model call → HTTP 400.
+
+**Fix:** Every sub-agent spec must carry `geminiToolFilter` explicitly:
+
+```typescript
+// src/lib/with-gemini-compat.ts
+export function withGeminiCompat(spec: SubAgent): SubAgent {
+  const existing = (spec.middleware ?? []) as unknown[];
+  if (existing.includes(geminiToolFilter)) return spec;
+  return { ...spec, middleware: [geminiToolFilter, ...existing] } as SubAgent;
+}
+
+// src/lib/subagents.ts
+export const SUBAGENTS = [withGeminiCompat(GENERAL_PURPOSE_SUBAGENT)];
+```
+
+The sub-agent list (`SUBAGENTS`) is a shared export used by both T-DA-04 Config B
+and the integration tests, so the fix is applied in exactly one place.
+
+## Verification approach
+
+The Gemini schema converter (`schemaToGenerativeAIParameters` in
+`@langchain/google-genai/dist/utils/zod_to_genai_parameters.js`) is **not a public export** —
+the package only exports `ChatGoogleGenerativeAI`, `EmptyContentError`, and
+`GoogleGenerativeAIEmbeddings`. The internal subpath throws `ERR_PACKAGE_PATH_NOT_EXPORTED`.
+
+Compatibility is therefore verified at two layers:
+
+**1. Static schema scan (unit test — `pnpm test`):**
+`src/__tests__/gemini-compat.test.ts` — uses `convertToOpenAITool` (from `@langchain/core`) as a
+proxy for the JSON Schema representation. Proves `.positive()` produces `exclusiveMinimum: 0` in
+the tool schema (root cause), and that `geminiToolFilter.wrapModelCall` removes all tools with
+`exclusiveMinimum` before they reach the model call handler. Also asserts `withGeminiCompat` is
+correctly applied to sub-agent specs.
+
+**2. Real API acceptance via task tool path (integration test — `pnpm test:integration`):**
+`src/__tests__/gemini-compat.integration.test.ts` — exercises the exact path DDR-011 is about.
+For each sub-agent in `SUBAGENTS`, builds the real main agent with its sub-agent list, instructs
+it to delegate via the `task` tool, then asserts:
+
+- A1: a `task` tool call appears in the returned messages
+- A2: a child LLM span exists under the task span in LangSmith (sub-agent made a model call
+  without a 400 — proves its middleware stack accepted the filtered tool list)
+- A3: no HTTP 400 thrown anywhere in the run
+
+Smoke run (2026-10-05): `runId: 18c54e8c-a2b1-4531-825b-7a47ed232af1` —
+A1: 1 task call, A2: 1 child LLM span under task span `01a10b74-3fb4-7528-868a-5ad0605b2462`,
+A3: no 400. 2/2 tests pass.
+
 ## Empirical evidence
 
 Tool-schema scan run during T-DA-01:

@@ -33,7 +33,12 @@
 
 ## Concepts covered
 
-- **Filesystem as Context (FSC):** Large payloads (corpus documents) are written to disk; only file paths appear in agent messages. This keeps the context window small — the model never re-serialises the full corpus text on every step, only the path to a file it already read. Applied here via `FilesystemBackend` with `virtualMode: true`.
+- **Filesystem as Context (FSC):** Large payloads live on disk; the agent reads them on-demand via `read_file` tool calls. File content enters the conversation history as a tool-result message when the agent reads it, and persists in the message window like any other history entry. It is NOT pre-loaded into the system prompt and NOT stored in a dedicated state field (as `StateBackend` would by materialising file content into the state dict — see DDR-006). The distinction is eager-vs-lazy loading, not whether content is visible in subsequent steps. Token evidence from run 1 in `results/artifact-agent/results.json` (langsmithRunId `6c5bc989-e37a-4f26-853c-edff497322e9`), `inputTokensPerCall: [4688, 4855, 11236, 12710]`:
+  - Call 1 → 2: +167 — initial write_todos overhead
+  - Call 2 → 3: **+6,381** — corpus content enters context (read_file tool results)
+  - Call 3 → 4: **+1,474** — agent's own write_file content (3 findings + summary + sources written to disk, referenced back as tool results)
+  - Call 4 still carries the ~6,400 corpus tokens from call 3 — direct proof of persistence. Applied here via `FilesystemBackend` with `virtualMode: true`.
+  - **Confirmed by post-T-DA-03 validation run** (langsmithRunId `d4a0378d-d8d3-427d-9e32-82341a1730f5`, stored in `results/artifact-agent/validation-run.json`): 5 model calls, `inputTokensPerCall: [4688, 4855, 8984, 11180, 12638]` (LangSmith-verified, total 42345), `toolsBeforeCall: [[], ["ls"], ["read_file"x4], ["read_file"x2], ["write_file"x5]]` — token jumps occur exactly at calls preceded by `read_file` and `write_file` results, matching the FSC pattern. (`toolsBeforeCall` was null for the original T-DA-03 runs; field added post-T-DA-03.)
 
 - **FilesystemBackend `virtualMode: true`:** Remaps all agent-facing paths under `rootDir`. The agent's `/corpus/eu-ai-act-article-5.txt` resolves to `tmp/artifact-agent/run-{n}/corpus/eu-ai-act-article-5.txt` on real disk. Without `virtualMode`, absolute paths like `/corpus/` resolve to the filesystem root and cause ENOENT errors (same failure mode as T-DA-02 stray files).
 
@@ -55,7 +60,9 @@
 
 ## Evidence of completion
 
-```
+Note: The experiment was re-run after adding instrumentation fields (workMs, retryStats, toolsBeforeCall, systemSpanTokens). The original run showed high token variance (run 2: ~80 K tokens, 8 calls) due to an unstable intermediate run; those numbers are superseded by the canonical dataset below and are preserved only in git history.
+
+```text
 Artifact Agent — T-DA-03
 Model: gemini-3.5-flash-lite | 3 runs
 
@@ -66,19 +73,19 @@ Model: gemini-3.5-flash-lite | 3 runs
   PASS: finding-1.md cites "eu-ai-act-article-5.txt"
   PASS: finding-2.md cites "eu-ai-act-article-9.txt"
   PASS: finding-3.md cites "us-eo-14110-section-4.txt"
-  [✓] run  1 | findings=3 | in=33435 out=1628 | calls=4 | 10786ms
+  [✓] run  1 | findings=3 | in=33489 out=1755 | calls=4 | 10090ms
   [rate-limit] waiting 65s...
   running run 2/3...
-  [✓] run  2 | findings=3 | in=80691 out=1712 | calls=8 | 13538ms
+  [✓] run  2 | findings=3 | in=33456 out=1718 | calls=4 | 10365ms
   [rate-limit] waiting 65s...
   running run 3/3...
-  [✓] run  3 | findings=3 | in=42257 out=1692 | calls=5 | 10655ms
+  [✓] run  3 | findings=3 | in=33595 out=1906 | calls=4 | 10228ms
 
 === SUMMARY ===
   checker pass rate: 3/3
-  avg total tokens/run: 53805
-  avg model calls/run:  6
-  total estimated cost: $0.0132
+  avg total tokens/run: 35306
+  avg model calls/run:  4
+  total estimated cost: $0.009154
 
 Results saved to results/artifact-agent/results.json
 ```
@@ -93,6 +100,6 @@ Results saved to results/artifact-agent/results.json
 
 - **Corpus must live inside workDir for virtualMode:** `virtualMode: true` scopes ALL paths under `rootDir`. If you give the agent `/corpus/file.txt` and the corpus is only at the project root, the agent gets ENOENT. Copy corpus into `workDir/corpus/` before invoke.
 
-- **Token variance is high across runs (33 K–81 K):** The agent non-deterministically decides how many intermediate steps to take before writing findings. Run 2 used 8 model calls vs run 1's 4. The FSC pattern bounds per-step token growth but doesn't control step count. Rate-limit pacing (65 s inter-run) handles this safely.
+- **Token counts are stable after re-run (33 K–34 K, 4 calls each):** The canonical dataset shows consistent model call counts across all 3 runs; the original run's outlier (run 2: ~80 K tokens, 8 calls) was an artefact of the pre-instrumentation run set.
 
 - **`pnpm dev` only runs `src/index.ts`:** The `dev` script hardcodes `src/index.ts` as the entrypoint — it does not accept a file argument. Use `npx tsx --env-file=.env <script>` to run experiment scripts directly.

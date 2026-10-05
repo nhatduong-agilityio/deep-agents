@@ -18,7 +18,7 @@ Status markers: `[ ]` not started · `[~]` in progress · `[x]` done and verifie
 - [x] Prettier 3.9.9; `format:check` clean
 - [x] Husky v9 hooks: `pre-commit` (lint-staged) + `commit-msg` (commitlint Conventional Commits)
 - [x] Vitest 5.0.3 smoke test passing
-- [x] LangSmith client exported from `src/index.ts`; warns when `LANGCHAIN_API_KEY` unset
+- [x] LangSmith client exported from `src/index.ts`; warns when `LANGSMITH_API_KEY` unset (fallback: `LANGCHAIN_API_KEY`; env var name updated to canonical form in T-DA-02)
 - [x] All deps pinned exact (no `^` or `~`); `pnpm.yaml` allows esbuild build scripts
 - [x] `.env.example` documents all env vars (LangSmith, Gemini, Groq, Tavily, LLM Guard)
 - [x] LLM Guard sidecar stub in `docker-compose.yml` (profile: `guardrails`, opt-in)
@@ -117,7 +117,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 - [x] Baseline: default agent with no planning instruction; first-call rate for `write_todos` honestly reported (even if 0/10)
 - [x] Treatment: system prompt explicitly instructs the agent to call `write_todos` before any other action; ≥8/10 runs: first tool call = `write_todos`
 - [x] LangSmith trace shows `write_todos` + todo status updates (pending→in_progress→completed)
-- [x] PTR token overhead measured: tokens consumed by `write_todos` recitation per step recorded (Plan & TODO Recitation pattern — cap system prompt at ≤10 todo items)
+- [x] PTR token overhead measured: total token delta vs baseline (+30,818/run) decomposed into extra-call share (~61%) and per-call context growth (~39%) using median 7-call mode; per-step `write_todos` recitation cost was not isolated (`toolsBeforeCall` not collected until post-T-DA-03) — cap todo lists at ≤10 items to limit context-growth component
 - [x] Token counts + model-call counts per run recorded in `results/planning-first/`
 - [x] **DDR-007 written** (`docs/decisions/DDR-007-planning-enforcement.md`) — decision: prompt instruction vs no instruction; include measured first-call rates as empirical evidence
 
@@ -129,12 +129,12 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 **Definition of Done:**
 
-- [ ] `FilesystemBackend` (disk-persistent) used for experiments — not `StateBackend`; large corpus analysis written to `/report/` files, only file paths kept in agent messages (Filesystem as Context pattern)
-- [ ] Agent produces `/report/summary.md`, `/report/findings/*.md` (≥3 files), `/report/sources.md`
-- [ ] `check-report.ts` verifies file structure AND that every finding cites a corpus source (deterministic, no LLM judge)
-- [ ] ≥3 successful runs with checker passing
-- [ ] LangSmith trace ID recorded for each run
-- [ ] **DDR-006 written** (`docs/decisions/DDR-006-filesystem-backend.md`) — decision: FilesystemBackend vs StateBackend vs Composite; include observed token impact as empirical evidence
+- [x] `FilesystemBackend` (disk-persistent) used for experiments — not `StateBackend`; corpus content read on-demand via tool calls, not serialised into every subsequent step (Filesystem as Context pattern)
+- [x] Agent produces `/report/summary.md`, `/report/findings/*.md` (≥3 files), `/report/sources.md`
+- [x] `check-report.ts` verifies file structure AND that every finding cites a corpus source (deterministic, no LLM judge)
+- [x] ≥3 successful runs with checker passing (checker_pass_rate: 3/3)
+- [x] LangSmith trace ID recorded for each run (`runId` passed in invoke config from T-DA-03 onwards; initial 3 runs auto-traced under project `deep-agents-phase`, `langsmithRunId: null` in pre-fix results)
+- [x] **DDR-006 written** (`docs/decisions/DDR-006-filesystem-backend.md`) — backend rationale (checkpoint growth vs disk isolation) documented; checkpoint-size comparison proposed, not run
 
 ---
 
@@ -144,10 +144,11 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 **Definition of Done:**
 
-- [ ] ≥3 runs each config (A: main agent retrieves directly; B: research sub-agents spawned via `task` tool — Supervisor-Worker pattern; keep sub-agent count ≤5 to avoid diminishing returns beyond that threshold)
+- [ ] ≥3 runs each config (A: main agent retrieves directly; B: research sub-agents spawned via `task` tool — Supervisor-Worker pattern; keep sub-agent count ≤5 to avoid diminishing returns beyond that threshold); **pass `geminiToolFilter` explicitly to sub-agent**: `subagents: [{ ...GENERAL_PURPOSE_SUBAGENT, middleware: [geminiToolFilter] }]` — sub-agents do NOT inherit `geminiToolFilter` from parent middleware (verified smoke-subagent-filter.ts)
 - [ ] Isolation ratio reported: `main_agent_peak_tokens(B) / main_agent_peak_tokens(A)` ≤ 0.50 (Context Isolate Patterns — CIP)
 - [ ] Quality gate: T-DA-03 checker passes for both configs
-- [ ] Total system token cost reported even if B > A total (SVW pattern: sub-agent delegation costs ~15x baseline total — document the threshold where it becomes worth it)
+- [ ] Total system token cost reported even if B > A total (SVW pattern: sub-agent delegation costs ~15x baseline total — document the threshold where it becomes worth it); **system tokens measured via `collectSystemTokens(runId)` which calls `langsmith.runs.query({ trace_id, run_type: 'LLM', project_ids: [projectId] })` and sums `prompt_tokens` + `completion_tokens` across all LLM spans** — `result.messages` covers main-agent calls only; sub-agent LLM calls live in child spans and are invisible to `extractMetrics`; Config A baseline: `systemTokens ≈ mainAgentTokens` (no sub-agents); Config B will show `systemTokens >> mainAgentTokens`
+- [ ] Per-run time breakdown reported: `elapsedMs` (wall clock), `retryWaitMs` (time blocked on 429 backoff), and `workMs = elapsedMs - retryWaitMs` (actual agent computation time). Config B sub-agents run in parallel when the main agent issues multiple `task` calls in one turn — `workMs` gives a fair comparison excluding rate-limit variance
 
 ---
 
@@ -157,9 +158,9 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 **Definition of Done:**
 
-- [ ] Critic tools restricted to `read_file`, `ls`, `glob`, `grep` only — zero irreversible operations (Blast-Radius Containment pattern); configured via `createFilesystemMiddleware({ tools: ["read_file", "ls", "glob", "grep"] })`
+- [ ] Critic tools: `["read_file", "ls", "glob", "write_file"]` — `grep` excluded (filtered by `geminiToolFilter`; Zod `.positive()` on `max_count` generates `exclusiveMinimum`, rejected by Gemini API — root cause confirmed in `gemini-compat.test.ts`); **`execute` excluded via explicit `tools` allowlist** (do NOT rely on backend capability filtering — `execute` appears in `tool-list-default.json` because the default stack registers it at init time and filters only at request time; explicitly omit it); write restricted to `/feedback/` via `permissions` rules (BRC pattern); `createFilesystemMiddleware({ tools: ["read_file", "ls", "glob", "write_file"], permissions: [{ operations: ["write", "delete"], paths: ["/feedback/**"], mode: "allow" }, { operations: ["write", "delete"], paths: ["/**"], mode: "deny" }] })` — **Permission rule order:** rules are evaluated first-match-wins; the allow rule for `/feedback/**` must come first so writes there succeed; the final `deny` for `/**` is required because the default is allow — without it, any path not matching the allow rule would be permitted by default (BRC pattern requires explicit deny to close the gap)
 - [ ] Critic writes structured feedback (numbered items) to `/feedback/` only — format aids producer convergence
-- [ ] Adversarial write attempt to `/drafts/` denied; denial logged in LangSmith trace
+- [ ] Adversarial write attempts denied: (1) write to `/drafts/` hits `deny` rule; (2) write to `/report/` hits `deny` rule — both test the same first-match-wins logic, covering paths outside `/feedback/**`; denials logged in LangSmith trace
 - [ ] Draft file hash unchanged after critic run
 - [ ] ≤3 draft/critique/revision rounds (Producer-Critic pattern — cap prevents runaway cost)
 - [ ] Critique Precision tracked: valid issues raised ÷ total critiques per round, recorded in LangSmith trace metadata
@@ -178,8 +179,8 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 - [ ] DDR-009 written: benchmark code-execution environment decision (JS port vs curated subset vs sandbox)
 - [ ] **5 harness steps** measured (≥3 runs each), in order:
   1. **Baseline** — default agent, no changes
-  2. **Think Tool** — add `think` no-op tool + prompt examples; expected +54% on multi-step tasks (Structured Reflection pattern)
-  3. **CETC middleware** — enable tool-result clearing via `clear_tool_uses_20250919`; measure token reduction vs baseline (expect ~84% reduction on long runs)
+  2. **Think Tool** — add `think` no-op tool + prompt examples; measure pass rate delta (Structured Reflection pattern; +54% is Anthropic's published result on their model — treat as hypothesis, report actual delta)
+  3. **Context Pruning middleware** — implement `wrapModelCall` middleware that removes tool-result messages older than the last N steps before each model call; measure token reduction vs baseline (`clear_tool_uses_20250919` is Anthropic-API-only and unavailable with `google-genai:`; ~84% reduction is Anthropic's figure — measure actual delta)
   4. **Pre-completion checklist** — middleware enforces checklist before final answer
   5. **Plan-Execute Decoupling (ReWOO)** — full `write_todos` DAG generated upfront, no interleaved prompting; measure model-call count reduction
 - [ ] Pass rate + cost/task table for all 5 steps in `reports/`
@@ -205,20 +206,21 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 **Scope:** `docs/decisions/README.md`; `reports/phase-report.md`
 
-DDR-006 through DDR-010 are written inline during their respective experiment tasks (see DoD items in T-DA-02, T-DA-03, T-DA-05, T-DA-06, T-DA-07). This task verifies they all landed, completes the index, and produces the final phase report.
+DDRs are written inline during their respective experiment tasks (see DoD items in T-DA-02, T-DA-03, T-DA-05, T-DA-06, T-DA-07). This task verifies they all landed, completes the index, and produces the final phase report.
 
-| #       | Title                                                                 | Written in | Pattern reference                                                   |
-| ------- | --------------------------------------------------------------------- | ---------- | ------------------------------------------------------------------- |
-| DDR-006 | Filesystem backend (FilesystemBackend vs StateBackend vs Composite)   | T-DA-03    | FSC pattern                                                         |
-| DDR-007 | Planning enforcement: prompt instruction vs no instruction            | T-DA-02    | PTR + ReWOO patterns                                                |
-| DDR-008 | Critique sub-agent permission design                                  | T-DA-05    | BRC + PC patterns                                                   |
-| DDR-009 | Benchmark code-execution environment                                  | T-DA-06    | —                                                                   |
-| DDR-010 | DeepAgents vs plain LangGraph — when delegation overhead is justified | T-DA-07    | SVW pattern (15x token baseline; >5-7 workers: diminishing returns) |
+| #       | Title                                                                 | Written in  | Pattern reference                                                   |
+| ------- | --------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------- |
+| DDR-006 | Filesystem backend (FilesystemBackend vs StateBackend vs Composite)   | T-DA-03     | FSC pattern                                                         |
+| DDR-007 | Planning enforcement: prompt instruction vs no instruction            | T-DA-02     | PTR + ReWOO patterns                                                |
+| DDR-008 | Critique sub-agent permission design                                  | T-DA-05     | BRC + PC patterns                                                   |
+| DDR-009 | Benchmark code-execution environment                                  | T-DA-06     | —                                                                   |
+| DDR-010 | DeepAgents vs plain LangGraph — when delegation overhead is justified | T-DA-07     | SVW pattern (15x token baseline; >5-7 workers: diminishing returns) |
+| DDR-011 | Gemini tool schema filtering via wrapModelCall middleware             | pre-T-DA-04 | —                                                                   |
 
 **Definition of Done:**
 
-- [ ] Verify DDR-006 through DDR-010 all exist in `docs/decisions/`; any missing one blocks this task
-- [ ] `docs/decisions/README.md` index complete — all 10 entries (DDR-001 through DDR-010)
+- [ ] Verify every DDR in `docs/decisions/` exists on disk; any listed DDR missing from disk blocks this task
+- [ ] `docs/decisions/README.md` index complete — one entry per DDR file in `docs/decisions/`
 - [ ] Phase report covers: evidence for each required output, cost summary, lessons learned
 - [ ] Phase report links to all LangSmith trace IDs
 
@@ -233,7 +235,7 @@ DDR-006 through DDR-010 are written inline during their respective experiment ta
 **Definition of Done:**
 
 - [ ] `src/agent.ts` created: `createDeepAgent({ model, backend: new StateBackend(), systemPrompt })` exported as `graph`
-- [ ] `gemini-2.0-flash` used as model (alias acceptable for demo; pinned ID for experiments)
+- [ ] `gemini-3.5-flash-lite` used as model (alias acceptable for demo; same model as measured experiments — `gemini-2.0-flash` is deprecated)
 - [ ] `StateBackend` chosen for file storage (in-memory per thread, no disk writes — Filesystem as Context pattern)
 - [ ] `skills/` directory created alongside `src/agent.ts`; at least one `SKILL.md` (e.g., `skills/corpus-search/SKILL.md`) passed to `createDeepAgent({ skills: [...] })` (Agent Skills pattern)
 - [ ] `langgraph.json` created: `graphs.agent = "./src/agent.ts:graph"`, `env = ".env"`, `node_version = "20"`, CORS `allow_origins = ["http://localhost:5173"]`
@@ -244,7 +246,7 @@ DDR-006 through DDR-010 are written inline during their respective experiment ta
 **Key facts (verified during research):**
 
 - `deepagents` has zero runtime imports from `langsmith` — peer-dep mismatch (`<0.10.0` vs installed `0.10.7`) is safe to ignore
-- `REQUIRED_MIDDLEWARE_NAMES = { FilesystemMiddleware, SubAgentMiddleware }` — `write_todos` is built-in by default, not opt-in middleware
+- `REQUIRED_MIDDLEWARE_NAMES` is **empty** for `google-genai:` model profiles — `write_todos` is NOT built-in; add `todoListMiddleware()` explicitly (verified T-DA-01; contradicts earlier research note)
 - `langgraphjs dev` default loader = `tsx`; our `tsx@4.23.15` is picked up automatically
 
 ---

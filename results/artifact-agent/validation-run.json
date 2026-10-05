@@ -1,0 +1,52 @@
+{
+  "purpose": "instrumentation validation, not part of T-DA-03 dataset",
+  "note": "Run executed post-T-DA-03 to validate the LangSmith runs API migration and confirm toolsBeforeCall tracking. Token counts differ from T-DA-03 runs because run 1 of T-DA-03 had 4 model calls; this run had 5 (an extra read_file pass). Not included in results.json summary.",
+  "model": "gemini-3.5-flash-lite",
+  "deepagents_version": "1.14.1",
+  "date": "2026-10-05",
+  "langsmithRunId": "d4a0378d-d8d3-427d-9e32-82341a1730f5",
+  "langsmithVerified": true,
+  "checkerPassed": true,
+  "modelCallCount": 5,
+  "inputTokens": 42345,
+  "outputTokens": 1640,
+  "inputTokensPerCall": [4688, 4855, 8984, 11180, 12638],
+  "toolsBeforeCall": [
+    [],
+    ["ls"],
+    ["read_file", "read_file", "read_file", "read_file"],
+    ["read_file", "read_file"],
+    ["write_file", "write_file", "write_file", "write_file", "write_file"]
+  ],
+  "peakInputTokens": 12638,
+  "systemInputTokens": 42345,
+  "systemOutputTokens": 1640,
+  "systemSpanTokens": [
+    {
+      "spanId": "01a10b5b-a792-72df-ad42-1af0326bee3f",
+      "promptTokens": 4688,
+      "completionTokens": 15
+    },
+    {
+      "spanId": "01a10b5b-abfb-77f9-ace8-9e65f73b38ac",
+      "promptTokens": 4855,
+      "completionTokens": 166
+    },
+    {
+      "spanId": "01a10b5b-b229-777e-8a4b-e7e4c904624d",
+      "promptTokens": 8984,
+      "completionTokens": 90
+    },
+    {
+      "spanId": "01a10b5b-b6f5-70c9-81cd-f8fb151f4705",
+      "promptTokens": 11180,
+      "completionTokens": 1107
+    },
+    {
+      "spanId": "01a10b5b-cd60-71ab-817c-aaedccb259e5",
+      "promptTokens": 12638,
+      "completionTokens": 262
+    }
+  ],
+  "systemCheck": "pass"
+}

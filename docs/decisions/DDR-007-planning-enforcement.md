@@ -48,9 +48,11 @@ The deciding criterion: Output 2 requires a LangSmith trace showing `write_todos
 
 `results/planning-first/results.json` — 20 runs (10 baseline + 10 treatment), `gemini-3.5-flash-lite`, 2026-10-05:
 
-| Condition | write_todos first-call rate | Avg total tokens/run | Avg model calls/run |
-| --------- | --------------------------- | -------------------- | ------------------- |
-| Baseline  | **0/10**                    | ~14,100              | 3                   |
-| Treatment | **10/10**                   | ~44,900              | 7                   |
+| Condition | write_todos first-call rate | Avg total tokens/run | Avg model calls/run           |
+| --------- | --------------------------- | -------------------- | ----------------------------- |
+| Baseline  | **0/10**                    | ~14,100              | 3                             |
+| Treatment | **10/10**                   | ~44,900              | 7.3 (run 1: 10; runs 2–10: 7) |
 
-PTR overhead: +30,818 tokens per run (~3.2× multiplier). The overhead comes from the todo list being included in the context of every subsequent model call in the run (7 calls × ~4,400 tokens each vs 3 calls × ~4,700 tokens each).
+PTR overhead: +30,818 tokens per run (~3.2× multiplier). **Decomposition using the median (7-call mode; run 1 with 10 calls is an outlier):** ~61% from additional model calls and ~39% from message history growth per call (write_todos call + result messages accumulate in the window, growing avg per-call input from 4,625 to 6,063 tokens — NOT labelled "PTR recitation" since it's the whole message history that grows, not only the todo list). The mean-based figure (7.3 avg calls including the outlier) gives ~66%/~34% — consistent in direction. Both percentages and the per-call averages are **measured arithmetic** from `results/planning-first/results.json`. **UNVERIFIED HYPOTHESIS:** The 4 extra model calls in treatment are caused by `write_todos` overhead (initial invocation + todo-status-update steps that baseline skips). Per-call `toolsBeforeCall` data was not collected in T-DA-02 (added post-T-DA-03); the step attribution is inferred from expected behaviour, not directly measured via tool-call tracing.
+
+**Statistical note:** 10/10 treatment successes gives a 95% exact-binomial lower confidence bound of ~69% for the true first-call rate. The result demonstrates that prompt-driven planning is feasible with this model; it is not a guarantee — a future model update could degrade the rate silently, which is why Option C (middleware enforcement) is the preferred long-term pattern.

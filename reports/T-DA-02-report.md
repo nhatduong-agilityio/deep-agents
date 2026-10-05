@@ -19,7 +19,7 @@
 
 ## Concepts covered
 
-- **PTR (Plan & TODO Recitation):** `write_todos` writes a numbered todo list into agent state; deepagents injects it into every subsequent model call. This keeps the agent on track but adds ~4,400 tokens of recitation overhead per model step — the 7-call treatment runs consumed 3.2× more tokens than the 3-call baseline runs.
+- **PTR (Plan & TODO Recitation):** `write_todos` writes a numbered todo list into agent state; deepagents injects it into every subsequent model call. The +30,818 token overhead breaks into two components using the **median** (7-call mode, excluding run 1 which took 10 calls as an outlier): ~61% from additional model calls (7 vs 3 baseline) and ~39% from message history growth per call (write_todos call + result messages accumulate in the window, growing avg per-call context from 4,625 tokens in baseline to 6,063 tokens in treatment). The mean-based figure (7.3 calls avg, including run 1) gives ~66%/~34% — consistent in direction. Both percentages and the per-call averages are **measured arithmetic** from `results/planning-first/results.json` (model call counts and per-call input token sums are in the data). **UNVERIFIED HYPOTHESIS:** The 4 extra model calls in treatment are caused by `write_todos` overhead (initial invocation + todo-status-update steps). Per-call `toolsBeforeCall` data was not collected in T-DA-02 (added post-T-DA-03); the call-count difference is measured, but which specific tools drove each extra step is inferred from expected behaviour, not directly observed.
 
 - **FilesystemBackend `virtualMode`:** Without `virtualMode: true`, the backend treats all paths as actual filesystem paths — absolute paths like `/workspace/findings.md` are written to `/workspace/` at the system root (or fall back to home dir). With `virtualMode: true`, all paths are remapped under `rootDir`, making the workspace fully sandboxed.
 
@@ -50,7 +50,9 @@ Results saved to results/planning-first/results.json
 ```
 
 - `results/planning-first/results.json` — 20 run records, all with `inputTokens > 0` and `modelCallCount > 0`
-- LangSmith traces: auto-traced under project `deep-agents-phase` (check https://smith.langchain.com); `deepagents_version: 1.14.1`, `model_id: gemini-3.5-flash-lite` in metadata on every run
+- Per-call tool tracking (`toolsBeforeCall`) was not collected in T-DA-02 (added in the post-T-DA-03 hardening pass); write_todos call counts per run are inferred from `modelCallCount` (treatment runs average 7.3 calls vs baseline 3, with the extra ~4 calls split between the initial `write_todos` invocation and subsequent todo-status-update steps)
+- **95% CI note:** 10/10 first-call successes gives a Clopper-Pearson exact 95% CI lower bound of ~69% for the true success rate. The result demonstrates feasibility of prompt-driven planning, not a guarantee — a model update could degrade the first-call rate silently.
+- LangSmith traces: auto-traced under project `deep-agents-phase`; `deepagents_version: 1.14.1`, `model_id: gemini-3.5-flash-lite` in metadata on every run
 
 ## Gotchas / lessons learned
 
@@ -60,6 +62,6 @@ Results saved to results/planning-first/results.json
 
 - **Retry-hint regex needs to handle decimal seconds:** The Gemini API returns `"Please retry in 24.709091678s"`. The regex `/retry in (\d+)s/` fails to match because `.709` separates the number from `s`. Use `/retry in (\d+)/` (drop the trailing `s`).
 
-- **Treatment runs consume 3× more tokens than baseline:** The `write_todos` todo list is injected into every model call's context (PTR pattern). For a 7-call treatment run: 7 × ~4,400 tokens of recitation overhead alone. Cap todo lists at ≤10 items (already enforced in the system prompt) to limit this.
+- **Treatment runs consume 3.2× more tokens than baseline:** Using the median (7-call mode), ~61% of the +30,818 overhead comes from additional model calls and ~39% from message history growth per call (write_todos call + result messages accumulate in the window, growing avg per-call context from 4,625 to 6,063 tokens). The two effects compound. Both percentages are **measured arithmetic** from `results/planning-first/results.json`. **Per-call tool data was not collected in T-DA-02** (`toolsBeforeCall` tracking added post-T-DA-03); the attribution of extra calls to `write_todos` activity (initial invocation + status updates) is an **UNVERIFIED HYPOTHESIS** — the call-count difference is measured, but which specific tools drove each extra step is inferred from expected behaviour, not directly observed. Cap todo lists at ≤10 items to limit the context-growth component.
 
 - **`gemini-2.0-flash-lite-001` is gone:** Deprecated as of 2026-10-05. `gemini-3.5-flash-lite` is the replacement. No versioned pinned ID (`gemini-3.5-flash-lite-001`, `gemini-3.5-flash-lite-07-2026`) exists in the v1beta API — only the named alias works.

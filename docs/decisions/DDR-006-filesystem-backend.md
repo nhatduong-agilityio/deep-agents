@@ -21,26 +21,31 @@ Related: DDR-007 (planning enforcement), DDR-005 (measurement discipline).
 
 ### Option A: StateBackend (in-memory)
 
-File contents are stored in the LangGraph state dict and injected back into every subsequent model
-call. For a 6-file corpus (~50 KB total), the entire document set would appear in context on every
-step.
+Both backends load file content lazily via `read_file` tool calls — neither pre-loads corpus text
+into the system prompt. The difference is WHERE files are stored between steps.
+
+`StateBackend` stores every written file in the LangGraph state dict (`files` key). LangGraph
+persists the full state via the checkpointer on every superstep. This means the checkpoint grows
+with each file written, even files the agent never reads again. For a 6-file corpus (~50 KB) plus
+generated report files, the checkpoint could reach hundreds of KB per superstep. Output files are
+also lost when the process exits because state is in-memory.
 
 - Pros: Zero disk I/O; easy to reset between runs; no path-scoping issues
-- Cons: Violates FSC pattern — large corpus content inflates input tokens on every model call;
-  unsuitable when context isolation matters (T-DA-04); output files are lost when the process exits
+- Cons: Checkpoint growth — every superstep persists all file content regardless of access pattern;
+  output files lost on process exit; unsuitable when checkpoint size matters (T-DA-04 context isolation)
 
 ### Option B: FilesystemBackend with virtualMode (chosen)
 
-`FilesystemBackend({ rootDir: workDir, virtualMode: true })` remaps all agent paths under
-`rootDir`. The agent's `/corpus/eu-ai-act-article-5.txt` resolves to
-`tmp/artifact-agent/run-{n}/corpus/eu-ai-act-article-5.txt` on disk. Files persist after the run
-and can be verified by the checker script.
+`FilesystemBackend({ rootDir: workDir, virtualMode: true })` stores files on disk and remaps all
+agent paths under `rootDir`. The checkpoint stores only file metadata (paths, sizes); file content
+stays on disk. For a 6-file corpus + generated report, the checkpoint remains small regardless of
+corpus size.
 
-- Pros: FSC pattern — only file paths appear in messages; output persists for verification;
-  `virtualMode: true` prevents writes outside the project (lesson from T-DA-02); easy to diff
-  outputs across runs
-- Cons: Requires copying corpus into the workDir before invoke; slightly more setup per run;
-  disk writes add a small latency overhead (negligible for text files)
+- Pros: Small checkpoint — only metadata checkpointed per superstep; output files persist for
+  verification after the run; `virtualMode: true` prevents writes outside the project; easy to
+  diff outputs across runs
+- Cons: Requires copying corpus into workDir before invoke; requires `virtualMode: true` discipline
+  (without it, absolute paths resolve to the real filesystem root); disk writes add negligible latency
 
 ### Option C: Composite (StateBackend scratch + FilesystemBackend outputs)
 
@@ -56,8 +61,9 @@ Intermediate scratchpad (reasoning, partial lists) in state; final report writte
 
 The deciding criteria:
 
-1. FSC pattern compliance: agent messages contain only file paths; corpus content is never
-   serialised into the context window after the initial read
+1. Checkpoint hygiene: FilesystemBackend keeps the LangGraph checkpoint small (metadata only);
+   StateBackend grows the checkpoint with every file written — a measurable cost for long-running
+   or multi-run experiments
 2. Verifiability: output files persist on disk; the deterministic `check-report.ts` script can
    verify structure and citations without an LLM judge
 3. Consistency with T-DA-02: `virtualMode: true` is already established as the safe default for
@@ -75,17 +81,21 @@ The deciding criteria:
 
 ## Empirical evidence
 
-`results/artifact-agent/results.json` — 3 runs, `gemini-3.5-flash-lite`, 2026-10-05:
+`results/artifact-agent/results.json` — 3 re-runs after hardening, `gemini-3.5-flash-lite`, 2026-10-05:
 
-| Run | Input tokens | Output tokens | Model calls | Checker |
-| --- | ------------ | ------------- | ----------- | ------- |
-| 1   | 33,435       | 1,628         | 4           | PASS    |
-| 2   | 80,691       | 1,712         | 8           | PASS    |
-| 3   | 42,257       | 1,692         | 5           | PASS    |
+| Run | Input tokens | Peak input/call | Model calls | Checker |
+| --- | ------------ | --------------- | ----------- | ------- |
+| 1   | 33,489       | 12,710          | 4           | PASS    |
+| 2   | 33,456       | 12,677          | 4           | PASS    |
+| 3   | 33,595       | 12,816          | 4           | PASS    |
 
-Average: 53,805 tokens/run, 6 model calls/run. Checker pass rate: 3/3.
+`inputTokensPerCall: [4688, 4855, 11236, 12710]` (run 1, `results/artifact-agent/results.json`,
+langsmithRunId `6c5bc989-e37a-4f26-853c-edff497322e9`). Corpus content (+6,381 tokens) enters
+context at call 3 and persists through call 4 (+1,474 from write_file results). Peak is at call 4
+(12,710), not call 1.
 
-Token variance across runs (33 K–81 K) reflects the non-deterministic number of tool-call steps
-the agent takes to read all corpus files before writing the report. The FSC pattern keeps per-step
-token counts bounded: only the current file path and its content appear in the step that reads it;
-subsequent steps reference only the path.
+**Token impact of backend choice (StateBackend vs FilesystemBackend) is NOT measured here.** Both
+backends load files lazily via `read_file`; the per-model-call token counts would be the same. The
+difference is in checkpoint size per superstep, which was not instrumented. Proposed future
+experiment: run identical 3 runs with `StateBackend`, log `JSON.stringify(state).length` before
+each superstep via a `wrapModelCall` middleware, and compare to FilesystemBackend baseline.
