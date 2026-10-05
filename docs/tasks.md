@@ -43,10 +43,10 @@ the _why_ — essential context for evaluating experiment results and onboarding
 
 **Definition of Done:**
 
-- [ ] DDR-001 through DDR-005 created in `docs/decisions/` following `TEMPLATE.md`
-- [ ] Each DDR has: context, decision, consequences, alternatives considered
-- [ ] `docs/decisions/README.md` index updated with all five entries
-- [ ] DDRs that interact reference each other (e.g., DDR-003 ↔ DDR-005 on version pinning)
+- [x] DDR-001 through DDR-005 created in `docs/decisions/` following `TEMPLATE.md`
+- [x] Each DDR has: context, decision, consequences, alternatives considered
+- [x] `docs/decisions/README.md` index updated with all five entries
+- [x] DDRs that interact reference each other (e.g., DDR-003 ↔ DDR-005 on version pinning)
 
 ---
 
@@ -99,27 +99,27 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 **Definition of Done:**
 
-- [ ] `createDeepAgent` instantiates without error; LangSmith trace ID logged to console
-- [ ] Tool-list JSON dump saved at `docs/tool-list-default.json`; `write_todos` confirmed present (requires explicit `todoListMiddleware()` for Google model profiles — `REQUIRED_MIDDLEWARE_NAMES` is empty for `google-genai:` prefix in `deepagents@1.14.1`)
-- [ ] 429 backoff helper unit-tested against mock 429 response
-- [ ] `src/lib/counter.ts` tracks **4 dimensions** per run: token count, estimated cost (USD), wall-clock time (ms), tool-call count — all checked pre-step (Budget-Guarded Autonomy pattern)
-- [ ] Pinned `deepagents` version + actual Gemini Flash model ID recorded in `docs/PROGRESS.md`; both added as trace metadata on every run
+- [x] `createDeepAgent` instantiates without error; LangSmith trace ID logged to console
+- [x] Tool-list JSON dump saved at `docs/tool-list-default.json`; `write_todos` confirmed present (requires explicit `todoListMiddleware()` for Google model profiles — `REQUIRED_MIDDLEWARE_NAMES` is empty for `google-genai:` prefix in `deepagents@1.14.1`)
+- [x] 429 backoff helper unit-tested against mock 429 response
+- [x] `src/lib/counter.ts` tracks **4 dimensions** per run: token count, estimated cost (USD), wall-clock time (ms), tool-call count — all checked pre-step (Budget-Guarded Autonomy pattern)
+- [x] Pinned `deepagents` version + actual Gemini Flash model ID recorded in `docs/PROGRESS.md`; both added as trace metadata on every run
 
 ---
 
-## T-DA-02 — Planning-First (Output 2)
+## T-DA-02 — Planning-First (Output 2) `[x]`
 
 **Scope:** `src/experiments/planning-first/{baseline,treatment,run}.ts`; `results/planning-first/`
 
 **Definition of Done:**
 
-- [ ] 10 baseline runs + 10 treatment runs completed
-- [ ] Baseline: default agent with no planning instruction; first-call rate for `write_todos` honestly reported (even if 0/10)
-- [ ] Treatment: system prompt explicitly instructs the agent to call `write_todos` before any other action; ≥8/10 runs: first tool call = `write_todos`
-- [ ] LangSmith trace shows `write_todos` + todo status updates (pending→in_progress→completed)
-- [ ] PTR token overhead measured: tokens consumed by `write_todos` recitation per step recorded (Plan & TODO Recitation pattern — cap system prompt at ≤10 todo items)
-- [ ] Token counts + model-call counts per run recorded in `results/planning-first/`
-- [ ] **DDR-007 written** (`docs/decisions/DDR-007-planning-enforcement.md`) — decision: prompt instruction vs no instruction; include measured first-call rates as empirical evidence
+- [x] 10 baseline runs + 10 treatment runs completed
+- [x] Baseline: default agent with no planning instruction; first-call rate for `write_todos` honestly reported (even if 0/10)
+- [x] Treatment: system prompt explicitly instructs the agent to call `write_todos` before any other action; ≥8/10 runs: first tool call = `write_todos`
+- [x] LangSmith trace shows `write_todos` + todo status updates (pending→in_progress→completed)
+- [x] PTR token overhead measured: tokens consumed by `write_todos` recitation per step recorded (Plan & TODO Recitation pattern — cap system prompt at ≤10 todo items)
+- [x] Token counts + model-call counts per run recorded in `results/planning-first/`
+- [x] **DDR-007 written** (`docs/decisions/DDR-007-planning-enforcement.md`) — decision: prompt instruction vs no instruction; include measured first-call rates as empirical evidence
 
 ---
 

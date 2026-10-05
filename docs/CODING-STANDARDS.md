@@ -28,9 +28,9 @@ Conventions observed in this project. Update when a new pattern is established.
 
 ## Tracing / Observability Pattern
 
-- LangSmith auto-traces when `LANGCHAIN_TRACING_V2=true` and `LANGCHAIN_API_KEY` are set
+- LangSmith auto-traces when `LANGSMITH_TRACING=true` and `LANGSMITH_API_KEY` are set (canonical names); `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` are accepted as legacy aliases
 - Shared client: `import { langsmith } from '../index.js'` — do not construct `new Client()` per file
-- Project: `LANGCHAIN_PROJECT=deep-agents-phase` (set in `.env`)
+- Project: `LANGSMITH_PROJECT=deep-agents-phase` (set in `.env`)
 - Every measured run must log its LangSmith run URL to stdout
 
 ## Comments

@@ -2,15 +2,16 @@
 
 ## Resume Point
 
-**Next action:** T-DA-02 — Planning-First (Output 2)
+**Next action:** T-DA-03 — Artifact Agent (Output 1)
 
 ## Pinned Versions (established T-DA-01)
 
-| Item                             | Value                       |
-| -------------------------------- | --------------------------- |
-| `deepagents`                     | `1.14.1`                    |
-| Gemini model (exploration alias) | `gemini-flash-lite-latest`  |
-| Gemini model (measured runs)     | `gemini-2.0-flash-lite-001` |
+| Item                             | Value                                                                                        |
+| -------------------------------- | -------------------------------------------------------------------------------------------- |
+| `deepagents`                     | `1.14.1`                                                                                     |
+| Gemini model (exploration alias) | `gemini-flash-lite-latest`                                                                   |
+| Gemini model (measured runs)     | `gemini-3.5-flash-lite` (no versioned ID available; API date `3.5-flash-lite-07-2026` noted) |
+| Model migration note             | `gemini-2.0-flash-lite-001` → `gemini-3.5-flash-lite` (deprecated 2026-10-05)                |
 
 ## Activity Log
 
@@ -25,3 +26,5 @@
 | 2026-10-02 | Completed | T-DA-00.2 — Skills Installation + Claude Code Hooks                          | reports/T-DA-00.2-report.md     |
 | 2026-10-02 | Started   | T-DA-01 — Scaffold + Reality Check                                           | —                               |
 | 2026-10-02 | Completed | T-DA-01 — Scaffold + Reality Check                                           | reports/T-DA-01-report.md       |
+| 2026-10-05 | Started   | T-DA-02 — Planning-First (Output 2)                                          | —                               |
+| 2026-10-05 | Completed | T-DA-02 — Planning-First (Output 2)                                          | reports/T-DA-02-report.md       |

@@ -32,10 +32,10 @@ Current resume point: see `docs/PROGRESS.md`.
 
 - **Never use Qwen3 on Groq in multi-turn tool-calling loops** — breaks function calling with `BadRequestError`
 - **All deps pinned exact** — no `^` or `~`; run `npm show <pkg> version` before adding anything
-- **Gemini Flash alias** (`gemini-2.0-flash`) for exploration only; pin versioned ID for all measured runs
+- **Gemini Flash alias** (`gemini-flash-lite-latest`) for exploration only; use `gemini-3.5-flash-lite` for measured runs (no versioned ID available as of 2026-10-05; `gemini-2.0-flash-lite-001` deprecated)
 - **Groq** = single-call roles only (LLM judge, summarization)
 - **`todoListMiddleware` required for Google models** — `write_todos` is NOT auto-applied for `google-genai:` model prefixes; add `todoListMiddleware()` explicitly. (Reality-checked T-DA-01: `REQUIRED_MIDDLEWARE_NAMES` is empty for Google model profiles.)
-- **LangSmith** is the tracer — not LangFuse. Auto-traces when `LANGCHAIN_TRACING_V2=true`
+- **LangSmith** is the tracer — not LangFuse. Auto-traces when `LANGSMITH_TRACING=true` (canonical); legacy `LANGCHAIN_TRACING_V2=true` also works
 - **Sequential runs** — no parallel API calls; back off on HTTP 429; count model calls per run
 
 ## Stack
