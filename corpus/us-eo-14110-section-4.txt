@@ -1,0 +1,35 @@
+US Executive Order 14110 — Section 4: Ensuring the Safety and Security of AI
+Source document: Executive Order 14110 on Safe, Secure, and Trustworthy Artificial Intelligence (October 30, 2023)
+
+SECTION 4. ENSURING THE SAFETY AND SECURITY OF ARTIFICIAL INTELLIGENCE
+
+4.1. Developing Guidelines, Standards, and Best Practices for AI Safety and Security.
+
+(a) Within 270 days of the date of this order, to help ensure the development of safe, secure, and trustworthy AI systems, the Secretary of Commerce, acting through the Director of the National Institute of Standards and Technology (NIST), in coordination with the Secretary of State, the Secretary of Defense, the Secretary of Homeland Security, the Director of the Office of Management and Budget (OMB Director), and the heads of other relevant agencies as the Secretary of Commerce deems appropriate, shall:
+
+  (i) Establish guidelines and best practices, with the aim of promoting consensus industry standards, for developing and deploying safe, secure, and trustworthy AI systems, consistent with the AI Risk Management Framework (AI RMF) and any other relevant NIST standards and guidance. This shall include at a minimum:
+    (A) expanding on voluntary guidance for evaluating, adopting, and deploying commercially available AI systems, consistent with existing NIST AI RMF guidance;
+    (B) developing or identifying existing standards, tools, methods, and practices for (I) AI red-teaming for foundation models to identify flaws and vulnerabilities, with a particular focus on models that could be used to harm health or safety, including by facilitating attacks on critical infrastructure or the development of biological, chemical, nuclear, or radiological weapons with the potential for mass casualties; and (II) evaluating whether AI systems are safe and effective, including by evaluating models through pre- and post-deployment testing, adversarial testing, and assessments of capabilities with respect to relevant risks, such as by expanding the ability of AI systems to generate synthetic data and serve as evaluators of AI systems;
+    (C) developing or identifying existing standards and best practices for detecting AI-generated content and authenticating official content; and
+    (D) developing a companion resource to the AI RMF, NIST Artificial Intelligence 600-1, for generative AI;
+  (ii) establish, in coordination with relevant agencies, guidelines for red-teaming of AI systems.
+
+4.2. Ensuring Robust Reliability, Security, and Trustworthiness of AI Systems.
+
+The heads of agencies that use AI systems in a manner that meaningfully impacts rights or safety, or that serve as an AI system developer, shall conduct a comprehensive review of current AI safety and security policies and procedures, identify gaps, and develop a plan to address any gaps within 180 days of the date of this order.
+
+4.3. Managing Risks from Dual-Use Foundation Models.
+
+Dual-use foundation models — AI models that are trained on broad data; generally use self-supervision; contain at least tens of billions of parameters; are applicable across a wide range of contexts; and that exhibit, or could easily be modified to exhibit, high levels of performance at tasks that pose a serious risk to security, national economic security, national public health or safety, or any combination of those matters — present unique and significant risks.
+
+(a) Within 90 days of the date of this order, the Secretary of Commerce shall require companies developing or demonstrating an intent to develop potential dual-use foundation models to provide the Federal Government, on an ongoing basis, with information, reports, or records regarding the following:
+  (i) Any ongoing or planned activities related to training, developing, or producing dual-use foundation models, including the physical and cybersecurity protections taken to assure the integrity of that training process against sophisticated threats;
+  (ii) The ownership and possession of the model weights of any dual-use foundation models, and the physical and cybersecurity measures taken to protect those model weights;
+  (iii) The results of any developed red-team testing conducted to evaluate the capability of dual-use foundation models for causing or enabling serious harm; and
+  (iv) Any other information, reports, or records that the Secretary of Commerce determines are reasonably necessary for the purposes of this section.
+
+4.4. Reducing Risks at the Intersection of AI and CBRN Weapons.
+
+(a) Within 180 days of the date of this order, to address the risk of AI being misused to assist in the development or use of biological, chemical, nuclear, or radiological (CBRN) weapons with the potential for mass casualties, the Secretary of Homeland Security shall, in coordination with the Secretary of State, the Secretary of Defense, the Attorney General, and the Director of National Intelligence:
+  (i) evaluate the potential for AI to be misused to assist in the development or production of CBRN weapons or attacks on critical infrastructure, and provide a report to the President that includes an assessment of this risk and potential mitigation steps;
+  (ii) provide an unclassified summary of such report to the public.

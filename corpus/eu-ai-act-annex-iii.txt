@@ -1,0 +1,48 @@
+EU AI Act — Annex III: High-Risk AI Systems
+Source document: Regulation (EU) 2024/1689 of the European Parliament and of the Council
+
+ANNEX III — High-Risk AI Systems Referred to in Article 6(2)
+
+High-risk AI systems pursuant to Article 6(2) are AI systems listed in any of the following areas:
+
+1. Biometrics, insofar as their use is permitted under relevant Union or national law:
+(a) AI systems intended to be used for the remote biometric identification of natural persons, with the exception of AI systems intended to be used for biometric verification whose sole purpose is to confirm that a specific natural person is who he or she claims to be;
+(b) AI systems intended to be used for biometric categorisation of natural persons based on their biometric data to deduce or infer their race, political opinions, trade union membership, religious or philosophical beliefs, sex life or sexual orientation; this does not include any labelling or filtering of lawfully acquired biometric data, such as images, based on biometric data or categorising biometric data in the area of law enforcement;
+(c) AI systems intended to be used for the recognition of emotions of natural persons.
+
+2. Critical infrastructure: AI systems intended to be used as safety components in the management and operation of critical digital infrastructure as listed in point (8) of Annex I to Directive (EU) 2022/2555, road traffic, or in the supply of water, gas, heating or electricity.
+
+3. Education and vocational training:
+(a) AI systems intended to be used to determine access or admission or to assign natural persons to educational and vocational training institutions or programmes at all levels;
+(b) AI systems intended to be used to evaluate learning outcomes, including when those outcomes are used to steer the learning process of natural persons in educational and vocational training institutions or programmes at all levels;
+(c) AI systems intended to be used for the purpose of assessing the appropriate level of education that an individual will receive or will be able to access, in the context of or within educational and vocational training institutions at all levels;
+(d) AI systems intended to be used for monitoring and detecting prohibited behaviour of students during tests in the context of or within educational and vocational training institutions at all levels.
+
+4. Employment, workers management and access to self-employment:
+(a) AI systems intended to be used for the recruitment or selection of natural persons, in particular to place targeted job advertisements, to analyse and filter job applications, and to evaluate candidates;
+(b) AI systems intended to be used to make decisions affecting the terms of work-related relationships, the promotion or termination of work-related contractual relationships, to allocate tasks based on individual behaviour or personal traits or characteristics or to monitor and evaluate performance and behaviour of persons in such relationships.
+
+5. Access to and enjoyment of essential private services and essential public services and benefits:
+(a) AI systems intended to be used by public authorities or on behalf of public authorities to evaluate the eligibility of natural persons for essential public assistance benefits and services, including healthcare services, as well as to grant, reduce, revoke, or reclaim such benefits and services;
+(b) AI systems intended to be used to evaluate the creditworthiness of natural persons or establish their credit score, with the exception of AI systems used for the purpose of detecting financial fraud;
+(c) AI systems intended to be used for risk assessment and pricing in relation to natural persons in the case of life and health insurance;
+(d) AI systems intended to be used to evaluate and classify emergency calls by natural persons or to be used to dispatch or establish priority in the dispatching of emergency first response services, including by police, firefighters and medical aid, as well as of emergency healthcare patient triage systems.
+
+6. Law enforcement, insofar as their use is permitted under relevant Union or national law:
+(a) AI systems intended to be used by or on behalf of competent authorities, or by Union institutions, bodies, offices or agencies, to assess the risk of a natural person to become the victim of criminal offences;
+(b) AI systems intended to be used by or on behalf of competent authorities as polygraphs and similar tools;
+(c) AI systems intended to be used by or on behalf of competent authorities to detect the emotional state of a natural person in the framework of law enforcement;
+(d) AI systems intended to be used by or on behalf of competent authorities to detect deep fakes;
+(e) AI systems intended to be used by or on behalf of competent authorities or by Union institutions, bodies, offices or agencies, for the evaluation of the reliability of evidence in the course of criminal investigation or prosecution;
+(f) AI systems intended to be used by or on behalf of competent authorities for profiling of natural persons in the course of detection, investigation or prosecution of criminal offences or execution of criminal penalties, including parole or probation, as well as when used for crime analytics regarding natural persons;
+(g) AI systems intended to be used for crime analytics regarding natural persons, allowing competent authorities to search for complex related and unrelated large data sets available in different data sources or in different data formats in order to identify unknown patterns or discover hidden relationships in the data.
+
+7. Migration, asylum and border control management, insofar as their use is permitted under relevant Union or national law:
+(a) AI systems intended to be used by or on behalf of competent public authorities as polygraphs and similar tools;
+(b) AI systems intended to be used by or on behalf of competent public authorities to assess a risk, including a security risk, a risk of irregular immigration, or a health risk, posed by a natural person who intends to enter or has entered into the territory of a Member State;
+(c) AI systems intended to be used by or on behalf of competent public authorities for the verification of the authenticity of travel documents and supporting documentation of natural persons and detect non-authentic documents by checking their security features;
+(d) AI systems intended to be used to assist competent public authorities for the examination of applications for asylum, visa and residence permits and associated complaints with regard to the eligibility of the natural persons applying for a status, including related assessments of the reliability of evidence.
+
+8. Administration of justice and democratic processes:
+(a) AI systems intended to be used by or on behalf of judicial authorities or administrative justice to research and interpret facts and the law and to apply the law to a concrete set of facts, or to be used in a similar way in alternative dispute resolution;
+(b) AI systems intended to be used for influencing the outcome of an election or referendum or the voting behaviour of natural persons in the exercise of their vote in elections or referenda.
