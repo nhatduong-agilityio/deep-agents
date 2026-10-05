@@ -123,7 +123,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ---
 
-## T-DA-03 — Artifact Agent (Output 1)
+## T-DA-03 — Artifact Agent (Output 1) `[x]`
 
 **Scope:** `corpus/` (fixed local AI-regulation files, ≤10 docs, EU AI Act + US EO on AI), `src/experiments/artifact-agent/`, `src/scripts/check-report.ts`
 

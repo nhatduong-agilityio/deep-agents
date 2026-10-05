@@ -1,0 +1,27 @@
+EU AI Act — Article 9: Risk Management System
+Source document: Regulation (EU) 2024/1689 of the European Parliament and of the Council
+
+Article 9 — Risk Management System
+
+1. A risk management system shall be established, implemented, documented and maintained in relation to high-risk AI systems.
+
+2. The risk management system shall consist of a continuous iterative process run throughout the entire lifecycle of a high-risk AI system, requiring regular systematic review and updating. It shall comprise the following steps:
+(a) the identification and analysis of the known and reasonably foreseeable risks that the high-risk AI system can pose to health, safety or fundamental rights when the high-risk AI system is used in accordance with its intended purpose;
+(b) the estimation and evaluation of the risks that may emerge when the high-risk AI system is used in accordance with its intended purpose, and under conditions of reasonably foreseeable misuse;
+(c) the evaluation of other risks possibly arising, based on the analysis of data gathered from the post-market monitoring system referred to in Article 72;
+(d) the adoption of appropriate and targeted risk management measures designed to address the risks identified pursuant to point (a).
+
+3. The risks referred to in this Article shall concern only those which may be reasonably mitigated or eliminated through the development or design of the high-risk AI system, or the provision of adequate technical information.
+
+4. The risk management measures referred to in point (d) of paragraph 2 shall give due consideration to the effects and possible interactions resulting from the combined application of the requirements set out in this Chapter, with a view to minimising risks more effectively while achieving an appropriate balance among the various requirements.
+
+5. The risk management measures referred to in point (d) of paragraph 2 shall be such that the relevant residual risk associated with each hazard as well as the overall residual risk of the high-risk AI systems is judged to be acceptable.
+
+6. In identifying the most appropriate risk management measures, the following shall be ensured:
+(a) elimination or reduction of risks as far as technically possible through adequate design and development;
+(b) where appropriate, implementation of adequate mitigation and control measures in relation to risks that cannot be eliminated;
+(c) provision of adequate information pursuant to Article 13, in particular as regards the risks referred to in point (c) of paragraph 2 of this Article and, where appropriate, training to deployers.
+
+7. In undertaking the risk identification referred to in point (a) of paragraph 2, providers shall also take into account whether the intended purpose of the high-risk AI system or its reasonably foreseeable misuse may have a negative impact on persons under the age of 18 or other vulnerable groups.
+
+8. For high-risk AI systems referred to in point 1(a) of Annex III, the technical specifications laid down in Annex II of Directive 2013/36/EU and the technical standards referred to in Article 25 of Regulation (EU) No 575/2013 and in Article 4 of Directive 2009/138/EC shall be taken into account where relevant for the purposes of this Article.

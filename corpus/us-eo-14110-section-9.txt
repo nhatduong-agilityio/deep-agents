@@ -1,0 +1,39 @@
+US Executive Order 14110 — Section 9: Protecting Americans' Privacy
+Source document: Executive Order 14110 on Safe, Secure, and Trustworthy Artificial Intelligence (October 30, 2023)
+
+SECTION 9. PROTECTING AMERICANS' PRIVACY AND CIVIL LIBERTIES
+
+9.1. Protecting Privacy in Artificial Intelligence.
+
+(a) To protect Americans' privacy and civil liberties, the Director of OMB, in coordination with the Assistant to the President and National Security Advisor (APNSA) and, as the Director of OMB deems appropriate, with the heads of other relevant agencies, and in consultation with the Federal Privacy Council and the Interagency Council on Statistical Policy (ICSP), shall:
+
+  (i) coordinate work by agencies to evaluate how their privacy programs address AI-related risks and, where appropriate, update their Privacy Impact Assessments and related guidance;
+  (ii) request that the Privacy and Civil Liberties Oversight Board (PCLOB) review agency uses of AI for impacts on privacy, civil rights, and civil liberties, and report any recommendations for Executive Branch action to the President; and
+  (iii) update the Federal Privacy Framework to better address emerging privacy implications of AI, including but not limited to the collection and use of personal information that enables or is produced by AI systems.
+
+(b) To advance privacy-preserving AI research and development, within 18 months of the date of this order:
+  (i) The National Science Foundation (NSF) shall prioritize research on privacy-preserving AI, including through promoting the development of innovative privacy-preserving techniques that can be employed in AI training and deployment, and shall issue a report to the President on the current state of and future priorities for privacy-preserving AI research;
+  (ii) The Secretary of Energy, in coordination with the NSF Director, shall research and develop techniques for privacy-preserving AI, including exploring the viability of privacy-preserving AI at the National Laboratories.
+
+9.2. Strengthening Privacy Guidance.
+
+The Federal Privacy Council shall, in consultation with the heads of relevant agencies and appropriate stakeholders, develop and publish a framework for agencies to use in evaluating and mitigating privacy risks that arise from AI systems. The framework shall address, among other things:
+
+(a) the collection, use, and retention of personal information by AI systems, including data minimization practices and limits on secondary use of data collected for AI training or deployment;
+(b) the use of AI systems in a manner that may have disparate impacts on individuals based on race, color, ethnicity, sex (including pregnancy, childbirth, and related medical conditions, and gender identity), age, national origin, religion, disability, sexual orientation, or other protected characteristics;
+(c) the use of AI systems to make or assist in making consequential decisions affecting individuals, including eligibility determinations for programs, licenses, loans, or benefits administered or regulated by Federal agencies;
+(d) transparency measures, such as requiring that individuals be notified when AI systems are used in consequential decisions that affect them, and providing them with information about the AI system used and the ability to seek recourse; and
+(e) mechanisms for individuals to access and correct personal information used in AI systems.
+
+9.3. Evaluating Privacy-Impacting AI.
+
+(a) Within 365 days of the date of this order, the Secretary of Commerce, in coordination with the Director of OMB and the heads of other relevant agencies as determined by the Secretary of Commerce, shall prepare a report identifying:
+  (i) the most significant privacy and civil liberties implications of AI systems deployed by the Federal Government;
+  (ii) existing Federal policies, regulations, and authorities that govern AI-related privacy and civil liberties concerns; and
+  (iii) any gaps in such policies, regulations, and authorities, and potential steps to address such gaps.
+
+(b) Agencies shall take steps to ensure that their AI procurement, development, and deployment practices are consistent with their privacy obligations, including by:
+  (i) conducting Privacy Impact Assessments for AI systems that process personally identifiable information;
+  (ii) implementing appropriate data minimization practices, including limiting the collection and retention of personal data used in AI systems to what is necessary;
+  (iii) ensuring that AI systems that make or assist in making consequential decisions have adequate transparency measures and provide avenues for individuals to contest decisions; and
+  (iv) adopting privacy-enhancing technologies, including privacy-preserving techniques for AI training and deployment, to the extent practicable.

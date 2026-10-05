@@ -2,7 +2,7 @@
 
 ## Resume Point
 
-**Next action:** T-DA-03 — Artifact Agent (Output 1)
+**Next action:** T-DA-04 — Context Isolation Proof (Output 3)
 
 ## Pinned Versions (established T-DA-01)
 
@@ -28,3 +28,5 @@
 | 2026-10-02 | Completed | T-DA-01 — Scaffold + Reality Check                                           | reports/T-DA-01-report.md       |
 | 2026-10-05 | Started   | T-DA-02 — Planning-First (Output 2)                                          | —                               |
 | 2026-10-05 | Completed | T-DA-02 — Planning-First (Output 2)                                          | reports/T-DA-02-report.md       |
+| 2026-10-05 | Started   | T-DA-03 — Artifact Agent (Output 1)                                          | —                               |
+| 2026-10-05 | Completed | T-DA-03 — Artifact Agent (Output 1)                                          | reports/T-DA-03-report.md       |

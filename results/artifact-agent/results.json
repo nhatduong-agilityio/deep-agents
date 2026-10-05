@@ -1,0 +1,47 @@
+{
+  "experiment": "artifact-agent",
+  "model": "gemini-3.5-flash-lite",
+  "deepagents_version": "1.14.1",
+  "date": "2026-10-05",
+  "runs": [
+    {
+      "run": 1,
+      "workDir": "/Users/nhat.duongasnet/Documents/training/generative-ai/tmp/artifact-agent/run-1",
+      "checkerPassed": true,
+      "findingCount": 3,
+      "inputTokens": 33435,
+      "outputTokens": 1628,
+      "modelCallCount": 4,
+      "elapsedMs": 10786,
+      "estimatedCostUsd": 0.002996025
+    },
+    {
+      "run": 2,
+      "workDir": "/Users/nhat.duongasnet/Documents/training/generative-ai/tmp/artifact-agent/run-2",
+      "checkerPassed": true,
+      "findingCount": 3,
+      "inputTokens": 80691,
+      "outputTokens": 1712,
+      "modelCallCount": 8,
+      "elapsedMs": 13538,
+      "estimatedCostUsd": 0.006565425
+    },
+    {
+      "run": 3,
+      "workDir": "/Users/nhat.duongasnet/Documents/training/generative-ai/tmp/artifact-agent/run-3",
+      "checkerPassed": true,
+      "findingCount": 3,
+      "inputTokens": 42257,
+      "outputTokens": 1692,
+      "modelCallCount": 5,
+      "elapsedMs": 10655,
+      "estimatedCostUsd": 0.003676875
+    }
+  ],
+  "summary": {
+    "checker_pass_rate": "3/3",
+    "avg_total_tokens": 53805,
+    "avg_model_calls": 6,
+    "total_cost_usd": 0.013238
+  }
+}
