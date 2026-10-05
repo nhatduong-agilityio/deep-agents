@@ -1,0 +1,221 @@
+{
+  "meta": {
+    "date": "2026-10-05T03:29:26.369Z",
+    "model": "gemini-3.5-flash-lite",
+    "deepagents_version": "1.14.1",
+    "runs_per_condition": 10
+  },
+  "baseline": [
+    {
+      "run": 1,
+      "condition": "baseline",
+      "firstTool": "write_file",
+      "inputTokens": 13846,
+      "outputTokens": 229,
+      "modelCallCount": 3,
+      "elapsedMs": 3531,
+      "estimatedCostUsd": 0.00110715
+    },
+    {
+      "run": 2,
+      "condition": "baseline",
+      "firstTool": "write_file",
+      "inputTokens": 13843,
+      "outputTokens": 221,
+      "modelCallCount": 3,
+      "elapsedMs": 3611,
+      "estimatedCostUsd": 0.0011045249999999999
+    },
+    {
+      "run": 3,
+      "condition": "baseline",
+      "firstTool": "write_file",
+      "inputTokens": 13857,
+      "outputTokens": 225,
+      "modelCallCount": 3,
+      "elapsedMs": 3857,
+      "estimatedCostUsd": 0.001106775
+    },
+    {
+      "run": 4,
+      "condition": "baseline",
+      "firstTool": "write_file",
+      "inputTokens": 13880,
+      "outputTokens": 234,
+      "modelCallCount": 3,
+      "elapsedMs": 3844,
+      "estimatedCostUsd": 0.0011112000000000001
+    },
+    {
+      "run": 5,
+      "condition": "baseline",
+      "firstTool": "write_file",
+      "inputTokens": 13870,
+      "outputTokens": 241,
+      "modelCallCount": 3,
+      "elapsedMs": 3602,
+      "estimatedCostUsd": 0.00111255
+    },
+    {
+      "run": 6,
+      "condition": "baseline",
+      "firstTool": "write_file",
+      "inputTokens": 13892,
+      "outputTokens": 256,
+      "modelCallCount": 3,
+      "elapsedMs": 4001,
+      "estimatedCostUsd": 0.0011186999999999998
+    },
+    {
+      "run": 7,
+      "condition": "baseline",
+      "firstTool": "write_file",
+      "inputTokens": 13863,
+      "outputTokens": 226,
+      "modelCallCount": 3,
+      "elapsedMs": 4032,
+      "estimatedCostUsd": 0.001107525
+    },
+    {
+      "run": 8,
+      "condition": "baseline",
+      "firstTool": "write_file",
+      "inputTokens": 13863,
+      "outputTokens": 225,
+      "modelCallCount": 3,
+      "elapsedMs": 4495,
+      "estimatedCostUsd": 0.001107225
+    },
+    {
+      "run": 9,
+      "condition": "baseline",
+      "firstTool": "write_file",
+      "inputTokens": 13905,
+      "outputTokens": 255,
+      "modelCallCount": 3,
+      "elapsedMs": 5007,
+      "estimatedCostUsd": 0.001119375
+    },
+    {
+      "run": 10,
+      "condition": "baseline",
+      "firstTool": "write_file",
+      "inputTokens": 13935,
+      "outputTokens": 290,
+      "modelCallCount": 3,
+      "elapsedMs": 4250,
+      "estimatedCostUsd": 0.0011321249999999999
+    }
+  ],
+  "treatment": [
+    {
+      "run": 1,
+      "condition": "treatment",
+      "firstTool": "write_todos",
+      "inputTokens": 63872,
+      "outputTokens": 770,
+      "modelCallCount": 10,
+      "elapsedMs": 14214,
+      "estimatedCostUsd": 0.0050214
+    },
+    {
+      "run": 2,
+      "condition": "treatment",
+      "firstTool": "write_todos",
+      "inputTokens": 42311,
+      "outputTokens": 527,
+      "modelCallCount": 7,
+      "elapsedMs": 10346,
+      "estimatedCostUsd": 0.003331425
+    },
+    {
+      "run": 3,
+      "condition": "treatment",
+      "firstTool": "write_todos",
+      "inputTokens": 42353,
+      "outputTokens": 547,
+      "modelCallCount": 7,
+      "elapsedMs": 10524,
+      "estimatedCostUsd": 0.003340575
+    },
+    {
+      "run": 4,
+      "condition": "treatment",
+      "firstTool": "write_todos",
+      "inputTokens": 42303,
+      "outputTokens": 533,
+      "modelCallCount": 7,
+      "elapsedMs": 9895,
+      "estimatedCostUsd": 0.003332625
+    },
+    {
+      "run": 5,
+      "condition": "treatment",
+      "firstTool": "write_todos",
+      "inputTokens": 42269,
+      "outputTokens": 536,
+      "modelCallCount": 7,
+      "elapsedMs": 9996,
+      "estimatedCostUsd": 0.003330975
+    },
+    {
+      "run": 6,
+      "condition": "treatment",
+      "firstTool": "write_todos",
+      "inputTokens": 42253,
+      "outputTokens": 523,
+      "modelCallCount": 7,
+      "elapsedMs": 9826,
+      "estimatedCostUsd": 0.003325875
+    },
+    {
+      "run": 7,
+      "condition": "treatment",
+      "firstTool": "write_todos",
+      "inputTokens": 42259,
+      "outputTokens": 529,
+      "modelCallCount": 7,
+      "elapsedMs": 7892,
+      "estimatedCostUsd": 0.0033281249999999995
+    },
+    {
+      "run": 8,
+      "condition": "treatment",
+      "firstTool": "write_todos",
+      "inputTokens": 42307,
+      "outputTokens": 549,
+      "modelCallCount": 7,
+      "elapsedMs": 10199,
+      "estimatedCostUsd": 0.0033377249999999997
+    },
+    {
+      "run": 9,
+      "condition": "treatment",
+      "firstTool": "write_todos",
+      "inputTokens": 41959,
+      "outputTokens": 497,
+      "modelCallCount": 7,
+      "elapsedMs": 8170,
+      "estimatedCostUsd": 0.003296025
+    },
+    {
+      "run": 10,
+      "condition": "treatment",
+      "firstTool": "write_todos",
+      "inputTokens": 41963,
+      "outputTokens": 484,
+      "modelCallCount": 7,
+      "elapsedMs": 7957,
+      "estimatedCostUsd": 0.003292425
+    }
+  ],
+  "summary": {
+    "baseline_write_todos_first_call_rate": "0/10",
+    "treatment_write_todos_first_call_rate": "10/10",
+    "ptr_overhead": {
+      "avg_tokens_with_plan": 44934,
+      "avg_tokens_without_plan": 14116,
+      "delta": 30818
+    }
+  }
+}
