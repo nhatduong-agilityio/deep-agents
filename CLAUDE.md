@@ -35,6 +35,7 @@ Current resume point: see `docs/PROGRESS.md`.
 - **Gemini Flash alias** (`gemini-flash-lite-latest`) for exploration only; use `gemini-3.5-flash-lite` for measured runs (no versioned ID available as of 2026-10-05; `gemini-2.0-flash-lite-001` deprecated)
 - **Groq** = single-call roles only (LLM judge, summarization)
 - **`todoListMiddleware` required for Google models** — `write_todos` is NOT auto-applied for `google-genai:` model prefixes; add `todoListMiddleware()` explicitly. (Reality-checked T-DA-01: `REQUIRED_MIDDLEWARE_NAMES` is empty for Google model profiles.)
+- **`geminiToolFilter` NOT inherited by sub-agents** — `mergeMiddlewareStack` uses `appendNew:false` for the general-purpose sub-agent; parent's custom middleware is NOT passed through. Sub-agents get the default stack only (FilesystemMiddleware, SummarizationMiddleware, PatchToolCallsMiddleware). Fix: `subagents: [{ ...GENERAL_PURPOSE_SUBAGENT, middleware: [geminiToolFilter] }]`. (Verified smoke test 2026-10-05.)
 - **LangSmith** is the tracer — not LangFuse. Auto-traces when `LANGSMITH_TRACING=true` (canonical); legacy `LANGCHAIN_TRACING_V2=true` also works
 - **Sequential runs** — no parallel API calls; back off on HTTP 429; count model calls per run
 

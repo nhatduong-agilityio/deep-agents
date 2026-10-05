@@ -10,6 +10,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:integration": "node --env-file=.env node_modules/vitest/dist/cli.js run --config vitest.integration.config.ts --reporter=verbose",
     "diagrams": "node scripts/render-diagrams.mjs",
     "prepare": "husky"
   },

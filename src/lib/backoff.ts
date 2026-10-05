@@ -1,7 +1,14 @@
+export interface RetryStats {
+  retryCount: number;
+  totalWaitMs: number;
+}
+
 export interface BackoffOptions {
   maxRetries?: number;
   baseDelayMs?: number;
   maxDelayMs?: number;
+  // mutated in-place so callers can read retry telemetry after the call
+  retryStats?: RetryStats;
 }
 
 // Jitter prevents thundering herd when multiple runs hit 429 simultaneously
@@ -53,6 +60,10 @@ export async function withBackoff<T>(fn: () => Promise<T>, opts: BackoffOptions 
       process.stderr.write(
         `  [backoff] 429 on attempt ${attempt + 1} — waiting ${Math.round(delay / 1000)}s\n`,
       );
+      if (opts.retryStats) {
+        opts.retryStats.retryCount++;
+        opts.retryStats.totalWaitMs += delay;
+      }
       await new Promise((resolve) => setTimeout(resolve, delay));
       attempt++;
     }
