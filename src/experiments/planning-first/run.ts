@@ -37,7 +37,9 @@ function printRow(r: RunResult): void {
 }
 
 process.stdout.write('T-DA-02 — Planning-First experiment\n');
-process.stdout.write(`Model: gemini-3.5-flash-lite | ${RUNS_PER_CONDITION} runs per condition\n\n`);
+process.stdout.write(
+  `Model: gpt-5.4-mini-2026-03-17 | ${RUNS_PER_CONDITION} runs per condition\n\n`,
+);
 
 async function pause(): Promise<void> {
   process.stdout.write(
@@ -90,7 +92,7 @@ mkdirSync(RESULTS_DIR, { recursive: true });
 const output = {
   meta: {
     date: new Date().toISOString(),
-    model: 'gemini-3.5-flash-lite',
+    model: 'gpt-5.4-mini-2026-03-17',
     deepagents_version: '1.14.1',
     runs_per_condition: RUNS_PER_CONDITION,
   },

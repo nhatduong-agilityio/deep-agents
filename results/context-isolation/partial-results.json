@@ -1,0 +1,115 @@
+{
+  "experiment": "context-isolation",
+  "model": "gemini-3.5-flash-lite",
+  "deepagents_version": "1.14.1",
+  "status": "partial — daily quota exhausted 2026-10-06 before 3×B runs with new supervisor prompt",
+  "quota_reset": "approximately 2026-10-07 10:28 local time",
+  "configA_runs": [
+    {
+      "source": "b5gdaybv8 run-1 A1",
+      "mainAgentPeakInputTokens": 12753,
+      "systemInputTokens": 33532,
+      "systemCheck": "pass",
+      "completenessCheck": "pass",
+      "checkerPassed": true,
+      "modelCallCount": 4,
+      "workMs": 10685,
+      "retryWaitMs": 0,
+      "langsmithRunId": "9f28efc4-e1f1-4938-9f49-7b3ee0f48bd7"
+    },
+    {
+      "source": "b5gdaybv8 run-1 A2",
+      "mainAgentPeakInputTokens": 11180,
+      "systemInputTokens": 29707,
+      "systemCheck": "fail",
+      "systemCheckNote": "retry artifact — withBackoff inflated systemInputTokens",
+      "completenessCheck": "pass",
+      "checkerPassed": true,
+      "modelCallCount": 5,
+      "workMs": 12672,
+      "retryWaitMs": 0,
+      "langsmithRunId": "bf1bad4b-9d29-4d7a-b603-5bb989b76d00"
+    },
+    {
+      "source": "b4wrh8f2v run-2 A1",
+      "mainAgentPeakInputTokens": 12624,
+      "systemInputTokens": 38091,
+      "systemCheck": "fail",
+      "systemCheckNote": "retry artifact",
+      "completenessCheck": "pass",
+      "checkerPassed": true,
+      "modelCallCount": 4,
+      "workMs": 10324,
+      "retryWaitMs": 74816,
+      "langsmithRunId": "9e05da85-01e1-4396-9719-95fd5fd22eab"
+    },
+    {
+      "source": "b13xpfin0 run-3 A1",
+      "mainAgentPeakInputTokens": 12715,
+      "systemInputTokens": 42422,
+      "systemCheck": "pass",
+      "completenessCheck": "pass",
+      "checkerPassed": true,
+      "modelCallCount": 5,
+      "workMs": 12400,
+      "retryWaitMs": 0,
+      "langsmithRunId": "15a96127-a06d-4d90-83c3-f001deb04b09"
+    }
+  ],
+  "configB_runs": [
+    {
+      "source": "b5gdaybv8 run-1 B1",
+      "supervisorPrompt": "v1 (old — text synthesis instead of write_file)",
+      "mainAgentPeakInputTokens": 5550,
+      "systemInputTokens": 257974,
+      "systemCheck": "fail",
+      "systemCheckNote": "expected — sub-agents inflate system total",
+      "completenessCheck": "pass",
+      "checkerPassed": false,
+      "checkerFailReason": "main agent produced text response instead of write_file calls; 0 report files written",
+      "modelCallCount": 3,
+      "workMs": 82372,
+      "retryWaitMs": 432033,
+      "workerReturnTokens": [162, 65],
+      "workerReturnWordCounts": [75, 30],
+      "langsmithRunId": "99064eaf-7b35-457f-9306-2e3c0e5fadb7"
+    },
+    {
+      "source": "b4wrh8f2v run-2 B1",
+      "supervisorPrompt": "v1 (old)",
+      "mainAgentPeakInputTokens": 5611,
+      "systemInputTokens": 275571,
+      "systemCheck": "fail",
+      "systemCheckNote": "expected",
+      "completenessCheck": "pass",
+      "checkerPassed": false,
+      "checkerFailReason": "same as above — 0 report files written",
+      "modelCallCount": 3,
+      "workMs": 101584,
+      "retryWaitMs": 426004,
+      "workerReturnTokens": [229, 105],
+      "workerReturnWordCounts": [97, 48],
+      "langsmithRunId": "d6d401a3-0176-4013-bc90-a2b3a83a3dfc"
+    }
+  ],
+  "isolationRatioGate": {
+    "configA_peaks": [12753, 11180, 12624, 12715],
+    "configB_peaks_available": [5550, 5611],
+    "note": "only 2 B runs available; gate computed from 2 values",
+    "medianA": 12715,
+    "medianB_from2": 5580.5,
+    "ratioMedian": 0.439,
+    "gateThreshold": 0.5,
+    "gatePasses": true
+  },
+  "blockers": [
+    "Daily quota exhausted (500 req/day free tier) — cannot run more B runs today",
+    "Supervisor prompt v1 caused text synthesis (0 files written); v2 (4-phase) not yet tested",
+    "Need ≥3 B runs with checker pass to fully meet DoD"
+  ],
+  "nextSteps": [
+    "After quota resets (~10:28 AM 2026-10-07): run node_modules/.bin/tsx --env-file=.env src/experiments/context-isolation/measure.ts",
+    "config-b.ts already has v2 supervisor prompt (4-phase, imperative write_file calls)",
+    "Expect B checker to pass with v2 prompt based on prompt analysis"
+  ]
+}

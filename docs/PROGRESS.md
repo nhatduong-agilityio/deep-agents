@@ -2,16 +2,16 @@
 
 ## Resume Point
 
-**Next action:** T-DA-04 — Context Isolation Proof (Output 3)
+**Next action:** T-DA-05 — Critique Workflow
 
 ## Pinned Versions (established T-DA-01)
 
-| Item                             | Value                                                                                        |
-| -------------------------------- | -------------------------------------------------------------------------------------------- |
-| `deepagents`                     | `1.14.1`                                                                                     |
-| Gemini model (exploration alias) | `gemini-flash-lite-latest`                                                                   |
-| Gemini model (measured runs)     | `gemini-3.5-flash-lite` (no versioned ID available; API date `3.5-flash-lite-07-2026` noted) |
-| Model migration note             | `gemini-2.0-flash-lite-001` → `gemini-3.5-flash-lite` (deprecated 2026-10-05)                |
+| Item                     | Value                                                                              |
+| ------------------------ | ---------------------------------------------------------------------------------- |
+| `deepagents`             | `1.14.1`                                                                           |
+| Primary model (all runs) | `gpt-5.4-mini-2026-03-17` (`openai:gpt-5.4-mini-2026-03-17`) — migrated 2026-10-06 |
+| Model pricing            | $0.75/$4.50 per 1M tokens (input/output) — verified 2026-10-06                     |
+| Previous model           | `gemini-3.5-flash-lite` — replaced; T-DA-02/03/04 results reflect Gemini pricing   |
 
 ## Investigation Findings
 
@@ -63,20 +63,40 @@ in parallel by default — sequential behaviour would require explicit coordinat
 
 ---
 
+## A1 LangSmith Re-query Note (2026-10-06)
+
+Original B1 measurement (validation-run.json) showed only 6 LangSmith spans and
+`systemInputTokens: 45,521` for Config A run 1. Re-query of the same runId later that session
+returned **7 spans, total 57,077 tokens**. Span 7 (the 7th main-agent call, 11,556 prompt tokens)
+had not yet been indexed when the first `collectSystemTokens` poll completed.
+
+This confirmed the need for the polling loop (poll every 5s, return only when span count is stable
+across 2 consecutive polls). The polling loop was the fix; `measurementIncomplete:true` is the
+safety valve when it times out.
+
+Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
+
+- After first poll: 6 spans, sum = 45,521 tokens, `mainAgentPeakInputTokens` = 11,441 (span 6)
+- After re-query: 7 spans, sum = 57,077 tokens, `peakInputTokens` from messages = 11,556 (call 7)
+- `inputTokensPerCall` from AIMessage.usage_metadata (messages, not LangSmith): all 7 calls captured immediately, peak = 11,556 — this is the source of truth for the T-DA-04 ratio gate
+
 ## Activity Log
 
-| Date       | Event     | Task                                                                         | Output                          |
-| ---------- | --------- | ---------------------------------------------------------------------------- | ------------------------------- |
-| 2026-10-02 | Planned   | Phase: Rapid Development with DeepAgents                                     | docs/tasks.md                   |
-| 2026-10-02 | Done      | T-DA-00: Project Bootstrap (TypeScript, LangSmith, Gemini, Groq, no Fastify) | package.json, src/index.ts      |
-| 2026-10-02 | Updated   | docs/tasks.md restructured: T-DA-00 (done), T-DA-00.1 (initial DDRs) added   | docs/tasks.md, docs/PROGRESS.md |
-| 2026-10-02 | Started   | T-DA-00.1 — Initial Decision Records                                         | —                               |
-| 2026-10-02 | Completed | T-DA-00.1 — Initial Decision Records                                         | reports/T-DA-00.1-report.md     |
-| 2026-10-02 | Started   | T-DA-00.2 — Skills Installation + Claude Code Hooks                          | —                               |
-| 2026-10-02 | Completed | T-DA-00.2 — Skills Installation + Claude Code Hooks                          | reports/T-DA-00.2-report.md     |
-| 2026-10-02 | Started   | T-DA-01 — Scaffold + Reality Check                                           | —                               |
-| 2026-10-02 | Completed | T-DA-01 — Scaffold + Reality Check                                           | reports/T-DA-01-report.md       |
-| 2026-10-05 | Started   | T-DA-02 — Planning-First (Output 2)                                          | —                               |
-| 2026-10-05 | Completed | T-DA-02 — Planning-First (Output 2)                                          | reports/T-DA-02-report.md       |
-| 2026-10-05 | Started   | T-DA-03 — Artifact Agent (Output 1)                                          | —                               |
-| 2026-10-05 | Completed | T-DA-03 — Artifact Agent (Output 1)                                          | reports/T-DA-03-report.md       |
+| Date       | Event     | Task                                                                         | Output                                         |
+| ---------- | --------- | ---------------------------------------------------------------------------- | ---------------------------------------------- |
+| 2026-10-02 | Planned   | Phase: Rapid Development with DeepAgents                                     | docs/tasks.md                                  |
+| 2026-10-02 | Done      | T-DA-00: Project Bootstrap (TypeScript, LangSmith, Gemini, Groq, no Fastify) | package.json, src/index.ts                     |
+| 2026-10-02 | Updated   | docs/tasks.md restructured: T-DA-00 (done), T-DA-00.1 (initial DDRs) added   | docs/tasks.md, docs/PROGRESS.md                |
+| 2026-10-02 | Started   | T-DA-00.1 — Initial Decision Records                                         | —                                              |
+| 2026-10-02 | Completed | T-DA-00.1 — Initial Decision Records                                         | reports/T-DA-00.1-report.md                    |
+| 2026-10-02 | Started   | T-DA-00.2 — Skills Installation + Claude Code Hooks                          | —                                              |
+| 2026-10-02 | Completed | T-DA-00.2 — Skills Installation + Claude Code Hooks                          | reports/T-DA-00.2-report.md                    |
+| 2026-10-02 | Started   | T-DA-01 — Scaffold + Reality Check                                           | —                                              |
+| 2026-10-02 | Completed | T-DA-01 — Scaffold + Reality Check                                           | reports/T-DA-01-report.md                      |
+| 2026-10-05 | Started   | T-DA-02 — Planning-First (Output 2)                                          | —                                              |
+| 2026-10-05 | Completed | T-DA-02 — Planning-First (Output 2)                                          | reports/T-DA-02-report.md                      |
+| 2026-10-05 | Started   | T-DA-03 — Artifact Agent (Output 1)                                          | —                                              |
+| 2026-10-05 | Completed | T-DA-03 — Artifact Agent (Output 1)                                          | reports/T-DA-03-report.md                      |
+| 2026-10-06 | Started   | T-DA-04 — Context Isolation Proof (Output 3)                                 | —                                              |
+| 2026-10-06 | Blocked   | T-DA-04 — daily quota exhausted (500 req/day); partial results saved         | results/context-isolation/partial-results.json |
+| 2026-10-06 | Completed | T-DA-04 — Context Isolation Proof (Output 3)                                 | reports/T-DA-04-report.md                      |

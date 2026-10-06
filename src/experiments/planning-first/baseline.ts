@@ -1,10 +1,8 @@
 import { mkdirSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { AIMessage } from '@langchain/core/messages';
-import { todoListMiddleware } from 'langchain';
 import { createDeepAgent, FilesystemBackend } from 'deepagents';
 import { withBackoff } from '../../lib/backoff.js';
-import { geminiToolFilter } from '../../lib/gemini-tool-filter.js';
 
 export interface RunResult {
   run: number;
@@ -25,9 +23,9 @@ export const AGENT_TASK =
   '2. Create /workspace/summary.md: a single paragraph summarising the findings from findings.md.\n' +
   'Do not stop until both files are written.';
 
-// Gemini Flash Lite pricing (USD per 1M tokens) — matches counter.ts
-const COST_PER_1M_INPUT = 0.075;
-const COST_PER_1M_OUTPUT = 0.3;
+// GPT-5.4-mini pricing (USD per 1M tokens) — verified 2026-10-06: developers.openai.com/api/docs/pricing
+const COST_PER_1M_INPUT = 0.75;
+const COST_PER_1M_OUTPUT = 4.5;
 
 export function extractMetrics(messages: unknown[]): {
   firstTool: string | null;
@@ -62,7 +60,7 @@ export function computeCost(inputTokens: number, outputTokens: number): number {
   );
 }
 
-const RUN_METADATA = { deepagents_version: '1.14.1', model_id: 'gemini-3.5-flash-lite' };
+const RUN_METADATA = { deepagents_version: '1.14.1', model_id: 'gpt-5.4-mini-2026-03-17' };
 
 // Project-relative workspace so agent output is visible; cleaned up after each run
 export const WORKSPACE_ROOT = join(process.cwd(), 'tmp', 'planning-first');
@@ -72,8 +70,7 @@ export async function runBaselineRun(runIndex: number): Promise<RunResult> {
   mkdirSync(workDir, { recursive: true });
 
   const agent = createDeepAgent({
-    model: 'google-genai:gemini-3.5-flash-lite',
-    middleware: [geminiToolFilter, todoListMiddleware()],
+    model: 'openai:gpt-5.4-mini-2026-03-17',
     // virtualMode scopes all agent paths under workDir — prevents writes outside project
     backend: () => new FilesystemBackend({ rootDir: workDir, virtualMode: true }),
   });

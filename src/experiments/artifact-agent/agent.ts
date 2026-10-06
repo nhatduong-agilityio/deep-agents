@@ -1,13 +1,11 @@
 import { cpSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { AIMessage } from '@langchain/core/messages';
-import { todoListMiddleware } from 'langchain';
 import { createDeepAgent, FilesystemBackend } from 'deepagents';
 import { langsmith } from '../../index.js';
 import { withBackoff, type RetryStats } from '../../lib/backoff.js';
-import { geminiToolFilter } from '../../lib/gemini-tool-filter.js';
 
-interface SpanTokens {
+export interface SpanTokens {
   spanId: string;
   promptTokens: number;
   completionTokens: number;
@@ -33,7 +31,7 @@ export interface RunResult {
   // main-agent tokens only (from result.messages AIMessage.usage_metadata)
   inputTokens: number;
   outputTokens: number;
-  // per-call input tokens + tools that preceded each call; used by T-DA-04 peak measurement
+  // per-call input tokens + tools that preceded each call
   inputTokensPerCall: number[];
   toolsBeforeCall: string[][];
   peakInputTokens: number;
@@ -45,11 +43,24 @@ export interface RunResult {
   // per-agent span grouping: main-agent LLM spans vs sub-agent spans keyed by task span ID
   mainAgentSpans: SpanTokens[];
   subAgentSpans: Record<string, SpanTokens[]>;
-  // max promptTokens across mainAgentSpans only — the Config A baseline for T-DA-04 ratio
+  // max of inputTokensPerCall (from messages) — source of truth for T-DA-04 ratio gate
   mainAgentPeakInputTokens: number;
-  // 'fail' when systemInputTokens !== inputTokens (unexpected sub-agent or counting divergence)
-  systemCheck: 'pass' | 'fail';
-  // 429 rate-limit telemetry for this run
+  // per-call LangSmith vs messages comparison: 'pass'=all match, 'incomplete'=span count mismatch/empty, 'mismatch'=values differ
+  mainAgentConsistency: 'pass' | 'incomplete' | 'mismatch';
+  // All LLM spans assigned to exactly one group; token sums match system total
+  completenessCheck: 'pass' | 'fail';
+  // true when LangSmith indexing timed out and system token data is unreliable
+  measurementIncomplete: boolean;
+  measurementIncompleteReason?: string;
+  // Optional: populated by Config B runs (task tool result sizes from sub-agents)
+  workerReturnTokens?: number[];
+  workerReturnWordCounts?: number[];
+  // Optional: populated by Config B runs (disk write verification post-run)
+  writesOnDisk?: boolean;
+  missingOnDisk?: string[];
+  // ISO timestamp of agent invoke start — for cross-run ordering and incident correlation
+  startedAt: string;
+  // 429 rate-limit telemetry
   retryCount: number;
   retryWaitMs: number;
   // wall-clock time breakdown: elapsedMs = workMs + retryWaitMs
@@ -58,10 +69,20 @@ export interface RunResult {
   estimatedCostUsd: number;
 }
 
-const COST_PER_1M_INPUT = 0.075;
-const COST_PER_1M_OUTPUT = 0.3;
+export interface ModelConfig {
+  model: string; // deepagents model string, e.g. 'openai:gpt-5.4-mini-2026-03-17'
+  modelId: string; // trace metadata model_id
+  costPer1MInput: number;
+  costPer1MOutput: number;
+}
 
-const RUN_METADATA = { deepagents_version: '1.14.1', model_id: 'gemini-3.5-flash-lite' };
+export const DEFAULT_MODEL_CONFIG: ModelConfig = {
+  model: 'openai:gpt-5.4-mini-2026-03-17',
+  modelId: 'gpt-5.4-mini-2026-03-17',
+  // Verified 2026-10-06: developers.openai.com/api/docs/pricing — $0.75/$4.50 per 1M tokens
+  costPer1MInput: 0.75,
+  costPer1MOutput: 4.5,
+};
 
 export const CORPUS_DIR = join(process.cwd(), 'corpus');
 export const WORKSPACE_ROOT = join(process.cwd(), 'tmp', 'artifact-agent');
@@ -123,10 +144,28 @@ function extractMetrics(messages: unknown[]): {
   };
 }
 
-function computeCost(inputTokens: number, outputTokens: number): number {
+function computeCost(inputTokens: number, outputTokens: number, cfg: ModelConfig): number {
   return (
-    (inputTokens / 1_000_000) * COST_PER_1M_INPUT + (outputTokens / 1_000_000) * COST_PER_1M_OUTPUT
+    (inputTokens / 1_000_000) * cfg.costPer1MInput +
+    (outputTokens / 1_000_000) * cfg.costPer1MOutput
   );
+}
+
+// Every LLM span must be in exactly one group; token sums must match the system total.
+export function computeCompletenessCheck(
+  systemSpanTokens: SpanTokens[],
+  systemInputTokens: number,
+  mainAgentSpans: SpanTokens[],
+  subAgentSpans: Record<string, SpanTokens[]>,
+): 'pass' | 'fail' {
+  const allSubSpans = Object.values(subAgentSpans).flat();
+  const totalGrouped = mainAgentSpans.length + allSubSpans.length;
+  const groupedTokenSum =
+    mainAgentSpans.reduce((s, sp) => s + sp.promptTokens, 0) +
+    allSubSpans.reduce((s, sp) => s + sp.promptTokens, 0);
+  return totalGrouped === systemSpanTokens.length && groupedTokenSum === systemInputTokens
+    ? 'pass'
+    : 'fail';
 }
 
 // Project UUID is needed by runs.retrieve() and runs.query() — resolved once and cached.
@@ -150,7 +189,6 @@ export function groupSpansByAgent(
   sortedSpans: SpanTokens[];
   mainAgentSpans: SpanTokens[];
   subAgentSpans: Record<string, SpanTokens[]>;
-  mainAgentPeakInputTokens: number;
 } {
   const sorted = [...rawSpans].sort((a, b) => a.startTime.localeCompare(b.startTime));
   const sortedSpans: SpanTokens[] = [];
@@ -173,34 +211,51 @@ export function groupSpansByAgent(
     }
   }
 
-  return {
-    sortedSpans,
-    mainAgentSpans,
-    subAgentSpans,
-    mainAgentPeakInputTokens:
-      mainAgentSpans.length > 0 ? Math.max(...mainAgentSpans.map((s) => s.promptTokens)) : 0,
-  };
+  return { sortedSpans, mainAgentSpans, subAgentSpans };
 }
 
-// Sum tokens across every LLM span in the trace tree (includes sub-agent calls).
-// Spans are sorted chronologically and grouped by agent for T-DA-04 context isolation ratio.
-// Reuses the same retry pattern as verifyLangSmithRun; flush is already done there.
-async function collectSystemTokens(
+// Compares per-call promptTokens from LangSmith mainAgentSpans against inputTokensPerCall
+// from messages. 'incomplete' = zero spans or fewer than expected (indexing lag).
+// 'mismatch' = more spans than calls (wrong classification) or value differs on matching calls.
+export function computeMainAgentConsistency(
+  mainAgentSpans: SpanTokens[],
+  inputTokensPerCall: number[],
+): 'pass' | 'incomplete' | 'mismatch' {
+  if (mainAgentSpans.length === 0) return 'incomplete';
+  if (mainAgentSpans.length < inputTokensPerCall.length) return 'incomplete'; // indexing lag
+  if (mainAgentSpans.length > inputTokensPerCall.length) return 'mismatch'; // classification error
+  for (let i = 0; i < mainAgentSpans.length; i++) {
+    if (mainAgentSpans[i]!.promptTokens !== inputTokensPerCall[i]!) return 'mismatch';
+  }
+  return 'pass';
+}
+
+// Poll LangSmith until main-agent span count matches expectedMainAgentCallCount AND
+// total span count is stable across two consecutive polls (guards against indexing lag).
+// Times out after maxWaitMs and returns measurementIncomplete:true so the gate excludes
+// the run rather than recording a wrong value.
+export async function collectSystemTokens(
   runId: string,
-  maxAttempts = 4,
-  retryDelayMs = 3000,
+  expectedMainAgentCallCount: number,
+  maxWaitMs = 90_000,
 ): Promise<{
   systemInputTokens: number;
   systemOutputTokens: number;
   systemSpanTokens: SpanTokens[];
   mainAgentSpans: SpanTokens[];
   subAgentSpans: Record<string, SpanTokens[]>;
-  mainAgentPeakInputTokens: number;
+  measurementIncomplete: boolean;
+  measurementIncompleteReason?: string;
 }> {
   const projectId = await resolveProjectId();
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  const pollIntervalMs = 5_000;
+  const deadline = Date.now() + maxWaitMs;
+  let prevTotalSpanCount = -1; // -1 forces a second stable poll before returning
+  let firstErrorLogged = false;
+
+  while (Date.now() < deadline) {
     try {
-      // Find task tool span IDs — empty for Config A (no sub-agents); populated for Config B.
+      // Find task tool span IDs — empty for Config A; populated for Config B.
       const taskSpanIds = new Set<string>();
       for await (const run of langsmith.runs.query({
         trace_id: runId,
@@ -227,29 +282,61 @@ async function collectSystemTokens(
         });
       }
 
-      if (rawSpans.length === 0) continue; // server indexing lag, retry
+      const { sortedSpans, mainAgentSpans, subAgentSpans } = groupSpansByAgent(
+        rawSpans,
+        taskSpanIds,
+      );
 
-      const { sortedSpans, mainAgentSpans, subAgentSpans, mainAgentPeakInputTokens } =
-        groupSpansByAgent(rawSpans, taskSpanIds);
+      // Return when main-agent count matches AND total hasn't grown since last poll.
+      if (
+        mainAgentSpans.length === expectedMainAgentCallCount &&
+        sortedSpans.length === prevTotalSpanCount
+      ) {
+        const systemInputTokens = sortedSpans.reduce((sum, s) => sum + s.promptTokens, 0);
+        const systemOutputTokens = sortedSpans.reduce((sum, s) => sum + s.completionTokens, 0);
+        return {
+          systemInputTokens,
+          systemOutputTokens,
+          systemSpanTokens: sortedSpans,
+          mainAgentSpans,
+          subAgentSpans,
+          measurementIncomplete: false,
+        };
+      }
 
-      const systemInputTokens = sortedSpans.reduce((sum, s) => sum + s.promptTokens, 0);
-      const systemOutputTokens = sortedSpans.reduce((sum, s) => sum + s.completionTokens, 0);
-
-      return {
-        systemInputTokens,
-        systemOutputTokens,
-        systemSpanTokens: sortedSpans,
-        mainAgentSpans,
-        subAgentSpans,
-        mainAgentPeakInputTokens,
-      };
-    } catch {
-      // network error, retry
+      prevTotalSpanCount = sortedSpans.length;
+    } catch (err: unknown) {
+      // 401/403/404 will not resolve with retries — surface immediately
+      const status =
+        (err as { status?: number }).status ??
+        (err as { statusCode?: number }).statusCode ??
+        (err as { response?: { status?: number } }).response?.status;
+      if (status === 401 || status === 403 || status === 404) {
+        process.stderr.write(`  [langsmith] non-retryable error ${status}: ${String(err)}\n`);
+        return {
+          systemInputTokens: 0,
+          systemOutputTokens: 0,
+          systemSpanTokens: [],
+          mainAgentSpans: [],
+          subAgentSpans: {},
+          measurementIncomplete: true,
+          measurementIncompleteReason: `LangSmith non-retryable error ${status}`,
+        };
+      }
+      if (!firstErrorLogged) {
+        process.stderr.write(`  [langsmith] poll error (will retry): ${String(err)}\n`);
+        firstErrorLogged = true;
+      }
     }
-    if (attempt < maxAttempts) await new Promise((r) => setTimeout(r, retryDelayMs));
+
+    if (Date.now() + pollIntervalMs < deadline) {
+      await new Promise((r) => setTimeout(r, pollIntervalMs));
+    }
   }
+
+  // Timeout — run will be excluded from gate
   process.stderr.write(
-    `  [langsmith] no LLM spans found for ${runId} after ${maxAttempts} attempts\n`,
+    `  [langsmith] timeout after ${maxWaitMs}ms: expected ${expectedMainAgentCallCount} main-agent spans (run ${runId})\n`,
   );
   return {
     systemInputTokens: 0,
@@ -257,7 +344,8 @@ async function collectSystemTokens(
     systemSpanTokens: [],
     mainAgentSpans: [],
     subAgentSpans: {},
-    mainAgentPeakInputTokens: 0,
+    measurementIncomplete: true,
+    measurementIncompleteReason: `LangSmith indexing timeout (${maxWaitMs}ms): expected ${expectedMainAgentCallCount} main-agent spans`,
   };
 }
 
@@ -291,11 +379,17 @@ async function verifyLangSmithRun(
   return false;
 }
 
+// workspaceRoot defaults to WORKSPACE_ROOT (tmp/artifact-agent) for T-DA-03 backward compat.
+// T-DA-04 Config A passes tmp/context-isolation/a to keep evidence directories separate.
+// modelConfig defaults to DEFAULT_MODEL_CONFIG; callers should pass an explicit shared constant
+// so Config A and Config B are provably using the same model, metadata, and price table.
 export async function runArtifactRun(
   runIndex: number,
   checkerFn: (workDir: string) => { passed: boolean; findingCount: number },
+  workspaceRoot = WORKSPACE_ROOT,
+  modelConfig: ModelConfig = DEFAULT_MODEL_CONFIG,
 ): Promise<RunResult> {
-  const workDir = join(WORKSPACE_ROOT, `run-${runIndex}`);
+  const workDir = join(workspaceRoot, `run-${runIndex}`);
   mkdirSync(join(workDir, 'corpus'), { recursive: true });
 
   // Populate corpus inside workDir so virtualMode can serve it at /corpus/
@@ -303,9 +397,9 @@ export async function runArtifactRun(
     cpSync(join(CORPUS_DIR, f), join(workDir, 'corpus', f));
   }
 
+  const runMetadata = { deepagents_version: '1.14.1', model_id: modelConfig.modelId };
   const agent = createDeepAgent({
-    model: 'google-genai:gemini-3.5-flash-lite',
-    middleware: [geminiToolFilter, todoListMiddleware()],
+    model: modelConfig.model,
     // virtualMode scopes all agent paths under workDir — prevents writes outside project
     backend: () => new FilesystemBackend({ rootDir: workDir, virtualMode: true }),
   });
@@ -314,17 +408,25 @@ export async function runArtifactRun(
   const langsmithRunId = crypto.randomUUID();
   const retryStats: RetryStats = { retryCount: 0, totalWaitMs: 0 };
   const start = Date.now();
+  const startedAt = new Date(start).toISOString();
   const result = await withBackoff(
     () =>
       agent.invoke(
         { messages: [{ role: 'user', content: AGENT_TASK }] },
-        { metadata: RUN_METADATA, runId: langsmithRunId },
+        { metadata: runMetadata, runId: langsmithRunId },
       ),
     { retryStats },
   );
   const elapsedMs = Date.now() - start;
 
-  // Verify trace; collectSystemTokens reuses the retry pattern (flush already done here)
+  // workDir is preserved (not deleted) so the checker and future tasks can verify the files
+  const { passed: checkerPassed, findingCount } = checkerFn(workDir);
+  const { inputTokens, outputTokens, inputTokensPerCall, toolsBeforeCall, modelCallCount } =
+    extractMetrics(result.messages);
+  // Item 1: peak from messages, not LangSmith — immune to indexing lag
+  const peakInputTokens = inputTokensPerCall.length > 0 ? Math.max(...inputTokensPerCall) : 0;
+
+  // Verify trace; collectSystemTokens polls until spans stable (flush already done here)
   const langsmithVerified = await verifyLangSmithRun(langsmithRunId);
   const {
     systemInputTokens,
@@ -332,20 +434,16 @@ export async function runArtifactRun(
     systemSpanTokens,
     mainAgentSpans,
     subAgentSpans,
-    mainAgentPeakInputTokens,
-  } = await collectSystemTokens(langsmithRunId);
+    measurementIncomplete,
+    measurementIncompleteReason,
+  } = await collectSystemTokens(langsmithRunId, modelCallCount);
 
-  // workDir is preserved (not deleted) so the checker and future tasks can verify the files
-  const { passed: checkerPassed, findingCount } = checkerFn(workDir);
-  const { inputTokens, outputTokens, inputTokensPerCall, toolsBeforeCall, modelCallCount } =
-    extractMetrics(result.messages);
-  const peakInputTokens = inputTokensPerCall.length > 0 ? Math.max(...inputTokensPerCall) : 0;
-
-  // Config A assertion: no sub-agents → system tokens must equal main-agent tokens exactly.
-  // Mismatch indicates unexpected sub-agent calls or a counting divergence between
-  // AIMessage.usage_metadata and LangSmith prompt_tokens.
-  // Result is saved regardless so run.ts can decide whether to abort the run set.
-  const systemCheck: 'pass' | 'fail' = systemInputTokens === inputTokens ? 'pass' : 'fail';
+  const mainAgentConsistency = computeMainAgentConsistency(mainAgentSpans, inputTokensPerCall);
+  // Short-circuit: empty LangSmith data from a timeout trivially satisfies computeCompletenessCheck
+  // (0===0), which would be a false pass. Force 'fail' whenever the measurement is incomplete.
+  const completenessCheck: 'pass' | 'fail' = measurementIncomplete
+    ? 'fail'
+    : computeCompletenessCheck(systemSpanTokens, systemInputTokens, mainAgentSpans, subAgentSpans);
 
   return {
     run: runIndex,
@@ -365,12 +463,16 @@ export async function runArtifactRun(
     systemSpanTokens,
     mainAgentSpans,
     subAgentSpans,
-    mainAgentPeakInputTokens,
-    systemCheck,
+    mainAgentPeakInputTokens: peakInputTokens,
+    mainAgentConsistency,
+    completenessCheck,
+    measurementIncomplete,
+    measurementIncompleteReason,
+    startedAt,
     retryCount: retryStats.retryCount,
     retryWaitMs: Math.round(retryStats.totalWaitMs),
     elapsedMs,
     workMs: Math.max(0, elapsedMs - Math.round(retryStats.totalWaitMs)),
-    estimatedCostUsd: computeCost(inputTokens, outputTokens),
+    estimatedCostUsd: computeCost(inputTokens, outputTokens, modelConfig),
   };
 }

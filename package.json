@@ -22,6 +22,7 @@
     "@langchain/langgraph-api": "1.5.1",
     "@langchain/langgraph-checkpoint": "1.1.5",
     "@langchain/langgraph-sdk": "1.12.0",
+    "@langchain/openai": "1.6.2",
     "deepagents": "1.14.1",
     "langchain": "1.5.15",
     "langsmith": "0.10.7",
@@ -31,6 +32,7 @@
     "@commitlint/cli": "21.2.3",
     "@commitlint/config-conventional": "21.2.3",
     "@langchain/langgraph-cli": "1.5.1",
+    "@mermaid-js/mermaid-cli": "12.0.0",
     "@types/node": "26.6.4",
     "eslint": "10.11.0",
     "husky": "9.1.7",
@@ -39,7 +41,6 @@
     "tsx": "4.23.15",
     "typescript": "5.9.3",
     "typescript-eslint": "8.71.0",
-    "@mermaid-js/mermaid-cli": "12.0.0",
     "vitest": "5.0.3"
   },
   "lint-staged": {

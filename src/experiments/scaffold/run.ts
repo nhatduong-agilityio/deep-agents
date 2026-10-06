@@ -1,14 +1,10 @@
 import { writeFileSync, mkdirSync } from 'node:fs';
-import { todoListMiddleware } from 'langchain';
 import { createDeepAgent, FilesystemBackend } from 'deepagents';
-import { geminiToolFilter } from '../../lib/gemini-tool-filter.js';
 
-// Trace metadata pattern: attach to every invocation so T-DA-07 can validate spans
-const RUN_METADATA = { deepagents_version: '1.14.1', model_id: 'gemini-flash-lite-latest' };
+const RUN_METADATA = { deepagents_version: '1.14.1', model_id: 'gpt-5.4-mini-2026-03-17' };
 
 const agent = createDeepAgent({
-  model: 'google-genai:gemini-flash-lite-latest',
-  middleware: [geminiToolFilter, todoListMiddleware()],
+  model: 'openai:gpt-5.4-mini-2026-03-17',
   backend: () => new FilesystemBackend(),
 });
 
