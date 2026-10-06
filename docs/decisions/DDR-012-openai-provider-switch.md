@@ -59,9 +59,10 @@ CAMS routing table update (T-DA-04+):
 - `runArtifactRun` now accepts a `ModelConfig` parameter (model, modelId, costPer1MInput,
   costPer1MOutput). `measure.ts` defines `MEASUREMENT_MODEL` as the single source of truth and
   passes it to both `runConfigARun` and `runConfigBRun`, ensuring A and B are provably identical.
-- `geminiToolFilter` (removes `grep` due to Gemini JSON Schema bug) is kept in both configs.
-  It is harmless for OpenAI — the tool is simply absent from the list OpenAI receives.
-- `todoListMiddleware` is kept. Required for Google models; harmless for OpenAI.
+- `geminiToolFilter` and `todoListMiddleware` were removed in the post-T-DA-04 Gemini shim cleanup
+  (DDR-011 status: Superseded). `src/lib/gemini-tool-filter.ts`, `src/lib/with-gemini-compat.ts`,
+  and all references were deleted. T-DA-05+ code carries neither. OpenAI accepts all built-in tool
+  schemas without filtering; `todoListMiddleware` was a Google-model requirement only.
 - Costs: price table verified 2026-10-06 from `developers.openai.com/api/docs/pricing`:
   `gpt-5.4-mini` standard pricing = **$0.75 input / $4.50 output per 1M tokens**.
   Updated in `DEFAULT_MODEL_CONFIG` (`costPer1MInput: 0.75`, `costPer1MOutput: 4.50`).

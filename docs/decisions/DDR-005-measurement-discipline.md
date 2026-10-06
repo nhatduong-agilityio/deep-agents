@@ -41,7 +41,7 @@ Option B. The following rules apply to every experiment script:
 const runConfig = {
   metadata: {
     deepagents_version: '1.14.1',
-    model_id: 'gemini-2.0-flash-001',
+    model_id: 'gpt-5.4-mini-2026-03-17', // pinned snapshot — DDR-012
     task_id: 'T-DA-XX',
     run_id: crypto.randomUUID(),
   },

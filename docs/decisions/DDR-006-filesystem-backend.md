@@ -26,7 +26,7 @@ into the system prompt. The difference is WHERE files are stored between steps.
 
 `StateBackend` stores every written file in the LangGraph state dict (`files` key). LangGraph
 persists the full state via the checkpointer on every superstep. This means the checkpoint grows
-with each file written, even files the agent never reads again. For a 6-file corpus (~50 KB) plus
+with each file written, even files the agent never reads again. For a 6-file corpus (~29 KB / 28,803 bytes) plus
 generated report files, the checkpoint could reach hundreds of KB per superstep. Output files are
 also lost when the process exits because state is in-memory.
 

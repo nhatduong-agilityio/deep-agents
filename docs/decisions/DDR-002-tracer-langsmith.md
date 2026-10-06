@@ -32,11 +32,11 @@ References: [[DDR-003]] (model selection affects which spans appear in traces).
 
 ## Consequences
 
-- `LANGCHAIN_TRACING_V2=true`, `LANGCHAIN_API_KEY`, and `LANGCHAIN_PROJECT=deep-agents-phase` must be set in `.env`
+- `LANGSMITH_TRACING=true`, `LANGSMITH_API_KEY`, and `LANGSMITH_PROJECT=deep-agents-phase` must be set in `.env` (canonical names; `LANGCHAIN_TRACING_V2` / `LANGCHAIN_API_KEY` still work as legacy fallbacks)
 - The shared `langsmith` client in `src/index.ts` warns on startup if the key is absent — safe to run locally without tracing
 - LangFuse packages removed; any future need for LangFuse would require a separate integration path
 - Per-span token counts are available in LangSmith's UI and API — used directly in T-DA-07
 
 ## Empirical evidence
 
-`pnpm dev` with `LANGCHAIN_TRACING_V2=true` produces a LangSmith run record on first execution with zero callback registration in `src/index.ts`.
+`pnpm dev` with `LANGSMITH_TRACING=true` produces a LangSmith run record on first execution with zero callback registration in `src/index.ts`.

@@ -1,7 +1,7 @@
 # DDR-011: Gemini Tool Schema Filtering via wrapModelCall Middleware
 
 **Date:** 2026-10-02
-**Status:** Accepted
+**Status:** Superseded by DDR-012
 
 ## Context
 
@@ -95,22 +95,14 @@ The parent's `geminiToolFilter` is **not passed through**. Without it, the sub-a
 sends the full tool list (including `grep` with `exclusiveMinimum: 0`) to Gemini on
 its first model call → HTTP 400.
 
-**Fix:** Every sub-agent spec must carry `geminiToolFilter` explicitly:
+**Fix (historical, Gemini-only):** Every sub-agent spec had to carry `geminiToolFilter` explicitly,
+applied via `withGeminiCompat` in `src/lib/with-gemini-compat.ts`. This code and both helper files
+(`with-gemini-compat.ts`, `gemini-tool-filter.ts`) were deleted when the primary model switched to
+OpenAI (DDR-012). OpenAI accepts `exclusiveMinimum` natively; no tool filter is needed.
 
-```typescript
-// src/lib/with-gemini-compat.ts
-export function withGeminiCompat(spec: SubAgent): SubAgent {
-  const existing = (spec.middleware ?? []) as unknown[];
-  if (existing.includes(geminiToolFilter)) return spec;
-  return { ...spec, middleware: [geminiToolFilter, ...existing] } as SubAgent;
-}
-
-// src/lib/subagents.ts
-export const SUBAGENTS = [withGeminiCompat(GENERAL_PURPOSE_SUBAGENT)];
-```
-
-The sub-agent list (`SUBAGENTS`) is a shared export used by both T-DA-04 Config B
-and the integration tests, so the fix is applied in exactly one place.
+The sub-agent middleware inheritance rule remains: parent middleware is not propagated to
+sub-agents — any required middleware must be injected explicitly into the sub-agent spec at
+construction time. See DDR-013 for the general pattern applied to filesystem middleware.
 
 ## Verification approach
 

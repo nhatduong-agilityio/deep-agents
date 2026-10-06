@@ -37,7 +37,9 @@ Option C. The CAMS routing policy is:
 | LLM judge, summarization | Groq         | `llama-3.3-70b-versatile`                       | Single call only — never in loops              |
 | **Banned**               | Groq         | Qwen3 any variant                               | Breaks function-calling with `BadRequestError` |
 
-References: [[DDR-005]] (version pinning for measured runs).
+References: [[DDR-005]] (version pinning for measured runs). [[DDR-012]] supersedes the
+"Multi-turn agent loops" row of the routing table below for T-DA-04 and later tasks
+(switched to OpenAI `gpt-5.4-mini-2026-03-17` after Gemini daily quota exhaustion).
 
 ## Consequences
 
