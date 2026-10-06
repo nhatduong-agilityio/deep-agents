@@ -1,0 +1,34 @@
+EU AI Act — Article 6: Classification Rules for High-Risk AI Systems
+Source document: Regulation (EU) 2024/1689 of the European Parliament and of the Council
+
+Article 6 — Classification Rules for High-Risk AI Systems
+
+1. Irrespective of whether an AI system is placed on the market or put into service independently from the products referred to in points (a) and (b), that AI system shall be considered to be high-risk where both of the following conditions are fulfilled:
+
+(a) the AI system is intended to be used as a safety component of a product, or the AI system is itself a product, covered by the Union harmonisation legislation listed in Annex II;
+
+(b) the product whose safety component pursuant to point (a) is the AI system, or the AI system itself as a product, is required to undergo a third-party conformity assessment, with a view to the placing on the market or the putting into service of that product pursuant to the Union harmonisation legislation listed in Annex II.
+
+2. In addition to the high-risk AI systems referred to in paragraph 1, AI systems referred to in Annex III shall be considered to be high-risk.
+
+3. By derogation from paragraph 2, an AI system referred to in Annex III shall not be considered to be high-risk where it does not pose a significant risk of harm to the health, safety or fundamental rights of natural persons, including by not materially influencing the outcome of decision making.
+
+The first subparagraph shall apply where any of the following conditions is fulfilled:
+
+(a) the AI system is intended to perform a narrow procedural task;
+
+(b) the AI system is intended to improve the result of a previously completed human activity;
+
+(c) the AI system is intended to detect decision-making patterns or deviations from prior decision-making patterns and is not meant to replace or influence the previously completed human assessment, without proper human review;
+
+(d) the AI system is intended to perform a preparatory task to an assessment relevant for the purposes of the use cases listed in Annex III.
+
+Notwithstanding the first subparagraph, an AI system referred to in Annex III shall always be considered to be high-risk where the AI system performs profiling of natural persons as referred to in Article 4, point (4) of Regulation (EU) 2016/679.
+
+4. A provider who considers that an AI system referred to in Annex III is not high-risk shall document its assessment before that system is placed on the market or put into service. Such provider shall be subject to the registration obligation laid down in Article 49(2). Upon request of national competent authorities, the provider shall provide the documentation of the assessment.
+
+5. The Commission shall, after consulting the European Artificial Intelligence Board (the 'Board'), and no later than 2 February 2026, provide guidelines specifying the practical implementation of this Article in line with the technical specifications and existing guidance for the implementation of Union harmonisation legislation applicable to products covered by Annex II, and in the light of commonly observed practices in sectors and use cases covered by Annex III. When issuing such guidelines, the Commission shall take into account the well-established meaning and interpretation of 'safety component' as developed through relevant jurisprudence of the Court of Justice of the European Union. The Commission shall update those guidelines periodically, having regard to newly established jurisprudence, identified emerging risks and new developments in technology.
+
+6. The Commission is empowered to adopt delegated acts in accordance with Article 97 to amend paragraphs 1 and 2 of this Article in order to update the list of Union harmonisation legislation listed in Annex II and the list of high-risk AI systems listed in Annex III, where this is necessary to address newly identified significant risks while avoiding undue burden on providers and deployers, and to take into account relevant technological developments and new uses of AI. When exercising this power, the Commission shall take into account the impact of any update of the list on providers of AI systems already placed on the market or put into service in so far as these AI systems are affected by such an update.
+
+7. The Commission shall regularly review the guidelines referred to in paragraph 5 and update them where necessary to ensure the continued appropriateness and effectiveness of the classification rules set out in this Article, particularly in light of rapid developments in AI capabilities and deployment contexts across Member States.

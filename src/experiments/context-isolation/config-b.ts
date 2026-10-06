@@ -37,8 +37,9 @@ export const CONFIG_B_SUPERVISOR_TASK =
   '  research-eu, research-us, write-finding-1, write-finding-2, write-finding-3, ' +
   'write-summary, write-sources\n\n' +
   'PHASE 2 — EU AI Act research (call task tool with agent="research"):\n' +
-  '  "Read EU AI Act files in /corpus/: eu-ai-act-article-5.txt, eu-ai-act-article-9.txt, ' +
-  'eu-ai-act-article-13.txt, eu-ai-act-annex-iii.txt. Write notes to /notes/eu-ai-act.md. ' +
+  '  "Read EU AI Act files in /corpus/: eu-ai-act-article-5.txt, eu-ai-act-article-6.txt, ' +
+  'eu-ai-act-article-9.txt, eu-ai-act-article-13.txt, eu-ai-act-article-52.txt, ' +
+  'eu-ai-act-annex-iii.txt. Write notes to /notes/eu-ai-act.md. ' +
   'Return ≤150 words. For every key point include: Source: <exact-filename>."\n\n' +
   'PHASE 3 — US EO research (call task tool with agent="research"):\n' +
   '  "Read US EO files in /corpus/: us-eo-14110-section-4.txt, us-eo-14110-section-9.txt. ' +

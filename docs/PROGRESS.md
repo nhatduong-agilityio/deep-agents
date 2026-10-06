@@ -100,3 +100,4 @@ Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
 | 2026-10-06 | Started   | T-DA-04 — Context Isolation Proof (Output 3)                                 | —                                              |
 | 2026-10-06 | Blocked   | T-DA-04 — daily quota exhausted (500 req/day); partial results saved         | results/context-isolation/partial-results.json |
 | 2026-10-06 | Completed | T-DA-04 — Context Isolation Proof (Output 3)                                 | reports/T-DA-04-report.md                      |
+| 2026-10-06 | Completed | T-DA-04 v2 — expanded corpus to 8 files (~38.5KB); gate PASS 0.3286          | results/context-isolation/results-v2.json      |

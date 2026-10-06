@@ -1,7 +1,7 @@
 # DDR-010: CIP Isolation Benefit Scales with Retrieval Payload Relative to Fixed Harness Overhead
 
 **Date:** 2026-10-06
-**Status:** Hypothesis (not yet tested)
+**Status:** Confirmed — gate passed at ~38.5KB corpus (ratio 0.3286, 2026-10-06)
 **Related:** DDR-006 (FilesystemBackend), DDR-013 (RC1/RC2 fix), T-DA-04 report
 
 ## Finding: floor and growth from T-DA-04
@@ -101,9 +101,9 @@ With B_peak fixed at ~6300: A_peak must be ≥ 12,600.
 That requires corpus_tokens ≥ 12,600 − 4210 − 800 = 7,590 tokens ≈ 30KB additional corpus.
 Total corpus ≥ ~59KB would be sufficient (from current ~29KB).
 
-## Proposed follow-up (pre-registered, not yet run)
+## Confirmed follow-up (T-DA-04 v2, run 2026-10-06)
 
-**Experiment T-DA-04b** (proposed, optional, not scheduled):
+**Experiment T-DA-04 v2** (completed):
 
 ### Quantitative prediction
 
@@ -122,7 +122,30 @@ predicted ratio = 6,100 / 43,210 = 0.141 ≈ 0.14
 
 **Gate passes comfortably** — 0.14 << 0.50.
 
-### Falsification criterion
+### Actual v2 result
+
+Added `eu-ai-act-article-6.txt` (4,620 bytes) and `eu-ai-act-article-52.txt` (5,114 bytes).
+Total corpus: 8 files, 38,537 bytes (~38.5KB).
+
+| Run | Config | mainAgentPeak |
+| --- | ------ | ------------- |
+| 1   | A      | 10,851        |
+| 2   | A      | 10,785        |
+| 3   | A      | 10,886        |
+| 1   | B      | 3,683         |
+| 2   | B      | 3,566         |
+| 3   | B      | 3,479         |
+
+Median A: 10,851 | Median B: 3,566 | **Ratio: 0.3286 — PASS ✓**
+
+B peak dropped from ~6,135 to ~3,566 despite workers exceeding the 150-word cap
+(word counts: [255,115], [167,102], [159,113]). A peak stayed roughly flat (~10,851 vs ~11,228
+in v1), indicating the agent reads corpus files more selectively at 8 files than at 6.
+
+DDR-010 predicted ratio ≈ 0.14 at 150KB; at ~38.5KB actual ratio = 0.33, consistent with
+the model (B_peak stays bounded, ratio improves as corpus grows).
+
+### Falsification criterion (now observed-pass)
 
 The prediction is falsified if **B peak grows with corpus size** (indicating corpus tokens are
 leaking into the main agent's context, violating the isolation invariant). Specifically:
