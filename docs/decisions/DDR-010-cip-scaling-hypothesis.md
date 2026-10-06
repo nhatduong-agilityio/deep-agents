@@ -6,7 +6,7 @@
 
 ## Finding: floor and growth from T-DA-04
 
-T-DA-04 measured context isolation with a 6-file AI-regulation corpus (~50KB, EU AI Act + US EO).
+T-DA-04 measured context isolation with a 6-file AI-regulation corpus (~29KB / 28,803 bytes, EU AI Act + US EO).
 The primary isolation gate (Config B main-agent peak / Config A main-agent peak ≤ 0.50) **failed
 at 0.5464**. Secondary analysis reveals why:
 
@@ -80,7 +80,7 @@ Gate condition: B_peak / A_peak ≤ 0.50
 (4485 + n × s) / (4210 + C/4) ≤ 0.50
 ```
 
-For the current experiment: C = ~50,000 bytes, n=2, s≈200 → ratio ≈ 5075/16710 = 0.304.
+For the current experiment: C = ~28,803 bytes, n=2, s≈200 → ratio ≈ 5075/11410 = 0.445.
 But this ignores write_file and write_todos overhead (~1200 tokens), giving actual B ≈ 6300,
 A ≈ 16710 → ratio ≈ 0.377. The measured ratio (0.546) is higher because A's corpus adds
 ~6,000 tokens to the _first read call_ which then persists through all subsequent calls —
@@ -99,7 +99,7 @@ overhead_B=4485, summaries≈584, writing=1066 → B_peak≈6135 ✓
 Gate crosses 0.50 when: A_peak ≥ 2 × B_peak
 With B_peak fixed at ~6300: A_peak must be ≥ 12,600.
 That requires corpus_tokens ≥ 12,600 − 4210 − 800 = 7,590 tokens ≈ 30KB additional corpus.
-Total corpus ≥ ~80KB would be sufficient (from current ~50KB).
+Total corpus ≥ ~59KB would be sufficient (from current ~29KB).
 
 ## Proposed follow-up (pre-registered, not yet run)
 
@@ -149,8 +149,8 @@ the threshold at which it clearly passes a ≤50% gate depends on:
 2. Supervisor prompt size (drives B's floor)
 3. Worker summary cap (drives B's growth)
 
-For small corpora (~50KB), the supervisor prompt overhead dominates and the gate is marginal.
-For larger corpora (≥80KB with current overhead), the gate should pass comfortably.
+For small corpora (~29KB), the supervisor prompt overhead dominates and the gate is marginal.
+For larger corpora (≥60KB with current overhead), the gate should pass comfortably.
 
 Design recommendation: when corpus size is unknown or small, gate on growth ratio (B/A ≤ 0.30)
 rather than peak ratio — this is a more stable metric that is not sensitive to supervisor prompt

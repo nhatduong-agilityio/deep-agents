@@ -65,11 +65,11 @@ const workerFsMw = makeFilesystemMiddleware(backendFactory, [
 ]);
 const researchSubagent: SubAgent = {
   ...RESEARCH_SUBAGENT,
-  middleware: [...(RESEARCH_SUBAGENT.middleware ?? []), workerFsMw],
+  middleware: [workerFsMw], // RESEARCH_SUBAGENT.middleware is [] (no static shims)
 };
 ```
 
-`RESEARCH_SUBAGENT` in `subagents.ts` now carries only `[geminiToolFilter]` statically.
+`RESEARCH_SUBAGENT` in `subagents.ts` now carries an empty static middleware array (`[]`).
 The filesystem middleware is injected at run construction time.
 
 **Main agent corpus-block middleware (RC2 fix):**
@@ -79,8 +79,8 @@ const mainFsMw = makeFilesystemMiddleware(backendFactory, [
   { operations: ['read'], paths: ['/corpus/**'], mode: 'deny' },
 ]);
 const agent = createDeepAgent({
-  model: ..., middleware: [geminiToolFilter, mainFsMw, todoListMiddleware()],
-  backend: backendFactory, subagents: [withGeminiCompat(GENERAL_PURPOSE_SUBAGENT), researchSubagent],
+  model: ..., middleware: [mainFsMw],
+  backend: backendFactory, subagents: [GENERAL_PURPOSE_SUBAGENT, researchSubagent],
 });
 ```
 
@@ -112,8 +112,8 @@ time.
 
 ## Consequences
 
-- `RESEARCH_SUBAGENT` in `subagents.ts` has no filesystem middleware. Static tests updated to
-  assert this (one middleware entry: `geminiToolFilter`).
+- `RESEARCH_SUBAGENT` in `subagents.ts` has no filesystem middleware and no static shims. Static
+  tests updated to assert this (empty middleware array: `[]`).
 - `makeFilesystemMiddleware` is the single call site for `createFilesystemMiddleware` in T-DA-04.
 - `verifyNoDuplicateTools` in `measure.ts` updated to use the builder (consistent, no direct calls).
 - `checkWritesOnDisk` post-run guard added to `runConfigBRun` — verifies main-agent write_file
