@@ -32,12 +32,12 @@ graph TB
     end
 
     subgraph LLM["LLM Providers"]
-        Gemini["Gemini Flash — gemini-2.0-flash-001\nprimary — all multi-turn loops"]
+        GPT["GPT-5.4-mini — gpt-5.4-mini-2026-03-17\nprimary — all multi-turn loops"]
         Groq["Groq — single-call only\njudge and summarize"]
     end
 
     subgraph Obs["Observability"]
-        LSM["LangSmith\nauto-trace via LANGCHAIN_TRACING_V2\nproject: deep-agents-phase"]
+        LSM["LangSmith\nauto-trace via LANGSMITH_TRACING=true\nproject: deep-agents-phase"]
     end
 
     subgraph Storage["Storage (by task)"]
@@ -47,7 +47,7 @@ graph TB
 
     Hook -->|"POST /runs/stream (SSE)"| LGS
     Agent --> Graph
-    Graph -->|tool calls| Gemini
+    Graph -->|tool calls| GPT
     Graph -->|single call| Groq
     Graph -.->|async trace| LSM
     Graph --> Disk
@@ -69,7 +69,7 @@ graph LR
     end
 
     subgraph ModelLayer["Model Layer"]
-        GG["@langchain/google-genai 2.3.2 — Gemini Flash"]
+        OA["@langchain/openai 1.6.2 — GPT-5.4-mini"]
         GR["@langchain/groq 1.3.1 — Groq"]
     end
 
@@ -95,7 +95,7 @@ graph LR
     TS --> DA
     TS --> API
     TS --> RC
-    DA --> GG
+    DA --> OA
     DA --> GR
     DA --> SM
 ```

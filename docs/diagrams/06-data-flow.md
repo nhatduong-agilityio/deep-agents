@@ -15,7 +15,7 @@ flowchart TD
 
     subgraph AgentRuntime["Agent Runtime"]
         IM["Input: HumanMessage\n+ system prompt\n+ tool definitions"]
-        LLM["Gemini Flash\nchat completion"]
+        LLM["GPT-5.4-mini\nchat completion"]
         TC["Tool calls\nread_file · write_file\nwrite_todos · task · think"]
         TM["ToolMessages\nresults back into context"]
         IM --> LLM --> TC --> TM --> LLM
@@ -58,7 +58,7 @@ flowchart LR
 
     subgraph Agent["Artifact Agent — FilesystemBackend"]
         READ["read_file(path)\nreturns content"]
-        ANALYZE["Gemini Flash:\nextract themes + citations"]
+        ANALYZE["GPT-5.4-mini:\nextract themes + citations"]
         TODOS["write_todos:\n1. read all corpus\n2. extract themes\n3. write findings\n4. write summary\n5. write sources"]
         WRITE["write_file(path, content)\nonly paths kept in messages"]
 
@@ -116,7 +116,7 @@ flowchart LR
 flowchart LR
     subgraph RunConfig["runConfig.metadata (every run)"]
         V["deepagents_version: '1.14.1'"]
-        M["model_id: 'gemini-2.0-flash-001'"]
+        M["model_id: 'gpt-5.4-mini-2026-03-17'"]
         R["run_id: uuid"]
         T["task_id: 'T-DA-XX'"]
     end

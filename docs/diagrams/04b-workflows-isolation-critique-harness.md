@@ -11,32 +11,32 @@ flowchart LR
     end
 
     subgraph B["Config B — Supervisor + Workers (3 runs)"]
-        MB["Main Agent\norchestrates via task tool"]
-        W1["Worker 1"]
-        W2["Worker 2"]
-        W3["Worker 3"]
+        MB["Main Agent\norchestrates via task tool\n/corpus/** read DENIED"]
+        W1["EU Worker\nreads EU AI Act corpus"]
+        W2["US Worker\nreads US EO corpus"]
         TKB["peak_tokens_B"]
         MB -->|task tool| W1
         MB -->|task tool| W2
-        MB -->|task tool| W3
         MB --> TKB
     end
 
-    subgraph M["Metrics"]
-        RATIO["isolation_ratio = peak_B / peak_A"]
+    subgraph M["Metrics — T-DA-04 results"]
+        RATIO["isolation_ratio = peak_B / peak_A\nmedian: 6135 / 11228 = 0.5464"]
         GATE{ratio ≤ 0.50?}
+        GROWTH["growth_ratio = 1650 / 7018 = 0.235\nfloor: B call-1 = 39.9% of A peak"]
         RATIO --> GATE
+        RATIO --> GROWTH
     end
 
     subgraph Q["Quality Gate"]
-        CHECK["T-DA-03 checker passes\nfor BOTH configs"]
+        CHECK["T-DA-03 checker passes\n3/3 A · 3/3 B"]
     end
 
     A --> M
     B --> M
-    GATE -->|Yes| Q
-    GATE -->|No| TUNE["add workers or tighten prompt"]
-    Q --> DONE["Output 3 captured"]
+    GATE -->|Yes ✓| Q
+    GATE -->|"No — 0.5464 FAIL\ndeviation documented\n(floor-driven, not isolation failure)"| Q
+    Q --> DONE["Output 3 captured\ndeviation in reports/T-DA-04-report.md"]
 
     style DONE fill:#2d6a4f,color:#fff
 ```
@@ -48,7 +48,7 @@ flowchart TD
     INIT["Producer writes initial draft\ncorpus/drafts/"] --> C
 
     subgraph Loop["≤ 3 rounds"]
-        C["Critic Agent\nread_file · ls · glob · grep ONLY"]
+        C["Critic Agent\nread_file · ls · glob · write_file ONLY\nno grep · no execute (BRC)"]
         C_OUT["Numbered feedback\ncorpus/feedback/round-N.md"]
         DENY["Write to /drafts/ DENIED\nlogged in LangSmith trace"]
         HASH["Draft hash unchanged"]

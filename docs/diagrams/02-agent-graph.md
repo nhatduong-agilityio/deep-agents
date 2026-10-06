@@ -7,7 +7,7 @@ Internal structure of the LangGraph graph that `createDeepAgent()` compiles. Dee
 ```mermaid
 flowchart TD
     START(["__start__"])
-    AGENT["agent node\nChatGoogleGenerativeAI\ncalls tools or returns final answer"]
+    AGENT["agent node\nChatOpenAI\ncalls tools or returns final answer"]
     TOOLS["tools node\nexecutes tool calls in parallel\nreturns ToolMessages"]
     END(["__end__"])
 
@@ -68,7 +68,7 @@ graph LR
 flowchart LR
     subgraph Counter["counter.ts — 4 dimensions"]
         TC["token_count\ncumulative input+output"]
-        CO["cost_usd\nestimated at $0.075/1M input"]
+        CO["cost_usd\nestimated at $0.75/1M input"]
         TM["wall_ms\nDate.now() delta"]
         CC["tool_call_count\nincremented each ToolNode exec"]
     end

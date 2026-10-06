@@ -4,14 +4,14 @@
 
 ```mermaid
 flowchart TD
-    A["createDeepAgent()\nGemini Flash + FilesystemBackend"] --> B{Instantiates OK?}
+    A["createDeepAgent()\nGPT-5.4-mini + FilesystemBackend"] --> B{Instantiates OK?}
     B -->|No| FIX["fix config / check API keys"]
     B -->|Yes| D["Dump tool list\ndocs/tool-list-default.json"]
     D --> E{write_todos present?}
     E -->|No| ERR["STOP — check deepagents version"]
     E -->|Yes| F["Unit test backoff.ts\nmock 429 → verify retry"]
     F --> G["Run counter.ts\ntokens / cost / ms / calls"]
-    G --> H["Record deepagents version +\nGemini model ID in PROGRESS.md\nand as trace metadata"]
+    G --> H["Record deepagents version +\nmodel ID in PROGRESS.md\nand as trace metadata"]
     H --> DONE["LangSmith trace URL logged\nDoD met"]
 
     style DONE fill:#2d6a4f,color:#fff

@@ -17,7 +17,7 @@ Each file is kept under ~40 nodes to avoid GitLab's performance warning. For pix
 ## Pre-rendering to SVG (optional)
 
 ```bash
-pnpm diagrams          # renders all .mmd files in src/ → img/*.svg
+pnpm diagrams          # extracts mermaid blocks from *.md → img/*.svg
 ```
 
-Source `.mmd` files live in `src/` — one per diagram section. Edit there, re-run `pnpm diagrams`, commit both.
+Edit the mermaid blocks directly in the `.md` files above, then re-run `pnpm diagrams` and commit both the `.md` and the updated SVGs in `img/`.
