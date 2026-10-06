@@ -4,11 +4,11 @@ TypeScript + DeepAgents curriculum project. Demonstrates agentic AI patterns on 
 
 **Deadline:** 2026-10-16 — **Three required evidence outputs, all complete.**
 
-| Output                  | Task    | Status                 | Evidence                                     |
-| ----------------------- | ------- | ---------------------- | -------------------------------------------- |
-| Planning Trace          | T-DA-02 | `[x]` done             | LangSmith trace — `write_todos` first, 10/10 |
-| Artifact Report         | T-DA-03 | `[x]` done             | `/report/` files + checker 3/3 pass          |
-| Context Isolation Proof | T-DA-04 | `[x]` done (deviation) | Peak ratio 0.5464; growth ratio 0.235        |
+| Output                  | Task    | Status     | Evidence                                                    |
+| ----------------------- | ------- | ---------- | ----------------------------------------------------------- |
+| Planning Trace          | T-DA-02 | `[x]` done | LangSmith trace — `write_todos` first, 10/10                |
+| Artifact Report         | T-DA-03 | `[x]` done | `/report/` files + checker 3/3 pass                         |
+| Context Isolation Proof | T-DA-04 | `[x]` done | Peak ratio 0.3286 (v2, 8-file corpus); v1 0.5464 documented |
 
 ---
 
@@ -40,22 +40,22 @@ pnpm dev:web          # pnpm --filter web dev → Vite frontend (T-FS-02+)
 
 ## Task progress
 
-| ID        | Title                              | Status                     |
-| --------- | ---------------------------------- | -------------------------- |
-| T-DA-00   | Project Bootstrap                  | `[x]`                      |
-| T-DA-00.1 | Initial Decision Records           | `[x]`                      |
-| T-DA-00.2 | Skills + Claude Code Hooks         | `[x]`                      |
-| T-DA-01   | Scaffold + Reality Check           | `[x]`                      |
-| T-DA-02   | Planning-First (Output 2)          | `[x]`                      |
-| T-DA-03   | Artifact Agent (Output 1)          | `[x]`                      |
-| T-DA-04   | Context Isolation Proof (Output 3) | `[x]` deviation documented |
-| T-DA-05   | Critique Workflow                  | `[ ]`                      |
-| T-DA-06   | Harness Optimization Drills        | `[ ]`                      |
-| T-DA-07   | Trace Analysis                     | `[ ]`                      |
-| T-DA-08   | DDR Index + Phase Report           | `[ ]`                      |
-| T-FS-01   | LangGraph Server backend           | `[ ]`                      |
-| T-FS-02   | React + `useStream` frontend       | `[ ]`                      |
-| T-FS-03   | Dockerfile + Deployment            | `[ ]`                      |
+| ID        | Title                              | Status |
+| --------- | ---------------------------------- | ------ |
+| T-DA-00   | Project Bootstrap                  | `[x]`  |
+| T-DA-00.1 | Initial Decision Records           | `[x]`  |
+| T-DA-00.2 | Skills + Claude Code Hooks         | `[x]`  |
+| T-DA-01   | Scaffold + Reality Check           | `[x]`  |
+| T-DA-02   | Planning-First (Output 2)          | `[x]`  |
+| T-DA-03   | Artifact Agent (Output 1)          | `[x]`  |
+| T-DA-04   | Context Isolation Proof (Output 3) | `[x]`  |
+| T-DA-05   | Critique Workflow                  | `[ ]`  |
+| T-DA-06   | Harness Optimization Drills        | `[ ]`  |
+| T-DA-07   | Trace Analysis                     | `[ ]`  |
+| T-DA-08   | DDR Index + Phase Report           | `[ ]`  |
+| T-FS-01   | LangGraph Server backend           | `[ ]`  |
+| T-FS-02   | React + `useStream` frontend       | `[ ]`  |
+| T-FS-03   | Dockerfile + Deployment            | `[ ]`  |
 
 ## Directory structure
 

@@ -20,10 +20,10 @@ flowchart LR
         MB --> TKB
     end
 
-    subgraph M["Metrics — T-DA-04 results"]
-        RATIO["isolation_ratio = peak_B / peak_A\nmedian: 6135 / 11228 = 0.5464"]
+    subgraph M["Metrics — T-DA-04 v2 results (8-file corpus)"]
+        RATIO["isolation_ratio = peak_B / peak_A\nmedian: 3566 / 10851 = 0.3286"]
         GATE{ratio ≤ 0.50?}
-        GROWTH["growth_ratio = 1650 / 7018 = 0.235\nfloor: B call-1 = 39.9% of A peak"]
+        GROWTH["v1 (6-file): 0.5464 floor-driven deviation\nv2 (8-file): 0.3286 PASS ✓"]
         RATIO --> GATE
         RATIO --> GROWTH
     end
@@ -34,9 +34,8 @@ flowchart LR
 
     A --> M
     B --> M
-    GATE -->|Yes ✓| Q
-    GATE -->|"No — 0.5464 FAIL\ndeviation documented\n(floor-driven, not isolation failure)"| Q
-    Q --> DONE["Output 3 captured\ndeviation in reports/T-DA-04-report.md"]
+    GATE -->|"Yes — 0.3286 PASS ✓"| Q
+    Q --> DONE["Output 3 captured\nreports/T-DA-04-report.md"]
 
     style DONE fill:#2d6a4f,color:#fff
 ```

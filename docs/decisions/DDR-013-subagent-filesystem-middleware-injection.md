@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-06
 **Status:** Accepted
-**Related:** DDR-006 (FilesystemBackend), CLAUDE.md "geminiToolFilter NOT inherited by sub-agents"
+**Related:** DDR-006 (FilesystemBackend), DDR-011 (sub-agent middleware inheritance — same property applies to filesystem middleware)
 
 ## Context: RC1 and RC2 Root Causes
 
@@ -91,10 +91,8 @@ const agent = createDeepAgent({
 `createSubAgent` (deepagents source line 3779) takes only `spec.middleware`. There is no
 propagation of the parent agent's `backend:` or custom middleware to sub-agents.
 
-This is the same gotcha documented in CLAUDE.md for `geminiToolFilter`:
-
-> `geminiToolFilter` NOT inherited by sub-agents — fix: add it explicitly to the sub-agent spec.
-
+This is the same gotcha documented in DDR-011 for `geminiToolFilter` (now superseded, but the
+inheritance rule persists): parent middleware is not propagated to sub-agents regardless of type.
 The filesystem middleware backend has the same property: must be added explicitly.
 
 ### 2. User-supplied filesystem middleware replaces the internal one (by name)
