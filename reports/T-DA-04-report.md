@@ -306,12 +306,42 @@ No rate-limit backoff in any run.
 
 ## Gotchas / lessons learned
 
-1. **LangSmith indexing lag is real.** Span 7 of A1 (11,556 tokens) was missing from the first poll. The polling loop fix prevents this; `mainAgentPeakInputTokens` from messages is the primary gate metric regardless.
+1. **LangSmith span indexing lags run completion.** On A1 the final main-agent span
+   (11,556 tokens — the peak) was missing from the first poll and appeared on a later
+   re-query. Use `AIMessage.usage_metadata` as the source of truth for main-agent tokens;
+   use LangSmith only for sub-agent spans and system totals, and poll until span counts
+   are complete and stable. Exclude runs that time out.
 
-2. **Sub-agent middleware is not inherited.** Both `geminiToolFilter` and `FilesystemBackend` must be injected explicitly into each sub-agent spec. Static specs in `subagents.ts` cannot carry run-specific state.
+2. **Sub-agents do not inherit parent middleware** (`mergeMiddlewareStack`, `appendNew:false`).
+   Inject tool filters and filesystem permissions into each sub-agent spec explicitly,
+   via one shared builder. Missing a filter surfaced as a misleading HTTP 400; missing a
+   backend failed silently.
 
-3. **The isolation ratio gates on peak, not growth.** Growth ratio (0.235) is much more favorable than peak ratio (0.546). The fixed supervisor prompt overhead dominates B's peak. A gate on growth would pass cleanly; a gate on peak is sensitive to supervisor prompt size vs corpus size.
+3. **Every filesystem middleware must use the run's backend.** After routing all
+   filesystem middleware through one builder with a shared backend, worker notes and
+   reports landed on disk (`writesOnDisk` + checker pass). The suspected cause — the
+   default backend storing files in state instead of on disk — was not captured as
+   evidence.
 
-4. **Cost is driven by corpus tokens × calls carrying them, not sub-agent count.** B costs less ($0.1849 vs $0.1922) because corpus tokens appear in B's worker spans for 2 calls each rather than in A's main-agent rolling context for 6–7 calls each (corpus carry B/A = 0.317). The "sub-agents cost more" intuition fails when the delegation reduces how many calls carry the retrieval payload.
+4. **No forbidden tool call ≠ enforced permission.** Zero reads of `/corpus/` by the
+   main agent shows prompt compliance only. Proof requires an adversarial run that asks
+   for the denied read and shows the actual denial in the trace. Completed: adversarial
+   script prompted the main agent to read `/corpus/eu-ai-act-article-5.txt` and received
+   `Error: permission denied for read on /corpus/eu-ai-act-article-5.txt` from the tool
+   layer. Result saved to `results/context-isolation/adversarial-corpus-block.json`.
 
-5. **Config A writesOnDisk was not instrumented.** `runArtifactRun` does not call `checkWritesOnDisk`. Disk presence was verified manually; future experiments should add the guard to Config A as well.
+5. **The isolation floor is structural.** B's fixed overhead (call 1: 4,485 tokens) is
+   ~40% of A's median peak, so the peak-ratio gate mostly measures harness overhead at
+   this corpus size. The 0.50 gate could be crossed with small prompt tweaks, but that
+   would optimise the metric, not isolation. For small payloads, pre-register a growth
+   ratio ((peak − call1) B/A; here 0.235, post-hoc) alongside the peak ratio.
+
+6. **Cost ≈ Σ over calls of (fixed overhead + carried payload).** Isolation saves the
+   payload carried through later main-agent calls; each extra worker call adds its own
+   fixed overhead. Corpus-carry saving was 78,167 tokens across 3 runs (~26,056 per run
+   average), yet total cost was only ~4% lower because worker overhead offset most of it.
+
+7. **Provider schema dialects create shim layers — and switching providers mid-phase
+   breaks comparability.** Gemini rejected Zod `.positive()` (`exclusiveMinimum`),
+   requiring `geminiToolFilter` and `withGeminiCompat`. The switch to OpenAI made T-DA-04
+   not directly comparable with T-DA-02/03 (Gemini) and is recorded in DDR-012.
