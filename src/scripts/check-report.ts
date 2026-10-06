@@ -14,6 +14,11 @@ export interface CheckResult {
   issues: string[];
 }
 
+function emit(label: 'PASS' | 'FAIL', msg: string, issues: string[]): void {
+  process.stdout.write(`  ${label}: ${msg}\n`);
+  if (label === 'FAIL') issues.push(`FAIL: ${msg}`);
+}
+
 export function checkReport(reportDir: string): CheckResult {
   const issues: string[] = [];
 
@@ -24,33 +29,33 @@ export function checkReport(reportDir: string): CheckResult {
 
   // 1. summary.md exists and is non-empty
   if (!existsSync(summaryPath)) {
-    issues.push('FAIL: /report/summary.md does not exist');
+    emit('FAIL', '/report/summary.md does not exist', issues);
   } else if (readFileSync(summaryPath, 'utf8').trim().length === 0) {
-    issues.push('FAIL: /report/summary.md is empty');
+    emit('FAIL', '/report/summary.md is empty', issues);
   } else {
-    process.stdout.write('  PASS: /report/summary.md exists and is non-empty\n');
+    emit('PASS', '/report/summary.md exists and is non-empty', issues);
   }
 
   // 2. sources.md exists and is non-empty
   if (!existsSync(sourcesPath)) {
-    issues.push('FAIL: /report/sources.md does not exist');
+    emit('FAIL', '/report/sources.md does not exist', issues);
   } else if (readFileSync(sourcesPath, 'utf8').trim().length === 0) {
-    issues.push('FAIL: /report/sources.md is empty');
+    emit('FAIL', '/report/sources.md is empty', issues);
   } else {
-    process.stdout.write('  PASS: /report/sources.md exists and is non-empty\n');
+    emit('PASS', '/report/sources.md exists and is non-empty', issues);
   }
 
-  // 3. findings/ directory has ≥3 .md files
+  // 3. findings/ directory has ≥3 .md files — always check, never early-return
   if (!existsSync(findingsDir) || !statSync(findingsDir).isDirectory()) {
-    issues.push('FAIL: /report/findings/ directory does not exist');
+    emit('FAIL', '/report/findings/ directory does not exist', issues);
     return { passed: false, findingCount: 0, issues };
   }
 
   const findingFiles = readdirSync(findingsDir).filter((f) => f.endsWith('.md'));
   if (findingFiles.length < 3) {
-    issues.push(`FAIL: /report/findings/ has ${findingFiles.length} .md file(s); need ≥3`);
+    emit('FAIL', `/report/findings/ has ${findingFiles.length} .md file(s); need ≥3`, issues);
   } else {
-    process.stdout.write(`  PASS: /report/findings/ has ${findingFiles.length} .md file(s)\n`);
+    emit('PASS', `/report/findings/ has ${findingFiles.length} .md file(s)`, issues);
   }
 
   // 4. Each finding must cite a corpus source via "Source: <filename>" line
@@ -71,16 +76,14 @@ export function checkReport(reportDir: string): CheckResult {
     const content = readFileSync(join(findingsDir, file), 'utf8');
     const sourceMatch = /^Source:\s*(.+)/im.exec(content);
     if (!sourceMatch) {
-      issues.push(`FAIL: ${file} has no "Source: <filename>" line`);
+      emit('FAIL', `${file} has no "Source: <filename>" line`, issues);
       continue;
     }
     const cited = basename(sourceMatch[1].trim()).toLowerCase();
     if (!corpusFiles.has(cited)) {
-      issues.push(
-        `FAIL: ${file} cites "${sourceMatch[1].trim()}" which is not in the corpus (known: ${[...corpusFiles].join(', ')})`,
-      );
+      emit('FAIL', `${file} cites "${sourceMatch[1].trim()}" which is not in the corpus`, issues);
     } else {
-      process.stdout.write(`  PASS: ${file} cites "${sourceMatch[1].trim()}"\n`);
+      emit('PASS', `${file} cites "${sourceMatch[1].trim()}"`, issues);
     }
   }
 

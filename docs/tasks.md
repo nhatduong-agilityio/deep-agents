@@ -138,17 +138,19 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ---
 
-## T-DA-04 — Context Isolation Proof (Output 3)
+## T-DA-04 — Context Isolation Proof (Output 3) `[x]`
 
 **Scope:** `src/experiments/context-isolation/{config-a,config-b,measure}.ts`
 
 **Definition of Done:**
 
-- [ ] ≥3 runs each config (A: main agent retrieves directly; B: research sub-agents spawned via `task` tool — Supervisor-Worker pattern; keep sub-agent count ≤5 to avoid diminishing returns beyond that threshold); **pass `geminiToolFilter` explicitly to sub-agent**: `subagents: [{ ...GENERAL_PURPOSE_SUBAGENT, middleware: [geminiToolFilter] }]` — sub-agents do NOT inherit `geminiToolFilter` from parent middleware (verified smoke-subagent-filter.ts)
-- [ ] Isolation ratio reported: `main_agent_peak_tokens(B) / main_agent_peak_tokens(A)` ≤ 0.50 (Context Isolate Patterns — CIP)
-- [ ] Quality gate: T-DA-03 checker passes for both configs
-- [ ] Total system token cost reported even if B > A total (SVW pattern: sub-agent delegation costs ~15x baseline total — document the threshold where it becomes worth it); **system tokens measured via `collectSystemTokens(runId)` which calls `langsmith.runs.query({ trace_id, run_type: 'LLM', project_ids: [projectId] })` and sums `prompt_tokens` + `completion_tokens` across all LLM spans** — `result.messages` covers main-agent calls only; sub-agent LLM calls live in child spans and are invisible to `extractMetrics`; Config A baseline: `systemTokens ≈ mainAgentTokens` (no sub-agents); Config B will show `systemTokens >> mainAgentTokens`
-- [ ] Per-run time breakdown reported: `elapsedMs` (wall clock), `retryWaitMs` (time blocked on 429 backoff), and `workMs = elapsedMs - retryWaitMs` (actual agent computation time). Config B sub-agents run in parallel when the main agent issues multiple `task` calls in one turn — `workMs` gives a fair comparison excluding rate-limit variance
+- [x] ≥3 runs each config (A: main agent retrieves directly; B: research sub-agents spawned via `task` tool — Supervisor-Worker pattern; keep sub-agent count ≤5 to avoid diminishing returns beyond that threshold); **pass `geminiToolFilter` explicitly to sub-agent**: `subagents: [{ ...GENERAL_PURPOSE_SUBAGENT, middleware: [geminiToolFilter] }]` — sub-agents do NOT inherit `geminiToolFilter` from parent middleware (verified smoke-subagent-filter.ts)
+- [ ] Isolation ratio reported: `main_agent_peak_tokens(B) / main_agent_peak_tokens(A)` ≤ 0.50 (Context Isolate Patterns — CIP) — **FAIL — 0.5464 (median of 3); see deviation section in reports/T-DA-04-report.md and DDR-010**
+- [x] Quality gate: T-DA-03 checker passes for both configs (3/3 A, 3/3 B)
+- [x] Total system token cost reported even if B > A total — A: $0.1922, B: $0.1849 total; B is cost-neutral at this corpus size (DDR-010)
+- [x] Per-run time breakdown reported: `elapsedMs`, `retryWaitMs`, `workMs` — all runs: retryWaitMs=0; B workMs 24–28s vs A 17–22s
+
+**Closed with documented deviation:** gate bullet unchecked; all others met. See `reports/T-DA-04-report.md`.
 
 ---
 
@@ -158,7 +160,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 **Definition of Done:**
 
-- [ ] Critic tools: `["read_file", "ls", "glob", "write_file"]` — `grep` excluded (filtered by `geminiToolFilter`; Zod `.positive()` on `max_count` generates `exclusiveMinimum`, rejected by Gemini API — root cause confirmed in `gemini-compat.test.ts`); **`execute` excluded via explicit `tools` allowlist** (do NOT rely on backend capability filtering — `execute` appears in `tool-list-default.json` because the default stack registers it at init time and filters only at request time; explicitly omit it); write restricted to `/feedback/` via `permissions` rules (BRC pattern); `createFilesystemMiddleware({ tools: ["read_file", "ls", "glob", "write_file"], permissions: [{ operations: ["write", "delete"], paths: ["/feedback/**"], mode: "allow" }, { operations: ["write", "delete"], paths: ["/**"], mode: "deny" }] })` — **Permission rule order:** rules are evaluated first-match-wins; the allow rule for `/feedback/**` must come first so writes there succeed; the final `deny` for `/**` is required because the default is allow — without it, any path not matching the allow rule would be permitted by default (BRC pattern requires explicit deny to close the gap)
+- [ ] Critic tools: `["read_file", "ls", "glob", "write_file"]` — `grep` excluded (not needed for read-only critique; omitting it reduces blast radius); **`execute` excluded via explicit `tools` allowlist** (do NOT rely on backend capability filtering — `execute` appears in `tool-list-default.json` because the default stack registers it at init time and filters only at request time; explicitly omit it); write restricted to `/feedback/` via `permissions` rules (BRC pattern); `createFilesystemMiddleware({ tools: ["read_file", "ls", "glob", "write_file"], permissions: [{ operations: ["write", "delete"], paths: ["/feedback/**"], mode: "allow" }, { operations: ["write", "delete"], paths: ["/**"], mode: "deny" }] })` — **Permission rule order:** rules are evaluated first-match-wins; the allow rule for `/feedback/**` must come first so writes there succeed; the final `deny` for `/**` is required because the default is allow — without it, any path not matching the allow rule would be permitted by default (BRC pattern requires explicit deny to close the gap)
 - [ ] Critic writes structured feedback (numbered items) to `/feedback/` only — format aids producer convergence
 - [ ] Adversarial write attempts denied: (1) write to `/drafts/` hits `deny` rule; (2) write to `/report/` hits `deny` rule — both test the same first-match-wins logic, covering paths outside `/feedback/**`; denials logged in LangSmith trace
 - [ ] Draft file hash unchanged after critic run

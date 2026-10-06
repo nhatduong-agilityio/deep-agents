@@ -32,10 +32,9 @@ Current resume point: see `docs/PROGRESS.md`.
 
 - **Never use Qwen3 on Groq in multi-turn tool-calling loops** — breaks function calling with `BadRequestError`
 - **All deps pinned exact** — no `^` or `~`; run `npm show <pkg> version` before adding anything
-- **Gemini Flash alias** (`gemini-flash-lite-latest`) for exploration only; use `gemini-3.5-flash-lite` for measured runs (no versioned ID available as of 2026-10-05; `gemini-2.0-flash-lite-001` deprecated)
+- **Primary model** — `openai:gpt-5.4-mini-2026-03-17`; pinned snapshot ID used in all measured runs. Pricing: $0.75/$4.50 per 1M tokens (input/output). No `geminiToolFilter` or `todoListMiddleware` needed for OpenAI models.
 - **Groq** = single-call roles only (LLM judge, summarization)
-- **`todoListMiddleware` required for Google models** — `write_todos` is NOT auto-applied for `google-genai:` model prefixes; add `todoListMiddleware()` explicitly. (Reality-checked T-DA-01: `REQUIRED_MIDDLEWARE_NAMES` is empty for Google model profiles.)
-- **`geminiToolFilter` NOT inherited by sub-agents** — `mergeMiddlewareStack` uses `appendNew:false` for the general-purpose sub-agent; parent's custom middleware is NOT passed through. Sub-agents get the default stack only (FilesystemMiddleware, SummarizationMiddleware, PatchToolCallsMiddleware). Fix: `subagents: [{ ...GENERAL_PURPOSE_SUBAGENT, middleware: [geminiToolFilter] }]`. (Verified smoke test 2026-10-05.)
+- **Custom middleware NOT inherited by sub-agents** — `mergeMiddlewareStack` uses `appendNew:false`; parent middleware is NOT passed to sub-agents spawned via `task` tool. Sub-agents get the default stack only. Inject middleware explicitly per-run if needed.
 - **LangSmith** is the tracer — not LangFuse. Auto-traces when `LANGSMITH_TRACING=true` (canonical); legacy `LANGCHAIN_TRACING_V2=true` also works
 - **Sequential runs** — no parallel API calls; back off on HTTP 429; count model calls per run
 
@@ -45,7 +44,7 @@ Current resume point: see `docs/PROGRESS.md`.
 | ----------------- | -------------------------- | ----------------- |
 | Agent harness     | `deepagents`               | `1.14.1`          |
 | Graph runtime     | `@langchain/langgraph`     | `1.4.18`          |
-| Primary model     | `@langchain/google-genai`  | `2.3.2`           |
+| Primary model     | `@langchain/openai`        | `1.6.2`           |
 | Single-call model | `@langchain/groq`          | `1.3.1`           |
 | Tracing           | `langsmith`                | `0.10.7`          |
 | Server            | `@langchain/langgraph-api` | `1.5.1`           |

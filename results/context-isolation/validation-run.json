@@ -1,0 +1,385 @@
+{
+  "experiment": "context-isolation",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "deepagents_version": "1.14.1",
+  "date": "2026-10-06",
+  "gate": {
+    "medianA": 11389,
+    "medianB": 6277,
+    "ratioMedian": 0.5511458424795855,
+    "ratioMeans": 0.5511458424795855,
+    "passed": false,
+    "incompleteExcluded": 0
+  },
+  "warnings": [],
+  "configA": [
+    {
+      "run": 1,
+      "workDir": "/Users/nhat.duongasnet/Documents/training/generative-ai/tmp/context-isolation/a/run-1",
+      "langsmithRunId": "e6de35ae-b417-450b-a0ff-24498e8f3eae",
+      "langsmithVerified": true,
+      "checkerPassed": true,
+      "findingCount": 3,
+      "inputTokens": 73425,
+      "outputTokens": 1233,
+      "inputTokensPerCall": [4210, 4339, 10362, 10514, 10657, 10826, 11128, 11389],
+      "toolsBeforeCall": [
+        [],
+        ["ls"],
+        ["read_file", "read_file", "read_file", "read_file", "read_file", "read_file"],
+        ["write_file"],
+        ["write_file"],
+        ["write_file"],
+        ["write_file"],
+        ["write_file"]
+      ],
+      "peakInputTokens": 11389,
+      "modelCallCount": 8,
+      "systemInputTokens": 73425,
+      "systemOutputTokens": 1233,
+      "systemSpanTokens": [
+        {
+          "spanId": "01a11036-d1dd-770d-a625-4ef5ddcee88f",
+          "promptTokens": 4210,
+          "completionTokens": 20,
+          "startTime": "2026-10-06T07:56:30.557006Z"
+        },
+        {
+          "spanId": "01a11036-dc11-71af-8d50-ea02b4506e76",
+          "promptTokens": 4339,
+          "completionTokens": 226,
+          "startTime": "2026-10-06T07:56:33.169012Z"
+        },
+        {
+          "spanId": "01a11036-e42d-7501-895e-5ed8cb935e0a",
+          "promptTokens": 10362,
+          "completionTokens": 128,
+          "startTime": "2026-10-06T07:56:35.245023Z"
+        },
+        {
+          "spanId": "01a11036-eef5-763f-af19-9b48a52118c1",
+          "promptTokens": 10514,
+          "completionTokens": 119,
+          "startTime": "2026-10-06T07:56:38.005029Z"
+        },
+        {
+          "spanId": "01a11036-fbdf-70be-9208-53a5b20dd452",
+          "promptTokens": 10657,
+          "completionTokens": 145,
+          "startTime": "2026-10-06T07:56:41.311035Z"
+        },
+        {
+          "spanId": "01a11037-04e2-776a-84d2-55e2f8f15b14",
+          "promptTokens": 10826,
+          "completionTokens": 282,
+          "startTime": "2026-10-06T07:56:43.618041Z"
+        },
+        {
+          "spanId": "01a11037-152f-71d9-9f5c-ecee289a3e51",
+          "promptTokens": 11128,
+          "completionTokens": 241,
+          "startTime": "2026-10-06T07:56:47.791047Z"
+        },
+        {
+          "spanId": "01a11037-1f11-7106-8f4b-6b1a6b4d7ae0",
+          "promptTokens": 11389,
+          "completionTokens": 72,
+          "startTime": "2026-10-06T07:56:50.321053Z"
+        }
+      ],
+      "mainAgentSpans": [
+        {
+          "spanId": "01a11036-d1dd-770d-a625-4ef5ddcee88f",
+          "promptTokens": 4210,
+          "completionTokens": 20,
+          "startTime": "2026-10-06T07:56:30.557006Z"
+        },
+        {
+          "spanId": "01a11036-dc11-71af-8d50-ea02b4506e76",
+          "promptTokens": 4339,
+          "completionTokens": 226,
+          "startTime": "2026-10-06T07:56:33.169012Z"
+        },
+        {
+          "spanId": "01a11036-e42d-7501-895e-5ed8cb935e0a",
+          "promptTokens": 10362,
+          "completionTokens": 128,
+          "startTime": "2026-10-06T07:56:35.245023Z"
+        },
+        {
+          "spanId": "01a11036-eef5-763f-af19-9b48a52118c1",
+          "promptTokens": 10514,
+          "completionTokens": 119,
+          "startTime": "2026-10-06T07:56:38.005029Z"
+        },
+        {
+          "spanId": "01a11036-fbdf-70be-9208-53a5b20dd452",
+          "promptTokens": 10657,
+          "completionTokens": 145,
+          "startTime": "2026-10-06T07:56:41.311035Z"
+        },
+        {
+          "spanId": "01a11037-04e2-776a-84d2-55e2f8f15b14",
+          "promptTokens": 10826,
+          "completionTokens": 282,
+          "startTime": "2026-10-06T07:56:43.618041Z"
+        },
+        {
+          "spanId": "01a11037-152f-71d9-9f5c-ecee289a3e51",
+          "promptTokens": 11128,
+          "completionTokens": 241,
+          "startTime": "2026-10-06T07:56:47.791047Z"
+        },
+        {
+          "spanId": "01a11037-1f11-7106-8f4b-6b1a6b4d7ae0",
+          "promptTokens": 11389,
+          "completionTokens": 72,
+          "startTime": "2026-10-06T07:56:50.321053Z"
+        }
+      ],
+      "subAgentSpans": {},
+      "mainAgentPeakInputTokens": 11389,
+      "mainAgentConsistency": "pass",
+      "completenessCheck": "pass",
+      "measurementIncomplete": false,
+      "startedAt": "2026-10-06T07:56:30.551Z",
+      "retryCount": 0,
+      "retryWaitMs": 0,
+      "elapsedMs": 22250,
+      "workMs": 22250,
+      "estimatedCostUsd": 0.06061725
+    }
+  ],
+  "configB": [
+    {
+      "run": 1,
+      "workDir": "/Users/nhat.duongasnet/Documents/training/generative-ai/tmp/context-isolation/b/run-1",
+      "langsmithRunId": "1aa72c7e-fda9-4126-8a65-4b67cf8943b7",
+      "langsmithVerified": true,
+      "checkerPassed": true,
+      "findingCount": 3,
+      "inputTokens": 49756,
+      "outputTokens": 940,
+      "inputTokensPerCall": [4485, 4672, 5423, 5530, 5637, 5734, 5906, 6092, 6277],
+      "toolsBeforeCall": [
+        [],
+        ["write_todos"],
+        ["task", "task"],
+        ["write_file"],
+        ["write_file"],
+        ["write_file"],
+        ["write_file"],
+        ["write_file"],
+        ["write_todos"]
+      ],
+      "peakInputTokens": 6277,
+      "modelCallCount": 9,
+      "systemInputTokens": 68913,
+      "systemOutputTokens": 2321,
+      "systemSpanTokens": [
+        {
+          "spanId": "01a11037-5c64-72af-a38d-ad0032e2fd12",
+          "promptTokens": 4485,
+          "completionTokens": 94,
+          "startTime": "2026-10-06T07:57:06.020006Z"
+        },
+        {
+          "spanId": "01a11037-62af-716f-aaa1-f2e689bb1624",
+          "promptTokens": 4672,
+          "completionTokens": 192,
+          "startTime": "2026-10-06T07:57:07.631012Z"
+        },
+        {
+          "spanId": "01a11037-6e48-75d4-a27b-367070e14681",
+          "promptTokens": 1081,
+          "completionTokens": 156,
+          "startTime": "2026-10-06T07:57:10.600022Z"
+        },
+        {
+          "spanId": "01a11037-6e48-75d4-a27b-3afc7c833131",
+          "promptTokens": 1065,
+          "completionTokens": 90,
+          "startTime": "2026-10-06T07:57:10.600023Z"
+        },
+        {
+          "spanId": "01a11037-73e9-76c4-9767-eabcfabf6b67",
+          "promptTokens": 3211,
+          "completionTokens": 300,
+          "startTime": "2026-10-06T07:57:12.041029Z"
+        },
+        {
+          "spanId": "01a11037-74d0-708b-ae02-0f0e67c6c4e9",
+          "promptTokens": 4980,
+          "completionTokens": 286,
+          "startTime": "2026-10-06T07:57:12.27203Z"
+        },
+        {
+          "spanId": "01a11037-7f98-70eb-b470-4fb7a61b103e",
+          "promptTokens": 5288,
+          "completionTokens": 264,
+          "startTime": "2026-10-06T07:57:15.032035Z"
+        },
+        {
+          "spanId": "01a11037-82b2-70ca-a601-3cdd7270ada7",
+          "promptTokens": 3532,
+          "completionTokens": 285,
+          "startTime": "2026-10-06T07:57:15.826034Z"
+        },
+        {
+          "spanId": "01a11037-8e54-705e-abd8-4b12e255caf5",
+          "promptTokens": 5423,
+          "completionTokens": 83,
+          "startTime": "2026-10-06T07:57:18.804038Z"
+        },
+        {
+          "spanId": "01a11037-9305-721c-a022-ec84654c20ab",
+          "promptTokens": 5530,
+          "completionTokens": 83,
+          "startTime": "2026-10-06T07:57:20.005044Z"
+        },
+        {
+          "spanId": "01a11037-9921-766f-8ac3-6ba7845751f1",
+          "promptTokens": 5637,
+          "completionTokens": 73,
+          "startTime": "2026-10-06T07:57:21.56905Z"
+        },
+        {
+          "spanId": "01a11037-9eda-76c2-bf8a-a470fe49ccf8",
+          "promptTokens": 5734,
+          "completionTokens": 152,
+          "startTime": "2026-10-06T07:57:23.034056Z"
+        },
+        {
+          "spanId": "01a11037-a6ff-775e-b19c-adcb0ccdd424",
+          "promptTokens": 5906,
+          "completionTokens": 166,
+          "startTime": "2026-10-06T07:57:25.119062Z"
+        },
+        {
+          "spanId": "01a11037-b149-7318-9c43-48c9a8c212b3",
+          "promptTokens": 6092,
+          "completionTokens": 93,
+          "startTime": "2026-10-06T07:57:27.753068Z"
+        },
+        {
+          "spanId": "01a11037-b70d-762d-af1c-6578cd41a068",
+          "promptTokens": 6277,
+          "completionTokens": 4,
+          "startTime": "2026-10-06T07:57:29.229074Z"
+        }
+      ],
+      "mainAgentSpans": [
+        {
+          "spanId": "01a11037-5c64-72af-a38d-ad0032e2fd12",
+          "promptTokens": 4485,
+          "completionTokens": 94,
+          "startTime": "2026-10-06T07:57:06.020006Z"
+        },
+        {
+          "spanId": "01a11037-62af-716f-aaa1-f2e689bb1624",
+          "promptTokens": 4672,
+          "completionTokens": 192,
+          "startTime": "2026-10-06T07:57:07.631012Z"
+        },
+        {
+          "spanId": "01a11037-8e54-705e-abd8-4b12e255caf5",
+          "promptTokens": 5423,
+          "completionTokens": 83,
+          "startTime": "2026-10-06T07:57:18.804038Z"
+        },
+        {
+          "spanId": "01a11037-9305-721c-a022-ec84654c20ab",
+          "promptTokens": 5530,
+          "completionTokens": 83,
+          "startTime": "2026-10-06T07:57:20.005044Z"
+        },
+        {
+          "spanId": "01a11037-9921-766f-8ac3-6ba7845751f1",
+          "promptTokens": 5637,
+          "completionTokens": 73,
+          "startTime": "2026-10-06T07:57:21.56905Z"
+        },
+        {
+          "spanId": "01a11037-9eda-76c2-bf8a-a470fe49ccf8",
+          "promptTokens": 5734,
+          "completionTokens": 152,
+          "startTime": "2026-10-06T07:57:23.034056Z"
+        },
+        {
+          "spanId": "01a11037-a6ff-775e-b19c-adcb0ccdd424",
+          "promptTokens": 5906,
+          "completionTokens": 166,
+          "startTime": "2026-10-06T07:57:25.119062Z"
+        },
+        {
+          "spanId": "01a11037-b149-7318-9c43-48c9a8c212b3",
+          "promptTokens": 6092,
+          "completionTokens": 93,
+          "startTime": "2026-10-06T07:57:27.753068Z"
+        },
+        {
+          "spanId": "01a11037-b70d-762d-af1c-6578cd41a068",
+          "promptTokens": 6277,
+          "completionTokens": 4,
+          "startTime": "2026-10-06T07:57:29.229074Z"
+        }
+      ],
+      "subAgentSpans": {
+        "01a11037-6e40-762c-9f26-c9605a6f1b84": [
+          {
+            "spanId": "01a11037-6e48-75d4-a27b-367070e14681",
+            "promptTokens": 1081,
+            "completionTokens": 156,
+            "startTime": "2026-10-06T07:57:10.600022Z"
+          },
+          {
+            "spanId": "01a11037-74d0-708b-ae02-0f0e67c6c4e9",
+            "promptTokens": 4980,
+            "completionTokens": 286,
+            "startTime": "2026-10-06T07:57:12.27203Z"
+          },
+          {
+            "spanId": "01a11037-7f98-70eb-b470-4fb7a61b103e",
+            "promptTokens": 5288,
+            "completionTokens": 264,
+            "startTime": "2026-10-06T07:57:15.032035Z"
+          }
+        ],
+        "01a11037-6e40-762c-9f26-cf48b52026cc": [
+          {
+            "spanId": "01a11037-6e48-75d4-a27b-3afc7c833131",
+            "promptTokens": 1065,
+            "completionTokens": 90,
+            "startTime": "2026-10-06T07:57:10.600023Z"
+          },
+          {
+            "spanId": "01a11037-73e9-76c4-9767-eabcfabf6b67",
+            "promptTokens": 3211,
+            "completionTokens": 300,
+            "startTime": "2026-10-06T07:57:12.041029Z"
+          },
+          {
+            "spanId": "01a11037-82b2-70ca-a601-3cdd7270ada7",
+            "promptTokens": 3532,
+            "completionTokens": 285,
+            "startTime": "2026-10-06T07:57:15.826034Z"
+          }
+        ]
+      },
+      "mainAgentPeakInputTokens": 6277,
+      "mainAgentConsistency": "pass",
+      "completenessCheck": "pass",
+      "measurementIncomplete": false,
+      "startedAt": "2026-10-06T07:57:06.014Z",
+      "workerReturnTokens": [328, 368],
+      "workerReturnWordCounts": [137, 191],
+      "writesOnDisk": true,
+      "missingOnDisk": [],
+      "retryCount": 0,
+      "retryWaitMs": 0,
+      "elapsedMs": 24563,
+      "workMs": 24563,
+      "estimatedCostUsd": 0.041547
+    }
+  ]
+}

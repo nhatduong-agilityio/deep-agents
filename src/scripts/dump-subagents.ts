@@ -1,14 +1,12 @@
 /**
  * Dumps the sub-agent specs that would be registered with the task tool.
- * Confirms only one general-purpose sub-agent exists and that geminiToolFilter
- * is present in its middleware stack.
+ * Confirms only one general-purpose sub-agent exists.
  *
  * Run: npx tsx --env-file=.env src/scripts/dump-subagents.ts
  */
-import { GENERAL_PURPOSE_SUBAGENT } from 'deepagents';
-import { withGeminiCompat } from '../lib/with-gemini-compat.js';
+import { GENERAL_PURPOSE_SUBAGENT, type SubAgent } from 'deepagents';
 
-const subagents = [withGeminiCompat(GENERAL_PURPOSE_SUBAGENT)];
+const subagents: SubAgent[] = [GENERAL_PURPOSE_SUBAGENT as unknown as SubAgent];
 
 process.stdout.write(`Sub-agents registered with task tool: ${subagents.length}\n\n`);
 for (const spec of subagents) {
@@ -24,12 +22,4 @@ if (subagents.length !== 1 || subagents[0]?.name !== 'general-purpose') {
   process.exit(1);
 }
 
-const mwNames = ((subagents[0]?.middleware ?? []) as Array<{ name?: string }>).map((m) => m.name);
-if (!mwNames.includes('geminiToolFilter')) {
-  process.stderr.write(
-    '\nFAIL: geminiToolFilter missing from general-purpose sub-agent middleware\n',
-  );
-  process.exit(1);
-}
-
-process.stdout.write('\nPASS: one general-purpose sub-agent with geminiToolFilter confirmed\n');
+process.stdout.write('\nPASS: one general-purpose sub-agent confirmed\n');

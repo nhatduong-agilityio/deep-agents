@@ -1,17 +1,15 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { checkReport } from '../../scripts/check-report.js';
-import { runArtifactRun, type RunResult } from './agent.js';
+import { DEFAULT_MODEL_CONFIG, runArtifactRun, type RunResult } from './agent.js';
 
 const RUNS = 3;
-// 65 s covers the full 60 s sliding window for Gemini free-tier 15 RPM
-const INTER_RUN_DELAY_MS = 65_000;
+// 5 s is sufficient for OpenAI Tier 1 (500 RPM); update if switching back to Gemini free tier
+const INTER_RUN_DELAY_MS = 5_000;
 const RESULTS_DIR = join(process.cwd(), 'results', 'artifact-agent');
 
 async function pause(): Promise<void> {
-  process.stdout.write(
-    `  [rate-limit] waiting ${INTER_RUN_DELAY_MS / 1000}s to clear 15 RPM window...\n`,
-  );
+  process.stdout.write(`  [rate-limit] waiting ${INTER_RUN_DELAY_MS / 1000}s between runs...\n`);
   await new Promise((resolve) => setTimeout(resolve, INTER_RUN_DELAY_MS));
 }
 
@@ -19,7 +17,7 @@ async function main(): Promise<void> {
   mkdirSync(RESULTS_DIR, { recursive: true });
 
   process.stdout.write(`Artifact Agent — T-DA-03\n`);
-  process.stdout.write(`Model: gemini-3.5-flash-lite | ${RUNS} runs\n\n`);
+  process.stdout.write(`Model: ${DEFAULT_MODEL_CONFIG.modelId} | ${RUNS} runs\n\n`);
 
   const results: RunResult[] = [];
 
@@ -35,7 +33,7 @@ async function main(): Promise<void> {
 
     const status = result.checkerPassed ? '[✓]' : '[✗]';
     const lsStatus = result.langsmithVerified ? 'ls=✓' : 'ls=✗';
-    const sysStatus = result.systemCheck === 'pass' ? 'sys=✓' : 'sys=FAIL';
+    const sysStatus = `consist=${result.mainAgentConsistency}`;
     const retryNote =
       result.retryCount > 0
         ? ` retries=${result.retryCount} retryWait=${result.retryWaitMs}ms work=${result.workMs}ms`
@@ -78,7 +76,7 @@ async function main(): Promise<void> {
 
   const output = {
     experiment: 'artifact-agent',
-    model: 'gemini-3.5-flash-lite',
+    model: DEFAULT_MODEL_CONFIG.modelId,
     deepagents_version: '1.14.1',
     date: new Date().toISOString().slice(0, 10),
     runs: results,
@@ -100,17 +98,15 @@ async function main(): Promise<void> {
   process.stdout.write(`Check LangSmith for traces: https://smith.langchain.com\n`);
 
   // Throw AFTER saving so results.json always reflects what was measured
-  const failedChecks = results.filter((r) => r.systemCheck === 'fail');
-  if (failedChecks.length > 0) {
-    for (const r of failedChecks) {
+  const mismatchRuns = results.filter((r) => r.mainAgentConsistency === 'mismatch');
+  if (mismatchRuns.length > 0) {
+    for (const r of mismatchRuns) {
       process.stderr.write(
-        `CONFIG-A ASSERTION FAILED run ${r.run}: systemInputTokens=${r.systemInputTokens} !== inputTokens=${r.inputTokens}.\n` +
-          `  Check for unexpected sub-agent calls or a counting divergence between AIMessage.usage_metadata and LangSmith prompt_tokens.\n`,
+        `Consistency MISMATCH run ${r.run}: LangSmith span tokens differ from AIMessage.usage_metadata.\n` +
+          `  Check for unexpected sub-agent calls or a counting divergence.\n`,
       );
     }
-    throw new Error(
-      `CONFIG-A assertion failed on ${failedChecks.length} run(s). See stderr above.`,
-    );
+    throw new Error(`Consistency mismatch on ${mismatchRuns.length} run(s). See stderr above.`);
   }
 }
 
