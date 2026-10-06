@@ -11,7 +11,7 @@ sequenceDiagram
     participant Hook as useStream (@langchain/react)
     participant LGS as LangGraph Server (localhost:2024)
     participant Graph as DeepAgent Graph
-    participant Gemini as Gemini Flash
+    participant GPT as GPT-5.4-mini
     participant LS as LangSmith
 
     User->>UI: type message + submit
@@ -20,15 +20,15 @@ sequenceDiagram
     LGS->>Graph: invoke(state, config)
 
     loop Agent loop
-        Graph->>Gemini: chat completion (messages + tools)
-        Gemini-->>Graph: AIMessage (tool_calls or final)
+        Graph->>GPT: chat completion (messages + tools)
+        GPT-->>Graph: AIMessage (tool_calls or final)
         Graph-->>LGS: SSE chunk — event: messages/partial
         LGS-->>Hook: SSE stream
         Hook-->>UI: re-render with partial messages
     end
 
-    Graph->>Gemini: final response (no tool_calls)
-    Gemini-->>Graph: AIMessage (content only)
+    Graph->>GPT: final response (no tool_calls)
+    GPT-->>Graph: AIMessage (content only)
     Graph-->>LGS: SSE chunk — event: messages/complete
     LGS-->>Hook: stream end
     Hook-->>UI: isLoading = false
@@ -79,7 +79,7 @@ graph LR
     end
 
     G -->|"tsx loads"| AT["src/agent.ts\nexport const graph =\ncreateDeepAgent({...})"]
-    E -->|"injects"| ENV["GEMINI_API_KEY\nLANGCHAIN_API_KEY\n..."]
+    E -->|"injects"| ENV["OPENAI_API_KEY\nLANGSMITH_API_KEY\n..."]
     C -->|"allows"| FE["Frontend at :5173"]
 ```
 
