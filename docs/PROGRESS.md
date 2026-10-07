@@ -2,7 +2,7 @@
 
 ## Resume Point
 
-**Next action:** T-DA-06 — Harness Optimization Drills (next `[ ]` task)
+**Next action:** T-DA-05 — Critique Workflow (re-opened: one DoD bullet not met — producer fix rate; judge calibration failed)
 
 ## Pinned Versions (established T-DA-01)
 
@@ -88,24 +88,29 @@ Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
 
 ## Activity Log
 
-| Date       | Event     | Task                                                                         | Output                                         |
-| ---------- | --------- | ---------------------------------------------------------------------------- | ---------------------------------------------- |
-| 2026-10-02 | Planned   | Phase: Rapid Development with DeepAgents                                     | docs/tasks.md                                  |
-| 2026-10-02 | Done      | T-DA-00: Project Bootstrap (TypeScript, LangSmith, Gemini, Groq, no Fastify) | package.json, src/index.ts                     |
-| 2026-10-02 | Updated   | docs/tasks.md restructured: T-DA-00 (done), T-DA-00.1 (initial DDRs) added   | docs/tasks.md, docs/PROGRESS.md                |
-| 2026-10-02 | Started   | T-DA-00.1 — Initial Decision Records                                         | —                                              |
-| 2026-10-02 | Completed | T-DA-00.1 — Initial Decision Records                                         | reports/T-DA-00.1-report.md                    |
-| 2026-10-02 | Started   | T-DA-00.2 — Skills Installation + Claude Code Hooks                          | —                                              |
-| 2026-10-02 | Completed | T-DA-00.2 — Skills Installation + Claude Code Hooks                          | reports/T-DA-00.2-report.md                    |
-| 2026-10-02 | Started   | T-DA-01 — Scaffold + Reality Check                                           | —                                              |
-| 2026-10-02 | Completed | T-DA-01 — Scaffold + Reality Check                                           | reports/T-DA-01-report.md                      |
-| 2026-10-05 | Started   | T-DA-02 — Planning-First (Output 2)                                          | —                                              |
-| 2026-10-05 | Completed | T-DA-02 — Planning-First (Output 2)                                          | reports/T-DA-02-report.md                      |
-| 2026-10-05 | Started   | T-DA-03 — Artifact Agent (Output 1)                                          | —                                              |
-| 2026-10-05 | Completed | T-DA-03 — Artifact Agent (Output 1)                                          | reports/T-DA-03-report.md                      |
-| 2026-10-06 | Started   | T-DA-04 — Context Isolation Proof (Output 3)                                 | —                                              |
-| 2026-10-06 | Blocked   | T-DA-04 — daily quota exhausted (500 req/day); partial results saved         | results/context-isolation/partial-results.json |
-| 2026-10-06 | Completed | T-DA-04 — Context Isolation Proof (Output 3)                                 | reports/T-DA-04-report.md                      |
-| 2026-10-06 | Completed | T-DA-04 v2 — expanded corpus to 8 files (~38.5KB); gate PASS 0.3286          | results/context-isolation/results-v2.json      |
-| 2026-10-07 | Started   | T-DA-05 — Critique Workflow                                                  | —                                              |
-| 2026-10-07 | Completed | T-DA-05 — Critique Workflow                                                  | reports/T-DA-05-report.md                      |
+| Date       | Event     | Task                                                                                                                       | Output                                                                          |
+| ---------- | --------- | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 2026-10-02 | Planned   | Phase: Rapid Development with DeepAgents                                                                                   | docs/tasks.md                                                                   |
+| 2026-10-02 | Done      | T-DA-00: Project Bootstrap (TypeScript, LangSmith, Gemini, Groq, no Fastify)                                               | package.json, src/index.ts                                                      |
+| 2026-10-02 | Updated   | docs/tasks.md restructured: T-DA-00 (done), T-DA-00.1 (initial DDRs) added                                                 | docs/tasks.md, docs/PROGRESS.md                                                 |
+| 2026-10-02 | Started   | T-DA-00.1 — Initial Decision Records                                                                                       | —                                                                               |
+| 2026-10-02 | Completed | T-DA-00.1 — Initial Decision Records                                                                                       | reports/T-DA-00.1-report.md                                                     |
+| 2026-10-02 | Started   | T-DA-00.2 — Skills Installation + Claude Code Hooks                                                                        | —                                                                               |
+| 2026-10-02 | Completed | T-DA-00.2 — Skills Installation + Claude Code Hooks                                                                        | reports/T-DA-00.2-report.md                                                     |
+| 2026-10-02 | Started   | T-DA-01 — Scaffold + Reality Check                                                                                         | —                                                                               |
+| 2026-10-02 | Completed | T-DA-01 — Scaffold + Reality Check                                                                                         | reports/T-DA-01-report.md                                                       |
+| 2026-10-05 | Started   | T-DA-02 — Planning-First (Output 2)                                                                                        | —                                                                               |
+| 2026-10-05 | Completed | T-DA-02 — Planning-First (Output 2)                                                                                        | reports/T-DA-02-report.md                                                       |
+| 2026-10-05 | Started   | T-DA-03 — Artifact Agent (Output 1)                                                                                        | —                                                                               |
+| 2026-10-05 | Completed | T-DA-03 — Artifact Agent (Output 1)                                                                                        | reports/T-DA-03-report.md                                                       |
+| 2026-10-06 | Started   | T-DA-04 — Context Isolation Proof (Output 3)                                                                               | —                                                                               |
+| 2026-10-06 | Blocked   | T-DA-04 — daily quota exhausted (500 req/day); partial results saved                                                       | results/context-isolation/partial-results.json                                  |
+| 2026-10-06 | Completed | T-DA-04 — Context Isolation Proof (Output 3)                                                                               | reports/T-DA-04-report.md                                                       |
+| 2026-10-06 | Completed | T-DA-04 v2 — expanded corpus to 8 files (~38.5KB); gate PASS 0.3286                                                        | results/context-isolation/results-v2.json                                       |
+| 2026-10-07 | Started   | T-DA-05 — Critique Workflow                                                                                                | —                                                                               |
+| 2026-10-07 | Completed | T-DA-05 — Critique Workflow                                                                                                | reports/T-DA-05-report.md                                                       |
+| 2026-10-07 | Updated   | T-DA-05 — Deviation resolved: critic as task-tool sub-agent (DDR-015)                                                      | reports/T-DA-05-report.md (appended)                                            |
+| 2026-10-07 | Updated   | T-DA-05 — Mentor review: v2 run evidence, seeded-flaw table, DDR-008 re-analysis                                           | reports/T-DA-05-report.md, DDR-008, results/critique/supervisor-results.json    |
+| 2026-10-07 | Fixed     | analyzeAdversarialTrace extracted; file_path detection bug fixed; 4 new tests                                              | src/experiments/critique/adversarial.ts, critique-supervisor.test.ts            |
+| 2026-10-07 | Fixed     | process.exit(0) added to all 5 experiment scripts — shell no longer hangs after LangSmith flush                            | supervisor-run.ts, run.ts, validate-step5.ts, measure.ts, artifact-agent/run.ts |
+| 2026-10-07 | Re-opened | T-DA-05 — final-revision DoD bullet unchecked; feedbackRead bug corrected; judge calibration FAILED; v2 cost split by role | reports/T-DA-05-report.md, docs/tasks.md                                        |

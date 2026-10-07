@@ -353,7 +353,9 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((err: unknown) => {
-  process.stderr.write(`Fatal: ${String(err)}\n`);
-  process.exit(1);
-});
+main()
+  .then(() => process.exit(0))
+  .catch((err: unknown) => {
+    process.stderr.write(`Fatal: ${String(err)}\n`);
+    process.exit(1);
+  });
