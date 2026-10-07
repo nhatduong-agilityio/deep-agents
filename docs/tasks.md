@@ -144,7 +144,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 **Definition of Done:**
 
-- [x] ≥3 runs each config (A: main agent retrieves directly; B: research sub-agents spawned via `task` tool — Supervisor-Worker pattern; keep sub-agent count ≤5 to avoid diminishing returns beyond that threshold); **pass `geminiToolFilter` explicitly to sub-agent**: `subagents: [{ ...GENERAL_PURPOSE_SUBAGENT, middleware: [geminiToolFilter] }]` — sub-agents do NOT inherit `geminiToolFilter` from parent middleware (verified smoke-subagent-filter.ts)
+- [x] ≥3 runs each config (A: main agent retrieves directly; B: research sub-agents spawned via `task` tool — Supervisor-Worker pattern; keep sub-agent count ≤5 to avoid diminishing returns beyond that threshold); **inject filesystem middleware explicitly per-run** — sub-agents do NOT inherit parent middleware (`mergeMiddlewareStack appendNew:false`; see DDR-013); actual pattern: `middleware: [workerFsMw]` (empty base array, `workerFsMw` injected at run time)
 - [x] Isolation ratio reported: `main_agent_peak_tokens(B) / main_agent_peak_tokens(A)` ≤ 0.50 (Context Isolate Patterns — CIP) — **PASS — 0.3286 (median of 3, expanded corpus ~38.5KB / 8 files); v1 deviation 0.5464 preserved in report**
 - [x] Quality gate: T-DA-03 checker passes for both configs (3/3 A, 3/3 B)
 - [x] Total system token cost reported even if B > A total — A: $0.1922, B: $0.1849 total; B is cost-neutral at this corpus size (DDR-010)
@@ -154,20 +154,20 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ---
 
-## T-DA-05 — Critique Workflow
+## T-DA-05 — Critique Workflow `[x]`
 
 **Scope:** `src/experiments/critique/critic.ts`; `corpus/drafts/`; `corpus/feedback/`
 
 **Definition of Done:**
 
-- [ ] Critic tools: `["read_file", "ls", "glob", "write_file"]` — `grep` excluded (not needed for read-only critique; omitting it reduces blast radius); **`execute` excluded via explicit `tools` allowlist** (do NOT rely on backend capability filtering — `execute` appears in `tool-list-default.json` because the default stack registers it at init time and filters only at request time; explicitly omit it); write restricted to `/feedback/` via `permissions` rules (BRC pattern); `createFilesystemMiddleware({ tools: ["read_file", "ls", "glob", "write_file"], permissions: [{ operations: ["write", "delete"], paths: ["/feedback/**"], mode: "allow" }, { operations: ["write", "delete"], paths: ["/**"], mode: "deny" }] })` — **Permission rule order:** rules are evaluated first-match-wins; the allow rule for `/feedback/**` must come first so writes there succeed; the final `deny` for `/**` is required because the default is allow — without it, any path not matching the allow rule would be permitted by default (BRC pattern requires explicit deny to close the gap)
-- [ ] Critic writes structured feedback (numbered items) to `/feedback/` only — format aids producer convergence
-- [ ] Adversarial write attempts denied: (1) write to `/drafts/` hits `deny` rule; (2) write to `/report/` hits `deny` rule — both test the same first-match-wins logic, covering paths outside `/feedback/**`; denials logged in LangSmith trace
-- [ ] Draft file hash unchanged after critic run
-- [ ] ≤3 draft/critique/revision rounds (Producer-Critic pattern — cap prevents runaway cost)
-- [ ] Critique Precision tracked: valid issues raised ÷ total critiques per round, recorded in LangSmith trace metadata
-- [ ] Final revision addresses each feedback item (verified by diff)
-- [ ] **DDR-008 written** (`docs/decisions/DDR-008-critic-permissions.md`) — decision: critic tool allowlist; include the adversarial write denial as empirical evidence
+- [x] Critic tools: `["read_file", "ls", "glob", "write_file"]` — `grep` excluded (not needed for read-only critique; omitting it reduces blast radius); **`execute` excluded via explicit `tools` allowlist** (do NOT rely on backend capability filtering — `execute` appears in `tool-list-default.json` because the default stack registers it at init time and filters only at request time; explicitly omit it); write restricted to `/feedback/` via `permissions` rules (BRC pattern); `createFilesystemMiddleware({ tools: ["read_file", "ls", "glob", "write_file"], permissions: [{ operations: ["write", "delete"], paths: ["/feedback/**"], mode: "allow" }, { operations: ["write", "delete"], paths: ["/**"], mode: "deny" }] })` — **Permission rule order:** rules are evaluated first-match-wins; the allow rule for `/feedback/**` must come first so writes there succeed; the final `deny` for `/**` is required because the default is allow — without it, any path not matching the allow rule would be permitted by default (BRC pattern requires explicit deny to close the gap)
+- [x] Critic writes structured feedback (numbered items) to `/feedback/` only — format aids producer convergence
+- [x] Adversarial write attempts denied: (1) write to `/drafts/` hits `deny` rule; (2) write to `/report/` hits `deny` rule — both test the same first-match-wins logic, covering paths outside `/feedback/**`; denials logged in LangSmith trace (6 denials across 3 rounds; disk check confirmed no file created)
+- [x] Draft file hash unchanged after critic run (verified all 3 rounds: 2270c5af, 9750d6a1, bdf9f8f5)
+- [x] ≤3 draft/critique/revision rounds (Producer-Critic pattern — cap prevents runaway cost)
+- [x] Critique Precision tracked: valid issues raised ÷ total critiques per round, recorded in LangSmith trace metadata (round 1: 10/10=1.0; round 2: 12/12=1.0; round 3: 17/17=1.0)
+- [x] Final revision addresses each feedback item (verified by revision notes: round 1 10/10 ✓; round 2 10/12 — 2 items not logged in revision notes; surfaced in round 3 critique; cap hit before round 3 producer)
+- [x] **DDR-008 written** (`docs/decisions/DDR-008-critic-permissions.md`) — decision: critic tool allowlist; adversarial denial evidence table with 6 LangSmith run IDs
 
 ---
 
@@ -200,7 +200,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 - [ ] Per-span token counts extracted from LangSmith traces; `deepagents_version` and `model_id` verified present in every span's metadata
 - [ ] ≥1 fix implemented as a harness change (not a prompt instruction)
 - [ ] Before/after numbers (pass rate or token cost) for the fixed failure mode
-- [ ] **DDR-010 written** (`docs/decisions/DDR-010-deepagents-vs-langgraph.md`) — decision: when DeepAgents overhead is justified vs plain LangGraph; use measured token costs as empirical evidence
+- [ ] **DDR-014 written** (`docs/decisions/DDR-014-deepagents-vs-langgraph.md`) — decision: when DeepAgents overhead is justified vs plain LangGraph; use measured token costs as empirical evidence
 
 ---
 
@@ -210,14 +210,15 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 DDRs are written inline during their respective experiment tasks (see DoD items in T-DA-02, T-DA-03, T-DA-05, T-DA-06, T-DA-07). This task verifies they all landed, completes the index, and produces the final phase report.
 
-| #       | Title                                                                 | Written in  | Pattern reference                                                   |
-| ------- | --------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------- |
-| DDR-006 | Filesystem backend (FilesystemBackend vs StateBackend vs Composite)   | T-DA-03     | FSC pattern                                                         |
-| DDR-007 | Planning enforcement: prompt instruction vs no instruction            | T-DA-02     | PTR + ReWOO patterns                                                |
-| DDR-008 | Critique sub-agent permission design                                  | T-DA-05     | BRC + PC patterns                                                   |
-| DDR-009 | Benchmark code-execution environment                                  | T-DA-06     | —                                                                   |
-| DDR-010 | DeepAgents vs plain LangGraph — when delegation overhead is justified | T-DA-07     | SVW pattern (15x token baseline; >5-7 workers: diminishing returns) |
-| DDR-011 | Gemini tool schema filtering via wrapModelCall middleware             | pre-T-DA-04 | —                                                                   |
+| #       | Title                                                                       | Written in  | Pattern reference                                                   |
+| ------- | --------------------------------------------------------------------------- | ----------- | ------------------------------------------------------------------- |
+| DDR-006 | Filesystem backend (FilesystemBackend vs StateBackend vs Composite)         | T-DA-03     | FSC pattern                                                         |
+| DDR-007 | Planning enforcement: prompt instruction vs no instruction                  | T-DA-02     | PTR + ReWOO patterns                                                |
+| DDR-008 | Critique sub-agent permission design                                        | T-DA-05     | BRC + PC patterns                                                   |
+| DDR-009 | Benchmark code-execution environment                                        | T-DA-06     | —                                                                   |
+| DDR-010 | CIP isolation benefit scales with retrieval payload vs overhead (Confirmed) | T-DA-04     | CIP pattern — gate crossing; confirmed at ~38.5KB corpus            |
+| DDR-011 | Gemini tool schema filtering via wrapModelCall middleware (Superseded)      | pre-T-DA-04 | —                                                                   |
+| DDR-014 | DeepAgents vs plain LangGraph — when delegation overhead is justified       | T-DA-07     | SVW pattern (15x token baseline; >5-7 workers: diminishing returns) |
 
 **Definition of Done:**
 
@@ -237,7 +238,7 @@ DDRs are written inline during their respective experiment tasks (see DoD items 
 **Definition of Done:**
 
 - [ ] `src/agent.ts` created: `createDeepAgent({ model, backend: new StateBackend(), systemPrompt })` exported as `graph`
-- [ ] `gemini-3.5-flash-lite` used as model (alias acceptable for demo; same model as measured experiments — `gemini-2.0-flash` is deprecated)
+- [ ] `gpt-5.4-mini-2026-03-17` used as model (matches measured experiments — DDR-012; pinned snapshot required for reproducibility)
 - [ ] `StateBackend` chosen for file storage (in-memory per thread, no disk writes — Filesystem as Context pattern)
 - [ ] `skills/` directory created alongside `src/agent.ts`; at least one `SKILL.md` (e.g., `skills/corpus-search/SKILL.md`) passed to `createDeepAgent({ skills: [...] })` (Agent Skills pattern)
 - [ ] `langgraph.json` created: `graphs.agent = "./src/agent.ts:graph"`, `env = ".env"`, `node_version = "20"`, CORS `allow_origins = ["http://localhost:5173"]`
