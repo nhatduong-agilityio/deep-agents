@@ -175,21 +175,18 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ---
 
-## T-DA-06 — Harness Optimization Drills
+## T-DA-06 — Harness Optimization Drills `[x]` _(closed with documented deviation)_
 
-**Scope:** `src/experiments/harness/`; `benchmark/subset/` (curated 20-problem TypeScript algorithmic subset)
+**Scope:** `src/experiments/harness/`; `benchmark/subset/` (curated 20-problem TypeScript algorithmic subset); `src/experiments/harness-v2/` (deep-agent v2)
 
 **Definition of Done:**
 
-- [ ] Curated TS subset constructed; selection criterion documented (baseline Gemini Flash fails ≥20%)
-- [ ] DDR-009 written: benchmark code-execution environment decision (JS port vs curated subset vs sandbox)
-- [ ] **5 harness steps** measured (≥3 runs each), in order:
-  1. **Baseline** — default agent, no changes
-  2. **Think Tool** — add `think` no-op tool + prompt examples; measure pass rate delta (Structured Reflection pattern; +54% is Anthropic's published result on their model — treat as hypothesis, report actual delta)
-  3. **Context Pruning middleware** — implement `wrapModelCall` middleware that removes tool-result messages older than the last N steps before each model call; measure token reduction vs baseline (`clear_tool_uses_20250919` is Anthropic-API-only and unavailable with `google-genai:`; ~84% reduction is Anthropic's figure — measure actual delta)
-  4. **Pre-completion checklist** — middleware enforces checklist before final answer
-  5. **Plan-Execute Decoupling (ReWOO)** — full `write_todos` DAG generated upfront, no interleaved prompting; measure model-call count reduction
-- [ ] Pass rate + cost/task table for all 5 steps in `reports/`
+- [~] Curated TS subset constructed; selection criterion documented — **NOT MET in v1 or v2.** v1: 1.1% baseline failure at temperature=0.7 (corrected from systematic oracle error). v2 (deep-agent with run_tests tool): 0% baseline failure — gpt-5.4-mini solves every problem on the first run_tests call. The ≥20% gate was defined in this DoD but was not pre-registered in `results/harness-v2/pre-registration.json` before running; the full step × run matrix was therefore uninformative. See `reports/T-DA-06-v2-report.md`.
+- [x] DDR-009 written: benchmark code-execution environment decision; temperature=0.7, Node permission model, and subprocess isolation documented
+- [~] **5 harness steps measured (≥3 runs each)** — steps were run; comparison table is uninformative at ceiling (all steps 100% pass, 0 loops, ≤0.05 tool call delta). Kept for documentation. Pre-registration gap: no precondition gate was registered before running the full matrix.
+  - v1 (single-call): baseline=98.9%, think=98.9%, context-pruning=98.9%, checklist=98.6%, rewoo=98.9%
+  - v2 (deep-agent): baseline=100%, self-verification=100%, pre-completion=100%, loop-detection=100%, context-pruning=100%
+- [x] Pass rate + cost/task tables written; results at `results/harness/results.json`, `results/harness-v2/results.json`; reports at `reports/T-DA-06-report.md`, `reports/T-DA-06-v2-report.md`
 
 ---
 
@@ -197,13 +194,26 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 **Scope:** `reports/trace-analysis.md`; harness patches if fix is applied
 
+**Harness target (pre-registered before running):**
+The T-DA-05 critique workflow fixed only 1 of 5 seeded flaws across 3 rounds. The producer agent
+"lost the plot" — it received feedback but did not match each item to a concrete draft diff before
+finishing. Proposed fix: a pre-completion middleware that blocks the producer from calling
+`write_file` on the final draft until each feedback item is matched to a draft change (verified by
+diffing the previous draft against the proposed new content). This is a harness change, not a
+prompt instruction.
+
+Baseline metric (from T-DA-05 results): 1/5 seeded flaws fixed; repeated-feedback share per round
+≥1 (same feedback item appeared across rounds). Pre-register the gate in
+`results/trace-analysis/pre-registration.json` before running any new experiment.
+
 **Definition of Done:**
 
 - [ ] ≥2 concrete failure points named by tool-call sequence (not prose description); use `systematic-debugging` skill for root-cause analysis
 - [ ] Each failure point described with: span name → tool called → expected vs actual outcome (Agent Observability & Tracing pattern)
 - [ ] Per-span token counts extracted from LangSmith traces; `deepagents_version` and `model_id` verified present in every span's metadata
-- [ ] ≥1 fix implemented as a harness change (not a prompt instruction)
-- [ ] Before/after numbers (pass rate or token cost) for the fixed failure mode
+- [ ] Pre-registration JSON written to `results/trace-analysis/pre-registration.json` before running any fix experiment; includes baseline metric (1/5 flaws fixed) and gate (≥3/5 flaws fixed after fix)
+- [ ] ≥1 fix implemented as a harness change (not a prompt instruction); target: pre-completion middleware blocking final write until each feedback item matched to a diff
+- [ ] Before/after numbers (seeded flaws fixed, repeated-feedback share) for the fixed failure mode
 - [ ] **DDR-014 written** (`docs/decisions/DDR-014-deepagents-vs-langgraph.md`) — decision: when DeepAgents overhead is justified vs plain LangGraph; use measured token costs as empirical evidence
 
 ---

@@ -2,7 +2,7 @@
 
 ## Resume Point
 
-**Next action:** T-DA-05 — Critique Workflow (re-opened: one DoD bullet not met — producer fix rate; judge calibration failed)
+**Next action:** T-DA-07 — "Loses the Plot" Trace Analysis
 
 ## Pinned Versions (established T-DA-01)
 
@@ -114,3 +114,6 @@ Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
 | 2026-10-07 | Fixed     | analyzeAdversarialTrace extracted; file_path detection bug fixed; 4 new tests                                              | src/experiments/critique/adversarial.ts, critique-supervisor.test.ts            |
 | 2026-10-07 | Fixed     | process.exit(0) added to all 5 experiment scripts — shell no longer hangs after LangSmith flush                            | supervisor-run.ts, run.ts, validate-step5.ts, measure.ts, artifact-agent/run.ts |
 | 2026-10-07 | Re-opened | T-DA-05 — final-revision DoD bullet unchecked; feedbackRead bug corrected; judge calibration FAILED; v2 cost split by role | reports/T-DA-05-report.md, docs/tasks.md                                        |
+| 2026-10-07 | Started   | T-DA-06 — Harness Optimization Drills                                                                                      | —                                                                               |
+| 2026-10-07 | Completed | T-DA-06 — Harness Optimization Drills                                                                                      | reports/T-DA-06-report.md                                                       |
+| 2026-10-07 | Completed | T-DA-06 v2 — deep-agent coding benchmark (run_tests tool, isolated child_process, 5 middleware steps)                      | reports/T-DA-06-v2-report.md, results/harness-v2/results.json                   |

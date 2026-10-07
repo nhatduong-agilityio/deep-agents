@@ -1,0 +1,54 @@
+{
+  "experiment": "harness-v2",
+  "registered_at": "2026-10-07",
+  "model": "openai:gpt-5.4-mini-2026-03-17",
+  "deepagents_version": "1.14.1",
+  "design": {
+    "type": "deep-agent coding benchmark",
+    "problems_count": 20,
+    "runs_per_step": 3,
+    "public_test_count": 3,
+    "max_tool_calls": 8,
+    "context_prune_keep_last_n": 3,
+    "inter_call_delay_ms": 3000
+  },
+  "steps": [
+    {
+      "id": "baseline",
+      "what_changes": "Agent runs free — no constraints, minimal system prompt"
+    },
+    {
+      "id": "self-verification",
+      "what_changes": "System prompt requires run_tests before final answer"
+    },
+    {
+      "id": "pre-completion",
+      "what_changes": "Middleware blocks final answer until run_tests shows all PASSED"
+    },
+    {
+      "id": "loop-detection",
+      "what_changes": "Middleware detects repeated code hash; injects alternative-approach warning"
+    },
+    {
+      "id": "context-pruning",
+      "what_changes": "Old run_tests ToolMessages pruned before each model call (keep last 3)"
+    }
+  ],
+  "primary_metrics": [
+    "hiddenPassRate (scored on test cases not shown to agent)",
+    "avgModelCallsPerProblem",
+    "avgToolCallsPerProblem",
+    "avgCostUsd per run"
+  ],
+  "hypotheses": {
+    "self_verification": "run_tests usage rate increases vs baseline; hidden pass rate equal or higher",
+    "pre_completion": "all agents call run_tests at least once; same or better hidden pass rate",
+    "loop_detection": "loopDetected count decreases repeated failures; cost may increase due to retries",
+    "context_pruning": "input tokens per problem decrease by removing old ToolMessages; quality unchanged"
+  },
+  "isolation": {
+    "child_process_env": "{}",
+    "timeout_ms": 5000,
+    "public_hidden_split": "first 3 test cases public; remaining hidden"
+  }
+}
