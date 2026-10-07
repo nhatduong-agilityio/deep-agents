@@ -14,7 +14,8 @@ Index of all design decisions made in this project. Each DDR is a numbered file:
 | DDR-005 | Measurement Discipline                                                | Accepted              | 2026-10-02 |
 | DDR-006 | Filesystem Backend — FilesystemBackend vs StateBackend vs Composite   | Accepted              | 2026-10-05 |
 | DDR-007 | Planning Enforcement via System Prompt Instruction                    | Accepted              | 2026-10-05 |
-| DDR-010 | CIP Isolation Benefit Scales with Retrieval Payload vs Overhead       | Hypothesis            | 2026-10-06 |
+| DDR-008 | Critique Sub-Agent Permission Design (BRC Pattern)                    | Accepted              | 2026-10-07 |
+| DDR-010 | CIP Isolation Benefit Scales with Retrieval Payload vs Overhead       | Confirmed             | 2026-10-06 |
 | DDR-011 | Gemini Tool Schema Filtering via wrapModelCall                        | Superseded by DDR-012 | 2026-10-02 |
 | DDR-012 | Switch Primary Agent Model to OpenAI gpt-5.4-mini (T-DA-04)           | Accepted              | 2026-10-06 |
 | DDR-013 | Sub-agent Filesystem Middleware Must Be Injected Per-Run with Backend | Accepted              | 2026-10-06 |

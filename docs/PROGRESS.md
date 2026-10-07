@@ -2,7 +2,7 @@
 
 ## Resume Point
 
-**Next action:** T-DA-05 — Critique Workflow
+**Next action:** T-DA-06 — Harness Optimization Drills (next `[ ]` task)
 
 ## Pinned Versions (established T-DA-01)
 
@@ -12,6 +12,12 @@
 | Primary model (all runs) | `gpt-5.4-mini-2026-03-17` (`openai:gpt-5.4-mini-2026-03-17`) — migrated 2026-10-06 |
 | Model pricing            | $0.75/$4.50 per 1M tokens (input/output) — verified 2026-10-06                     |
 | Previous model           | `gemini-3.5-flash-lite` — replaced; T-DA-02/03/04 results reflect Gemini pricing   |
+
+## Pinned Models (T-DA-05 finding)
+
+| Role                 | Model ID             | Notes                                                                                                           |
+| -------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Groq precision judge | `openai/gpt-oss-20b` | `llama-3.3-70b-versatile` returned 404; only text models available: `openai/gpt-oss-20b`, `openai/gpt-oss-120b` |
 
 ## Investigation Findings
 
@@ -101,3 +107,5 @@ Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
 | 2026-10-06 | Blocked   | T-DA-04 — daily quota exhausted (500 req/day); partial results saved         | results/context-isolation/partial-results.json |
 | 2026-10-06 | Completed | T-DA-04 — Context Isolation Proof (Output 3)                                 | reports/T-DA-04-report.md                      |
 | 2026-10-06 | Completed | T-DA-04 v2 — expanded corpus to 8 files (~38.5KB); gate PASS 0.3286          | results/context-isolation/results-v2.json      |
+| 2026-10-07 | Started   | T-DA-05 — Critique Workflow                                                  | —                                              |
+| 2026-10-07 | Completed | T-DA-05 — Critique Workflow                                                  | reports/T-DA-05-report.md                      |

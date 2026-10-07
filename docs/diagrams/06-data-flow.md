@@ -50,9 +50,9 @@ flowchart TD
 ```mermaid
 flowchart LR
     subgraph Corpus["corpus/ — fixed, read-only"]
-        F1["eu-ai-act-art-6.txt"]
-        F2["eu-ai-act-art-13.txt"]
-        F3["us-eo-ai-section-4.txt"]
+        F1["eu-ai-act-article-6.txt"]
+        F2["eu-ai-act-article-13.txt"]
+        F3["us-eo-14110-section-4.txt"]
         FN["... up to 10 files"]
     end
 
