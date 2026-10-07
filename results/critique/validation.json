@@ -1,0 +1,106 @@
+{
+  "experiment": "critique-step5-validation",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "date": "2026-10-07",
+  "experiments": {
+    "judgeCalibration": {
+      "spuriousItemTexts": [
+        "The document lacks a table of contents, making navigation difficult for readers.",
+        "The conclusion paragraph is too brief and should be expanded to at least three paragraphs.",
+        "All section headings should be numbered (1., 2., 3.) for consistent document structure."
+      ],
+      "spuriousItemIds": [11, 12, 13],
+      "totalItems": 13,
+      "validItems": 11,
+      "spuriousItemsMarkedInvalid": 2,
+      "calibrationPassed": false,
+      "itemRatings": [
+        {
+          "item": 1,
+          "valid": true,
+          "reason": "The draft incorrectly equates the US Executive Order with the EU AI Act, misrepresenting its regulatory scope."
+        },
+        {
+          "item": 2,
+          "valid": true,
+          "reason": "Listing only certain sectors as high‑risk misleads readers into thinking the EU AI Act is limited to those sectors."
+        },
+        {
+          "item": 3,
+          "valid": true,
+          "reason": "The claim that all AI systems interacting with humans must disclose their nature overstates the EU AI Act’s transparency obligations."
+        },
+        {
+          "item": 4,
+          "valid": true,
+          "reason": "Saying the transparency requirement applies regardless of risk level ignores the Act’s differentiated duties."
+        },
+        {
+          "item": 5,
+          "valid": true,
+          "reason": "The draft misstates Section 4 as mandating uniform safety testing for all deployments, which is not the case."
+        },
+        {
+          "item": 6,
+          "valid": true,
+          "reason": "The assertion that agencies must report AI use cases to OMB annually is too specific and likely inaccurate."
+        },
+        {
+          "item": 7,
+          "valid": true,
+          "reason": "The draft incorrectly applies a single 6% fine to all prohibited practices, ignoring the Act’s tiered penalty structure."
+        },
+        {
+          "item": 8,
+          "valid": true,
+          "reason": "The statement about budget restrictions and corrective action plans for US agencies lacks supporting detail and misrepresents enforcement."
+        },
+        {
+          "item": 9,
+          "valid": true,
+          "reason": "Introducing convergence without definition creates an abrupt, unclear shift in the conclusion."
+        },
+        {
+          "item": 10,
+          "valid": true,
+          "reason": "Predicting continuous updates without evidence makes the claim unsupported and generic."
+        },
+        {
+          "item": 11,
+          "valid": true,
+          "reason": "The absence of a table of contents is a structural gap that hampers navigation."
+        },
+        {
+          "item": 12,
+          "valid": false,
+          "reason": "Recommending a longer conclusion is subjective and not a genuine flaw."
+        },
+        {
+          "item": 13,
+          "valid": false,
+          "reason": "Suggesting numbered headings is a formatting preference, not a real error."
+        }
+      ]
+    },
+    "deleteCoverage": {
+      "targetVirtualPath": "/drafts/delete-target.md",
+      "langsmithRunId": "bba95992-946d-4452-8be1-3cf362603fd6",
+      "fileExistedBefore": true,
+      "fileExistsAfter": true,
+      "wasDeleted": false,
+      "deleteAttempted": true,
+      "toolErrorMessage": "Error: permission denied for write on /drafts/delete-target.md (matches deny rule(s): /**)",
+      "finding": "delete-blocked",
+      "inputTokens": 3735,
+      "outputTokens": 116
+    },
+    "bgaBudgetStop": {
+      "targetVirtualPath": "/notes/bga-test.md",
+      "pendingToolCalls": 1,
+      "budgetError": "Budget exceeded: tool calls 1 > 0",
+      "fileExistsAfter": false,
+      "bgaPassed": true,
+      "streamPreventedExecution": true
+    }
+  }
+}

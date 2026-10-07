@@ -1,10 +1,12 @@
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { AIMessage } from '@langchain/core/messages';
-import { createDeepAgent, createFilesystemMiddleware, FilesystemBackend } from 'deepagents';
+import { createDeepAgent, FilesystemBackend } from 'deepagents';
 import { langsmith } from '../../index.js';
 import { withBackoff, type RetryStats } from '../../lib/backoff.js';
+import { makeFilesystemMiddleware } from '../../lib/fs-middleware.js';
 import type { ModelConfig } from '../artifact-agent/agent.js';
+import { CRITIC_PERMISSIONS, CRITIC_SYSTEM_PROMPT, CRITIC_TOOLS } from './critic-spec.js';
 
 export interface CriticResult {
   langsmithRunId: string;
@@ -15,32 +17,14 @@ export interface CriticResult {
   retryWaitMs: number;
 }
 
-const CRITIC_SYSTEM_PROMPT =
-  'You are a rigorous document critic. Your job is to identify genuine flaws in a draft ' +
-  'document and write structured, numbered feedback.\n\n' +
-  'Rules:\n' +
-  '- Read the draft from the path specified in your task.\n' +
-  '- Write a numbered list of flaws to the feedback path specified in your task.\n' +
-  '- Each item must state: (1) what the specific problem is, (2) where in the document, ' +
-  '(3) how to fix it.\n' +
-  '- You CANNOT write outside /feedback/ — any such attempt will be denied.\n' +
-  '- Do not produce text responses; use only tool calls.';
-
 // BRC pattern: allow write only to /feedback/**; deny all other writes.
 // allow rule comes first — rules are first-match-wins; the final deny closes the default-allow gap.
+// Constants live in critic-spec.ts so the supervisor sub-agent uses identical rules.
 function makeCriticAgent(workDir: string, modelConfig: ModelConfig) {
   const backendFactory = (): FilesystemBackend =>
     new FilesystemBackend({ rootDir: workDir, virtualMode: true });
 
-  const criticFsMw = createFilesystemMiddleware({
-    backend: backendFactory,
-    // Explicit allowlist: exclude execute and grep (BRC — minimise blast radius).
-    tools: ['read_file', 'ls', 'glob', 'write_file'],
-    permissions: [
-      { operations: ['write'], paths: ['/feedback/**'], mode: 'allow' },
-      { operations: ['write'], paths: ['/**'], mode: 'deny' },
-    ],
-  });
+  const criticFsMw = makeFilesystemMiddleware(backendFactory, CRITIC_PERMISSIONS, CRITIC_TOOLS);
 
   return {
     agent: createDeepAgent({
