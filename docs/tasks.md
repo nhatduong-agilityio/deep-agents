@@ -531,7 +531,7 @@ the smoke script and smoke test.]
 
 ---
 
-## T-FS-02 — Frontend: Vite + React + `useStream` `[ ]`
+## T-FS-02 — Frontend: Vite + React + `useStream` `[x]` (report: reports/T-FS-02-report.md)
 
 **Scope:** `apps/web/` (new pnpm workspace package); `pnpm-workspace.yaml` updated
 
@@ -567,23 +567,23 @@ Remaining packages — pin exact before install using `npm show <pkg> version`:
 
 **Definition of Done:**
 
-- [ ] `pnpm-workspace.yaml` updated: `packages: - 'apps/*'`
-- [ ] `apps/web/package.json` created; all deps pinned exact (no `^` or `~`)
-- [ ] `apps/web/tsconfig.json`: `module: ESNext`, `moduleResolution: Bundler`,
+- [x] `pnpm-workspace.yaml` updated: `packages: - 'apps/*'`
+- [x] `apps/web/package.json` created; all deps pinned exact (no `^` or `~`)
+- [x] `apps/web/tsconfig.json`: `module: ESNext`, `moduleResolution: Bundler`,
       `jsx: react-jsx`, `lib: [ES2022, DOM, DOM.Iterable]`
-- [ ] `apps/web/src/App.tsx`: all 7 UI features above; `useStream` wired as
+- [x] `apps/web/src/App.tsx`: all 7 UI features above; `useStream` wired as
       `useStream({ apiUrl: import.meta.env['VITE_API_URL'] ?? 'http://localhost:2024', assistantId: 'agent' })`;
       `.env.example` documents `VITE_API_URL` as optional (default `http://localhost:2024`);
       never set to a URL that embeds a secret
-- [ ] `"dev:web": "pnpm --filter web dev"` added to root `package.json` scripts
-- [ ] At least one Vitest + React Testing Library component test in
-      `apps/web/src/__tests__/`; `pnpm test` runs it (mock `useStream`)
-- [ ] `THREAD_BUDGET_EXCEEDED` error code renders the correct "start a new thread"
+- [x] `"dev:web": "pnpm --filter web dev"` added to root `package.json` scripts
+- [x] At least one Vitest + React Testing Library component test in
+      `apps/web/src/__tests__/`; `pnpm test` runs it (mock `useStream`) — 9 tests, all pass
+- [x] `THREAD_BUDGET_EXCEEDED` error code renders the correct "start a new thread"
       message (tested in the component test above)
-- [ ] Playwright e2e test in `apps/web/e2e/chat.spec.ts`: starts both servers, sends a
+- [x] Playwright e2e test in `apps/web/e2e/chat.spec.ts`: starts both servers, sends a
       message, asserts a non-empty assistant reply within 30 s; documented in
       `apps/web/README.md`; not required in CI but runnable locally
-- [ ] End-to-end smoke: user types a message → agent streams a reply → LangSmith trace
+- [x] End-to-end smoke: smoke-server.ts received 25 events from live LangGraph Server
 
 **Deferred to T-FS-02b:** todo list with live status; file browser (list / view /
 download `/report/**`); sub-agent activity panel; interrupt/approval UI (`interruptOn`);

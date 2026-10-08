@@ -1,6 +1,14 @@
+packages:
+  - 'apps/*'
+
 allowBuilds:
   esbuild: false
   puppeteer: true
 minimumReleaseAgeExclude:
   - langsmith@0.10.7
   - '@types/node@26.6.4'
+  - '@langchain/langgraph-sdk@1.12.3'
+  - '@langchain/react@1.2.3'
+  - '@playwright/test@1.64.0'
+  - playwright-core@1.64.0
+  - playwright@1.64.0
