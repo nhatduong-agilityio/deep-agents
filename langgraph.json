@@ -1,0 +1,16 @@
+{
+  "graphs": {
+    "agent": "./src/agent.ts:graph"
+  },
+  "env": ".env",
+  "node_version": "24",
+  "http": {
+    "cors": {
+      "allow_origins": ["http://localhost:5173", "https://smith.langchain.com"]
+    }
+  },
+  "auth": {
+    "path": "./src/auth.ts:auth",
+    "disable_studio_auth": true
+  }
+}

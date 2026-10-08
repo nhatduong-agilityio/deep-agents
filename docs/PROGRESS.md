@@ -2,7 +2,7 @@
 
 ## Resume Point
 
-**Next action:** T-FS-01 — Backend: DeepAgents on LangGraph Server
+**Next action:** T-FS-02 — Frontend: Vite + React + `useStream`
 
 ## Pinned Versions (established T-DA-01)
 
@@ -140,3 +140,5 @@ Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
 | 2026-10-08 | Completed | T-DA-08 — DDR Index Finalization + Phase Report                                                                            | reports/T-DA-08-report.md                                                       |
 | 2026-10-08 | Started   | T-FS-00 — Security Baseline: Use Case, Threat Model, and Auth Decision                                                     | —                                                                               |
 | 2026-10-08 | Completed | T-FS-00 — Security Baseline: Use Case, Threat Model, and Auth Decision                                                     | reports/T-FS-00-report.md                                                       |
+| 2026-10-08 | Started   | T-FS-01 — Backend: DeepAgents on LangGraph Server                                                                          | —                                                                               |
+| 2026-10-08 | Completed | T-FS-01 — Backend: DeepAgents on LangGraph Server                                                                          | reports/T-FS-01-report.md                                                       |
