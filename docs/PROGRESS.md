@@ -2,7 +2,7 @@
 
 ## Resume Point
 
-**Next action:** T-FS-02b — Deep Agents UI: Agent-Specific Features
+**Next action:** T-FS-03 — Production: Dockerfile + Deployment
 
 ## Pinned Versions (established T-DA-01)
 
@@ -145,3 +145,6 @@ Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
 | 2026-10-08 | Started   | T-FS-02 — Frontend: Vite + React + useStream                                                                               | —                                                                               |
 | 2026-10-08 | Completed | T-FS-02 — Frontend: Vite + React + useStream                                                                               | reports/T-FS-02-report.md                                                       |
 | 2026-10-08 | Refactor  | Monorepo restructure: src/ → apps/api/, packages/core/, experiments/, scripts/; 125/125 tests pass                         | 3 commits: feat/packages-core, feat/apps-api, refactor/restructure-src          |
+| 2026-10-08 | Started   | T-FS-02b — Deep Agents UI: Agent-Specific Features                                                                         | —                                                                               |
+| 2026-10-08 | Completed | T-FS-02b — Deep Agents UI: Agent-Specific Features                                                                         | reports/T-FS-02b-report.md                                                      |
+| 2026-10-08 | Updated   | T-FS-02b — DoD bullets verified; report corrected (85 tests, e2e gap noted, stop-bug + hooks-order bugs documented)        | reports/T-FS-02b-report.md                                                      |
