@@ -20,5 +20,5 @@ Index of all design decisions made in this project. Each DDR is a numbered file:
 | DDR-011 | Gemini Tool Schema Filtering via wrapModelCall                         | Superseded by DDR-012 | 2026-10-02 |
 | DDR-012 | Switch Primary Agent Model to OpenAI gpt-5.4-mini (T-DA-04)            | Accepted              | 2026-10-06 |
 | DDR-013 | Sub-agent Filesystem Middleware Must Be Injected Per-Run with Backend  | Accepted              | 2026-10-06 |
-| DDR-014 | (reserved for T-DA-07)                                                 | —                     | —          |
+| DDR-014 | DeepAgents vs Plain LangGraph — When Delegation Overhead Is Justified  | Accepted              | 2026-10-07 |
 | DDR-015 | PC Loop: Critic as `task`-Tool Sub-Agent with Hash-Guard Middleware    | Accepted              | 2026-10-07 |
