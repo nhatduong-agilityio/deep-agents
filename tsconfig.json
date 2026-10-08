@@ -14,8 +14,11 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "paths": {
+      "@deep-agents/core": ["./packages/core/src/index.ts"]
+    }
   },
-  "include": ["src/**/*", "benchmark/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["experiments/**/*", "packages/core/src/**/*", "scripts/**/*", "benchmark/**/*"],
+  "exclude": ["node_modules", "dist", "apps/**/*"]
 }

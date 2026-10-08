@@ -1,0 +1,19 @@
+{
+  "name": "api",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "langgraphjs dev",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@deep-agents/core": "workspace:*",
+    "@langchain/core": "1.2.14",
+    "@langchain/langgraph": "1.4.18",
+    "@langchain/langgraph-api": "1.5.1",
+    "@langchain/openai": "1.6.2",
+    "deepagents": "1.14.1",
+    "langchain": "1.5.15",
+    "zod": "4.6.5"
+  }
+}

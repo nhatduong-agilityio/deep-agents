@@ -1,0 +1,14 @@
+{
+  "name": "@deep-agents/core",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@langchain/core": "1.2.14",
+    "deepagents": "1.14.1",
+    "langsmith": "0.10.7",
+    "zod": "4.6.5"
+  }
+}

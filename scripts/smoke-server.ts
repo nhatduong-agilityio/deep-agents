@@ -20,7 +20,7 @@ try {
       process.stdout.write(`First event type: ${event.event}\n`);
     }
     // Stop after first meaningful response
-    if (event.event === 'on_chain_end') break;
+    if ((event.event as string) === 'on_chain_end') break;
     if (eventCount > 50) break;
   }
 } finally {

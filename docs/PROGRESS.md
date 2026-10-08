@@ -78,8 +78,8 @@ in parallel by default — sequential behaviour would require explicit coordinat
 implementer creates an object with `~handlerCache.authenticate(request: Request)`. This was
 the open VERIFY from the T-FS plan; it is now resolved.
 
-T-FS-01 creates `src/auth.ts` exporting `{ '~handlerCache': { authenticate, callbacks } }`.
-`langgraph.json` adds `"auth": { "path": "./src/auth.ts:auth", "disable_studio_auth": true }`.
+T-FS-01 creates `apps/api/src/auth.ts` exporting `{ '~handlerCache': { authenticate, callbacks } }`.
+`langgraph.json` adds `"auth": { "path": "./apps/api/src/auth.ts:auth", "disable_studio_auth": true }`.
 
 **T-FS-01 through T-FS-04 must cite DDR-016 for the auth approach.**
 
@@ -144,3 +144,4 @@ Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
 | 2026-10-08 | Completed | T-FS-01 — Backend: DeepAgents on LangGraph Server                                                                          | reports/T-FS-01-report.md                                                       |
 | 2026-10-08 | Started   | T-FS-02 — Frontend: Vite + React + useStream                                                                               | —                                                                               |
 | 2026-10-08 | Completed | T-FS-02 — Frontend: Vite + React + useStream                                                                               | reports/T-FS-02-report.md                                                       |
+| 2026-10-08 | Refactor  | Monorepo restructure: src/ → apps/api/, packages/core/, experiments/, scripts/; 125/125 tests pass                         | 3 commits: feat/packages-core, feat/apps-api, refactor/restructure-src          |

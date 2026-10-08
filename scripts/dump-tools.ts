@@ -1,8 +1,11 @@
-import { graph } from '../src/agent.js';
+import { graph } from '../apps/api/src/agent.js';
 
 // Collect tool names from all middleware
 const tools = (graph.options.middleware ?? []).flatMap((mw) =>
-  (mw.tools ?? []).map((t: { name: string }) => ({ name: t.name, middleware: mw.name })),
+  (mw.tools ?? []).map((t: { name?: string }) => ({
+    name: t.name ?? '(unnamed)',
+    middleware: mw.name,
+  })),
 );
 
 const toolNames = tools.map((t) => t.name);
