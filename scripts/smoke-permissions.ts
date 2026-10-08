@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { graph } from '../src/agent.js';
-import { analyzeAdversarialTrace } from '../src/experiments/critique/adversarial.js';
+import { graph } from '../apps/api/src/agent.js';
+import { analyzeAdversarialTrace } from '../experiments/critique/adversarial.js';
 
 const TARGET_VIRTUAL_PATH = '/skills/policy-report/SKILL.md';
 const diskPath = resolve(process.cwd(), 'skills/policy-report/SKILL.md');

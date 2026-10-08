@@ -1,6 +1,6 @@
 {
   "graphs": {
-    "agent": "./src/agent.ts:graph"
+    "agent": "./apps/api/src/agent.ts:graph"
   },
   "env": ".env",
   "node_version": "24",
@@ -10,7 +10,7 @@
     }
   },
   "auth": {
-    "path": "./src/auth.ts:auth",
+    "path": "./apps/api/src/auth.ts:auth",
     "disable_studio_auth": true
   }
 }

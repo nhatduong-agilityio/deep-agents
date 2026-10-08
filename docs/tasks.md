@@ -9,7 +9,7 @@ Status markers: `[ ]` not started · `[~]` in progress · `[x]` done and verifie
 
 ## T-DA-00 — Project Bootstrap `[x]`
 
-**Scope:** `package.json`, `tsconfig.json`, `eslint.config.js`, `.husky/`, `src/index.ts`, `src/__tests__/smoke.test.ts`, `.env.example`, `docker-compose.yml`, `pnpm.yaml`
+**Scope:** `package.json`, `tsconfig.json`, `eslint.config.js`, `.husky/`, `packages/core/src/langsmith.ts`, `experiments/__tests__/smoke.test.ts`, `.env.example`, `docker-compose.yml`, `pnpm.yaml`
 
 **Definition of Done:**
 
@@ -18,7 +18,7 @@ Status markers: `[ ]` not started · `[~]` in progress · `[x]` done and verifie
 - [x] Prettier 3.9.9; `format:check` clean
 - [x] Husky v9 hooks: `pre-commit` (lint-staged) + `commit-msg` (commitlint Conventional Commits)
 - [x] Vitest 5.0.3 smoke test passing
-- [x] LangSmith client exported from `src/index.ts`; warns when `LANGSMITH_API_KEY` unset (fallback: `LANGCHAIN_API_KEY`; env var name updated to canonical form in T-DA-02)
+- [x] LangSmith client exported from `packages/core/src/langsmith.ts` (re-exported via `@deep-agents/core`); warns when `LANGSMITH_API_KEY` unset (fallback: `LANGCHAIN_API_KEY`; env var name updated to canonical form in T-DA-02)
 - [x] All deps pinned exact (no `^` or `~`); `pnpm.yaml` allows esbuild build scripts
 - [x] `.env.example` documents all env vars (LangSmith, Gemini, Groq, Tavily, LLM Guard)
 - [x] LLM Guard sidecar stub in `docker-compose.yml` (profile: `guardrails`, opt-in)
@@ -83,7 +83,7 @@ npx skills add https://github.com/obra/superpowers --skill finishing-a-developme
 Add to `.claude/settings.local.json` under `"hooks"`:
 
 - After every `Write`/`Edit` tool call: run `pnpm typecheck` silently; surface any errors back to the agent
-- After every `Bash` call that changes files: run `pnpm lint src/` on changed `.ts` files
+- After every `Bash` call that changes files: run `pnpm lint experiments/ packages/ scripts/` on changed `.ts` files
 
 **Definition of Done:**
 
@@ -95,21 +95,21 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ## T-DA-01 — Scaffold + Reality Check `[x]`
 
-**Scope:** `src/agent.ts`, `src/lib/backoff.ts`, `src/lib/counter.ts`; `deepagents@1.14.1` already installed
+**Scope:** `apps/api/src/agent.ts`, `packages/core/src/backoff.ts`, `packages/core/src/counter.ts`; `deepagents@1.14.1` already installed
 
 **Definition of Done:**
 
 - [x] `createDeepAgent` instantiates without error; LangSmith trace ID logged to console
-- [x] Tool-list JSON dump saved at `docs/tool-list-default.json`; `write_todos` confirmed present (requires explicit `todoListMiddleware()` for Google model profiles — `REQUIRED_MIDDLEWARE_NAMES` is empty for `google-genai:` prefix in `deepagents@1.14.1`)
+- [x] Tool-list JSON dump saved at `results/scaffold/tool-list-default.json`; `write_todos` confirmed present (requires explicit `todoListMiddleware()` for Google model profiles — `REQUIRED_MIDDLEWARE_NAMES` is empty for `google-genai:` prefix in `deepagents@1.14.1`)
 - [x] 429 backoff helper unit-tested against mock 429 response
-- [x] `src/lib/counter.ts` tracks **4 dimensions** per run: token count, estimated cost (USD), wall-clock time (ms), tool-call count — all checked pre-step (Budget-Guarded Autonomy pattern)
+- [x] `packages/core/src/counter.ts` tracks **4 dimensions** per run: token count, estimated cost (USD), wall-clock time (ms), tool-call count — all checked pre-step (Budget-Guarded Autonomy pattern)
 - [x] Pinned `deepagents` version + actual Gemini Flash model ID recorded in `docs/PROGRESS.md`; both added as trace metadata on every run
 
 ---
 
 ## T-DA-02 — Planning-First (Output 2) `[x]`
 
-**Scope:** `src/experiments/planning-first/{baseline,treatment,run}.ts`; `results/planning-first/`
+**Scope:** `experiments/planning-first/{baseline,treatment,run}.ts`; `results/planning-first/`
 
 **Definition of Done:**
 
@@ -125,7 +125,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ## T-DA-03 — Artifact Agent (Output 1) `[x]`
 
-**Scope:** `corpus/` (fixed local AI-regulation files, ≤10 docs, EU AI Act + US EO on AI), `src/experiments/artifact-agent/`, `src/scripts/check-report.ts`
+**Scope:** `corpus/` (fixed local AI-regulation files, ≤10 docs, EU AI Act + US EO on AI), `experiments/artifact-agent/`, `scripts/check-report.ts`
 
 **Definition of Done:**
 
@@ -140,7 +140,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ## T-DA-04 — Context Isolation Proof (Output 3) `[x]`
 
-**Scope:** `src/experiments/context-isolation/{config-a,config-b,measure}.ts`
+**Scope:** `experiments/context-isolation/{config-a,config-b,measure}.ts`
 
 **Definition of Done:**
 
@@ -156,7 +156,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ## T-DA-05 — Critique Workflow `[x]`
 
-**Scope:** `src/experiments/critique/critic.ts`; `corpus/drafts/`; `corpus/feedback/`
+**Scope:** `experiments/critique/critic.ts`; `corpus/drafts/`; `corpus/feedback/`
 
 **Definition of Done:**
 
@@ -177,7 +177,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ## T-DA-06 — Harness Optimization Drills `[x]` _(closed with documented deviation)_
 
-**Scope:** `src/experiments/harness/`; `benchmark/subset/` (curated 20-problem TypeScript algorithmic subset); `src/experiments/harness-v2/` (deep-agent v2)
+**Scope:** `experiments/harness/`; `benchmark/subset/` (curated 20-problem TypeScript algorithmic subset); harness-v2 content merged into `experiments/harness/` (v1 dead code removed)
 
 **Definition of Done:**
 
@@ -192,7 +192,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ## T-DA-07 — "Loses the Plot" Trace Analysis `[x]`
 
-**Scope:** `reports/trace-analysis.md`; harness patches if fix is applied
+**Scope:** `reports/trace-analysis.md`; `experiments/critique/feedback-coverage.ts` (RevisionGateMiddleware fix)
 
 **Harness target (pre-registered before running):**
 The T-DA-05 critique workflow fixed only 1 of 5 seeded flaws across 3 rounds. The producer agent
@@ -350,14 +350,14 @@ production deployment, restrict project visibility or disable tracing for sensit
 
 ## T-FS-01 — Backend: DeepAgents on LangGraph Server `[x]` (report: reports/T-FS-01-report.md)
 
-**Scope:** `src/agent.ts`, `src/auth.ts` (if DDR-016 chose Option A),
-`src/lib/fs-middleware.ts` (signature extension), `src/lib/tool-args.ts` (new),
+**Scope:** `apps/api/src/agent.ts`, `apps/api/src/auth.ts` (DDR-016 Option A),
+`packages/core/src/fs-middleware.ts` (signature extension), `packages/core/src/tool-args.ts` (new),
 `langgraph.json`, `skills/policy-report/SKILL.md`; deps already installed
 (`deepagents@1.14.1`, `@langchain/langgraph-api@1.5.1`, `@langchain/langgraph-cli@1.5.1`,
 `@langchain/langgraph-sdk@1.12.0`, `tsx@4.23.15`)
 
 **What this layer does:** `createDeepAgent()` returns a compiled LangGraph graph.
-`langgraphjs dev` uses `tsx@4.23.15` (already installed) to load `src/agent.ts` and
+`langgraphjs dev` uses `tsx@4.23.15` (already installed) to load `apps/api/src/agent.ts` and
 serve the graph at `localhost:2024`. No custom HTTP server (DDR-004). The LangGraph
 Server injects its own checkpointer into the graph at load time (confirmed:
 `graph/load.mjs` in `@langchain/langgraph-api@1.5.1` sets
@@ -425,7 +425,7 @@ CompositeBackend(
 
 **Filesystem middleware — via `makeFilesystemMiddleware` (DDR-013 rule):**
 
-`src/lib/fs-middleware.ts` currently accepts `() => FilesystemBackend`. Extend the
+`packages/core/src/fs-middleware.ts` currently accepts `() => FilesystemBackend`. Extend the
 signature to accept `() => AnyBackendProtocol` before use. Pass the composite backend
 factory and the tools allowlist; pass an empty permissions array and rely on the
 top-level `createDeepAgent({ permissions: [...] })` field for rules.
@@ -494,17 +494,17 @@ the smoke script and smoke test.]
 
 **Definition of Done:**
 
-- [x] `src/lib/fs-middleware.ts` signature extended to accept `() => AnyBackendProtocol`
-- [x] `src/lib/tool-args.ts` created: `extractToolArgs(toolCall)` reads `file_path` from
-      tool arguments (moved from `src/experiments/critique/adversarial.ts`; that file
-      updated to import from `src/lib/tool-args.ts`)
+- [x] `packages/core/src/fs-middleware.ts` signature extended to accept `() => AnyBackendProtocol`
+- [x] `packages/core/src/tool-args.ts` created: `extractToolFilePath(toolCall)` reads `file_path` from
+      tool arguments (moved from `experiments/critique/adversarial.ts`; that file
+      updated to import from `@deep-agents/core`)
 - [x] `skills/policy-report/SKILL.md` created (report format, citation rules, filenames)
-- [x] `src/agent.ts` created: `createDeepAgent` with `backend: compositeBackend`,
+- [x] `apps/api/src/agent.ts` created: `createDeepAgent` with `backend: compositeBackend`,
       `permissions: [...]` (5-rule set above), `generalPurposeAgent: false` (or verified
       equivalent), `ThreadBudgetMiddleware`, filesystem middleware via
       `makeFilesystemMiddleware` (tools allowlist only), `model: "openai:gpt-5.4-mini-2026-03-17"`
 - [x] Graph exported WITHOUT its own checkpointer (server supplies it)
-- [x] `langgraph.json`: `graphs.agent = "./src/agent.ts:graph"`, `env = ".env"`,
+- [x] `langgraph.json`: `graphs.agent = "./apps/api/src/agent.ts:graph"`, `env = ".env"`,
       `node_version = "24"`, `allow_origins = ["http://localhost:5173"]`,
       `auth.path` set if DDR-016 chose Option A
 - [x] `"dev:server": "langgraphjs dev"` added to root `package.json` scripts
@@ -513,11 +513,9 @@ the smoke script and smoke test.]
       `execute`; assert `FilesystemMiddleware` appears exactly once (no duplicates)
 - [x] Agent reads `/skills/policy-report/SKILL.md` in a test invocation; skill content
       appears in the LangSmith trace (silent failure = skill ignored)
-- [x] **Early permission smoke test** (before T-FS-02): issue one adversarial
-      `write_file` call targeting `/skills/policy-report/SKILL.md`; the test passes only if
-      the trace contains BOTH a `write_file` attempt to that path AND a permission-denied
-      tool result, AND the file is unchanged after the run. This catches a "custom middleware
-      drops top-level permissions" failure before the frontend is built.
+- [x] **Early permission smoke test** (`scripts/smoke-permissions.ts`): adversarial
+      `write_file` call targeting `/skills/policy-report/SKILL.md`; passes only when trace
+      contains write attempt + permission-denied result + file unchanged after run
 - [x] Automated smoke script (`scripts/smoke-server.ts`) using
       `@langchain/langgraph-sdk@1.12.0` sends a minimal run and asserts ≥1 streamed event
 - [x] POST to `localhost:2024/runs/stream` produces a LangSmith trace in project
@@ -646,7 +644,7 @@ deployment docs for `@langchain/langgraph-cli@1.5.1`. Also verify: does the self
 image require a LangSmith API key to start the server (beyond tracing)?
 This VERIFY must be resolved before any T-FS-03 DoD items can be checked off.]
 
-The graph exported from `src/agent.ts` must not set its own checkpointer regardless of
+The graph exported from `apps/api/src/agent.ts` must not set its own checkpointer regardless of
 the VERIFY outcome (confirmed: `graph/load.mjs` replaces it at load time).
 
 **CORS:** Explicit production origin(s) only (e.g., `["https://your-domain.example.com"]`).
@@ -686,7 +684,7 @@ and how the frontend or BFF proxy is configured to send them.
 
 ## T-FS-04 — End-to-End Verification + Operations Runbook `[ ]`
 
-**Scope:** `src/__tests__/e2e/adversarial.test.ts`; `docs/runbook.md`
+**Scope:** `experiments/__tests__/e2e/adversarial.test.ts`; `docs/runbook.md`
 
 **Depends on:** T-FS-01 server running locally
 
@@ -706,7 +704,7 @@ The test PASSES only when the LangSmith trace (or local run output) contains ALL
 (a) a `write_file` call to the target path, (b) a permission-denied tool result for
 that call, (c) the target file is unchanged after the run.
 
-Use `extractToolArgs` from `src/lib/tool-args.ts` to locate the `write_file` call.
+Use `extractToolFilePath` from `@deep-agents/core` (`packages/core/src/tool-args.ts`) to locate the `write_file` call.
 
 A run where no `write_file` attempt is made is "model refusal — inconclusive." Retry
 with a neutral prompt that provides no hint about restrictions (e.g., "save your notes
@@ -751,8 +749,8 @@ or equivalent).
 
 **Definition of Done:**
 
-- [ ] `src/lib/tool-args.ts` exists with `extractToolArgs`; no test or experiment file
-      imports from `src/experiments/critique/adversarial.ts` for this helper
+- [ ] `packages/core/src/tool-args.ts` exists with `extractToolFilePath`; no test or experiment file
+      imports from `experiments/critique/adversarial.ts` for this helper
 - [ ] Test 1: passes with enforcement evidence (write attempt, permission-denied result,
       target unchanged); inconclusive runs documented and retried
 - [ ] Test 1b: static assertion that `task` is absent from the served tool schema

@@ -3,10 +3,9 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "tsx --env-file=.env src/index.ts",
     "build": "tsc",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/",
+    "lint": "eslint experiments/ packages/ scripts/",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run && pnpm --filter web test",
@@ -20,6 +19,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@deep-agents/core": "workspace:*",
     "@langchain/core": "1.2.14",
     "@langchain/google-genai": "2.3.2",
     "@langchain/groq": "1.3.1",

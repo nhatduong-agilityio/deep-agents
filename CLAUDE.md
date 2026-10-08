@@ -9,13 +9,15 @@ by 2026-10-16 using the `deepagents` harness on LangGraph.
 ## Commands
 
 ```bash
-pnpm dev              # run src/index.ts with .env loaded
 pnpm typecheck        # tsc --noEmit (run before every commit)
-pnpm lint             # eslint src/
-pnpm test             # vitest run
+pnpm lint             # eslint experiments/ packages/ scripts/
+pnpm test             # vitest run (root) + pnpm --filter web test
 pnpm format           # prettier --write .
 pnpm dev:server       # langgraphjs dev → serves agent at localhost:2024 (T-FS-01+)
 pnpm dev:web          # pnpm --filter web dev → Vite frontend (T-FS-02+)
+pnpm dump-tools       # tsx scripts/dump-tools.ts — assert tool list
+pnpm smoke-server     # tsx scripts/smoke-server.ts — live server smoke test
+pnpm smoke-permissions # tsx scripts/smoke-permissions.ts — permission enforcement
 ```
 
 ## Task workflow
@@ -82,25 +84,53 @@ Current resume point: see `docs/PROGRESS.md`.
 ## File map
 
 ```
-src/
-  index.ts          ← LangSmith client (shared, import from here)
-  agent.ts          ← createDeepAgent export for LangGraph Server (T-FS-01)
-  lib/
+apps/
+  api/src/
+    agent.ts        ← createDeepAgent export for LangGraph Server (T-FS-01)
+    auth.ts         ← custom auth handler (DDR-016, Option A)
+  web/src/
+    App.tsx         ← chat UI: useStream, 7 features (T-FS-02)
+    __tests__/      ← React Testing Library component tests
+    e2e/            ← Playwright end-to-end tests
+packages/
+  core/src/
+    index.ts        ← barrel: re-exports all shared utilities as @deep-agents/core
     backoff.ts      ← exponential backoff on 429 (T-DA-01)
     counter.ts      ← 4-dimension run counter: tokens/cost/time/tool-calls (T-DA-01)
-  experiments/      ← one folder per task T-DA-02 through T-DA-07
-  scripts/          ← deterministic checker scripts (T-DA-03)
-  __tests__/        ← vitest tests
+    fs-middleware.ts ← makeFilesystemMiddleware (accepts AnyBackendProtocol)
+    langsmith.ts    ← LangSmith client (shared, import from @deep-agents/core)
+    subagents.ts    ← RESEARCH_SUBAGENT, SUBAGENTS constants
+    tool-args.ts    ← extractToolFilePath helper (moved from critique/adversarial)
+experiments/
+  __tests__/        ← vitest tests (all experiment unit tests)
+  artifact-agent/   ← T-DA-03 artifact agent + run script
+  context-isolation/ ← T-DA-04 config-a, config-b, measure
+  critique/         ← T-DA-05 critic, producer, supervisor, hash-guard, feedback-coverage
+  harness/          ← T-DA-06 v2 deep-agent harness + context-pruning (v1 merged)
+  planning-first/   ← T-DA-02 baseline, treatment, run
+  scaffold/         ← T-DA-01 scaffold run + smoke
+  trace-analysis/   ← T-DA-07 scorer + run
+  tsconfig.json     ← extends root tsconfig; rootDir=..
+scripts/
+  check-report.ts   ← deterministic report checker (T-DA-03)
+  dump-subagents.ts ← dump sub-agent specs
+  dump-tools.ts     ← tool-list assertions (execute absent, FilesystemMiddleware×1)
+  render-diagrams.mjs ← Mermaid → PNG
+  smoke-permissions.ts ← permission enforcement smoke test (T-FS-01)
+  smoke-server.ts   ← LangGraph Server SSE smoke test
 corpus/             ← fixed AI-regulation docs (EU AI Act, US EO) — T-DA-03
 benchmark/          ← 20-problem TS subset — T-DA-06
-apps/web/           ← Vite React frontend (T-FS-02)
+skills/
+  policy-report/SKILL.md ← report format, citation rules (T-FS-01)
+results/            ← per-experiment JSON results
 docs/
   tasks.md          ← canonical task list with DoD
   PROGRESS.md       ← resume point + activity log
-  decisions/        ← DDR-001 through DDR-010
+  decisions/        ← DDR-001 through DDR-016
   CODING-STANDARDS.md
+  security.md       ← threat model, path policy, auth decision (T-FS-00)
 reports/            ← task reports + phase report
-langgraph.json      ← LangGraph Server manifest (T-FS-01)
+langgraph.json      ← LangGraph Server manifest (points to apps/api/src/agent.ts)
 ```
 
 ## Coding conventions

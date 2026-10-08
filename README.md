@@ -28,14 +28,16 @@ TypeScript + DeepAgents curriculum project. Demonstrates agentic AI patterns on 
 ## Commands
 
 ```bash
-pnpm dev              # run src/index.ts with .env loaded
 pnpm typecheck        # tsc --noEmit
-pnpm lint             # eslint src/
-pnpm test             # vitest run
+pnpm lint             # eslint experiments/ packages/ scripts/
+pnpm test             # vitest run (root) + pnpm --filter web test
 pnpm format           # prettier --write .
 pnpm diagrams         # render docs/diagrams/*.md → docs/diagrams/img/*.svg
-pnpm dev:server       # langgraphjs dev → localhost:2024 (T-FS-01+)
-pnpm dev:web          # pnpm --filter web dev → Vite frontend (T-FS-02+)
+pnpm dev:server       # langgraphjs dev → localhost:2024
+pnpm dev:web          # pnpm --filter web dev → Vite frontend (localhost:5173)
+pnpm dump-tools       # assert tool list (execute absent, FilesystemMiddleware×1)
+pnpm smoke-server     # live LangGraph Server SSE smoke test
+pnpm smoke-permissions # permission enforcement smoke test
 ```
 
 ## Task progress
@@ -49,44 +51,63 @@ pnpm dev:web          # pnpm --filter web dev → Vite frontend (T-FS-02+)
 | T-DA-02   | Planning-First (Output 2)          | `[x]`  |
 | T-DA-03   | Artifact Agent (Output 1)          | `[x]`  |
 | T-DA-04   | Context Isolation Proof (Output 3) | `[x]`  |
-| T-DA-05   | Critique Workflow                  | `[ ]`  |
-| T-DA-06   | Harness Optimization Drills        | `[ ]`  |
-| T-DA-07   | Trace Analysis                     | `[ ]`  |
-| T-DA-08   | DDR Index + Phase Report           | `[ ]`  |
-| T-FS-01   | LangGraph Server backend           | `[ ]`  |
-| T-FS-02   | React + `useStream` frontend       | `[ ]`  |
+| T-DA-05   | Critique Workflow                  | `[x]`  |
+| T-DA-06   | Harness Optimization Drills        | `[x]`  |
+| T-DA-07   | Trace Analysis                     | `[x]`  |
+| T-DA-08   | DDR Index + Phase Report           | `[x]`  |
+| T-FS-00   | Security Baseline + Auth Decision  | `[x]`  |
+| T-FS-01   | LangGraph Server backend           | `[x]`  |
+| T-FS-02   | React + `useStream` frontend       | `[x]`  |
+| T-FS-02b  | Deep Agents UI: Agent Features     | `[ ]`  |
 | T-FS-03   | Dockerfile + Deployment            | `[ ]`  |
+| T-FS-04   | E2E Verification + Runbook         | `[ ]`  |
 
 ## Directory structure
 
 ```
-src/
-  index.ts                    ← LangSmith client (shared)
-  agent.ts                    ← createDeepAgent export for LangGraph Server
-  lib/
+apps/
+  api/src/
+    agent.ts                  ← createDeepAgent + ThreadBudgetMiddleware
+    auth.ts                   ← custom auth handler (DDR-016)
+  web/src/
+    App.tsx                   ← chat UI: useStream, 7 features (T-FS-02)
+    __tests__/                ← React Testing Library tests (9 tests)
+    e2e/                      ← Playwright end-to-end tests
+packages/
+  core/src/                   ← @deep-agents/core — shared utilities
     backoff.ts                ← exponential backoff on 429
     counter.ts                ← 4-dimension run counter (tokens/cost/ms/calls)
-    fs-middleware.ts          ← makeFilesystemMiddleware — per-run backend injection
+    fs-middleware.ts          ← makeFilesystemMiddleware (AnyBackendProtocol)
+    langsmith.ts              ← LangSmith client
     subagents.ts              ← RESEARCH_SUBAGENT + SUBAGENTS list
-  experiments/
-    planning-first/           ← T-DA-02: baseline + treatment runs
-    artifact-agent/           ← T-DA-03 + T-DA-04: agent, checker, run scripts
-    context-isolation/        ← T-DA-04: config-a, config-b, measure, adversarial
-  scripts/
-    check-report.ts           ← deterministic artifact checker
-    dump-subagents.ts         ← sub-agent spec inspector
-  __tests__/                  ← vitest tests (43 tests)
+    tool-args.ts              ← extractToolFilePath helper
+experiments/
+  __tests__/                  ← vitest tests (116 tests)
+  artifact-agent/             ← T-DA-03: agent + run script
+  context-isolation/          ← T-DA-04: config-a, config-b, measure
+  critique/                   ← T-DA-05: critic, producer, supervisor, hash-guard
+  harness/                    ← T-DA-06: deep-agent harness + context-pruning
+  planning-first/             ← T-DA-02: baseline + treatment runs
+  scaffold/                   ← T-DA-01: scaffold run + smoke
+  trace-analysis/             ← T-DA-07: scorer + run
+scripts/
+  check-report.ts             ← deterministic artifact checker
+  dump-tools.ts               ← tool-list assertions
+  smoke-server.ts             ← LangGraph Server SSE smoke test
+  smoke-permissions.ts        ← permission enforcement smoke test
 corpus/                       ← fixed AI-regulation docs (EU AI Act, US EO)
+skills/policy-report/         ← agent skill: report format + citation rules
+benchmark/                    ← 20-problem TS subset (T-DA-06)
 results/                      ← JSON run logs per experiment
-reports/                      ← task reports (T-DA-01 through T-DA-04)
+reports/                      ← task reports (T-DA-00.1 through T-FS-02)
 docs/
   tasks.md                    ← canonical task list with DoD
   PROGRESS.md                 ← resume point + activity log
-  decisions/                  ← DDR-001 through DDR-013
+  decisions/                  ← DDR-001 through DDR-016
   diagrams/                   ← Mermaid diagrams + rendered SVGs
+  security.md                 ← threat model, path policy, auth decision
   CODING-STANDARDS.md
-apps/web/                     ← Vite React frontend (T-FS-02, not started)
-langgraph.json                ← LangGraph Server manifest (T-FS-01, not started)
+langgraph.json                ← LangGraph Server manifest (apps/api/src/agent.ts)
 ```
 
 ## Key constraints

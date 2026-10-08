@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@deep-agents/core':
+        specifier: workspace:*
+        version: link:packages/core
       '@langchain/core':
         specifier: 1.2.14
         version: 1.2.14(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.28.0(undici@8.11.2)(ws@8.22.0)(zod@4.6.5))(ws@8.22.0)
@@ -85,6 +88,33 @@ importers:
         specifier: 5.0.3
         version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(jsdom@30.1.2)(vite@8.3.3(@types/node@26.6.4)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
+  apps/api:
+    dependencies:
+      '@deep-agents/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@langchain/core':
+        specifier: 1.2.14
+        version: 1.2.14(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.28.0(undici@8.11.2)(ws@8.22.0)(zod@4.6.5))(ws@8.22.0)
+      '@langchain/langgraph':
+        specifier: 1.4.18
+        version: 1.4.18(@langchain/core@1.2.14(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.28.0(undici@8.11.2)(ws@8.22.0)(zod@4.6.5))(ws@8.22.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(zod@4.6.5)
+      '@langchain/langgraph-api':
+        specifier: 1.5.1
+        version: 1.5.1(a8d9f515bacf4efeb1fc1a19e9303fda)
+      '@langchain/openai':
+        specifier: 1.6.2
+        version: 1.6.2(@langchain/core@1.2.14(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.28.0(undici@8.11.2)(ws@8.22.0)(zod@4.6.5))(ws@8.22.0))(undici@8.11.2)(ws@8.22.0)
+      deepagents:
+        specifier: 1.14.1
+        version: 1.14.1(76f6175d12a1edc84108283e77ead708)
+      langchain:
+        specifier: 1.5.15
+        version: 1.5.15(@langchain/core@1.2.14(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.28.0(undici@8.11.2)(ws@8.22.0)(zod@4.6.5))(ws@8.22.0))(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.28.0(undici@8.11.2)(ws@8.22.0)(zod@4.6.5))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(ws@8.22.0)
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
+
   apps/web:
     dependencies:
       '@langchain/core':
@@ -136,6 +166,21 @@ importers:
       vitest:
         specifier: 5.0.3
         version: 5.0.3(@opentelemetry/api@1.9.1)(@types/node@26.6.4)(jsdom@30.1.2)(vite@8.3.3(@types/node@26.6.4)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/core:
+    dependencies:
+      '@langchain/core':
+        specifier: 1.2.14
+        version: 1.2.14(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.28.0(undici@8.11.2)(ws@8.22.0)(zod@4.6.5))(ws@8.22.0)
+      deepagents:
+        specifier: 1.14.1
+        version: 1.14.1(76f6175d12a1edc84108283e77ead708)
+      langsmith:
+        specifier: 0.10.7
+        version: 0.10.7(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.11.0(@opentelemetry/api@1.9.1))(openai@7.28.0(undici@8.11.2)(ws@8.22.0)(zod@4.6.5))(ws@8.22.0)
+      zod:
+        specifier: 4.6.5
+        version: 4.6.5
 
 packages:
 
