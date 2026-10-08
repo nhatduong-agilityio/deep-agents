@@ -243,75 +243,522 @@ DDRs are written inline during their respective experiment tasks (see DoD items 
 
 ---
 
-## T-FS-01 — Backend: DeepAgents on LangGraph Server
+## T-FS-00 — Security Baseline: Use Case, Threat Model, and Auth Decision `[ ]`
 
-**Scope:** `src/agent.ts`, `langgraph.json`; deps already installed (`deepagents`, `@langchain/langgraph-api`, `@langchain/langgraph-cli`, `@langchain/langgraph-sdk`, `@langchain/langgraph-checkpoint`)
+**Scope:** `docs/security.md`; `docs/decisions/DDR-016-auth-strategy.md`
 
-**What this layer does:** `createDeepAgent()` returns a compiled LangGraph graph. `langgraphjs dev` uses `tsx` (already in the project) to load `src/agent.ts` and serve the graph at `localhost:2024` — no custom HTTP server needed.
+**Why this task comes first:** T-FS-01 through T-FS-04 each require a settled auth model,
+a known secrets policy, a trace data policy, and a default per-thread cost budget.
+Deciding these after the fact creates rework.
+
+**Concrete use case:** A policy analyst asks a question about AI regulation (EU AI Act,
+US EO 14110) and receives a multi-file report: `/report/summary.md`,
+`/report/findings/*.md`, `/report/sources.md`, citing files from the bundled
+`/corpus/` directory.
+
+**Tools the use case requires:**
+
+- `read_file`, `ls`, `glob`, `grep` — reading and searching `/corpus/**` and `/skills/**`
+- `write_file` — writing `/report/**` and `/notes/**` (scratchpad)
+- `write_todos` — planning the report structure (PTR pattern)
+
+Excluded from v1: `task` (sub-agent delegation — see T-FS-01); `execute`; `delete`;
+`edit_file`. A `task` tool in the tool-list dump is a misconfiguration.
+
+**Path policy:**
+
+- Read allowed: `/corpus/**`, `/skills/**`
+- Write allowed: `/report/**`, `/notes/**`
+- Write denied everywhere else (including `/skills/**`, `/corpus/**`)
+
+**Skills:** `skills/policy-report/SKILL.md` — defines the report format (required
+sections, citation style, filename conventions). The agent reads this before starting.
+
+**Acceptance criteria (user's view):** The report renders in the UI, every finding in
+`/report/findings/*.md` cites a filename from `/corpus/`, the run stays within the
+per-thread cost budget, and no write appears outside `/report/**` or `/notes/**` in
+the LangSmith trace.
+
+**Threat model — three top risks:**
+
+1. **Prompt injection** — crafted user message instructs the agent to call `write_file`
+   on arbitrary paths (e.g., `/skills/policy-report/SKILL.md`, `/agent.ts`). Mitigation:
+   filesystem permissions block out-of-scope writes at the middleware layer; adversarial
+   smoke test in T-FS-01 and full adversarial suite in T-FS-04 provide enforcement evidence.
+
+2. **Cost abuse** — no per-thread cost cap lets a stuck or malicious conversation exhaust
+   the OpenAI quota. Mitigation: per-thread cumulative cost counter stored in thread state
+   (input + output tokens, priced at DDR-012 rates: $0.75/M input, $4.50/M output);
+   further model calls blocked once the budget is exceeded; monthly hard limit set in
+   OpenAI project settings.
+
+3. **Data exposure** — `VITE_*` env vars are baked into the Vite JS bundle at build time
+   and are public to any browser user. `OPENAI_API_KEY`, `LANGSMITH_API_KEY`, and any
+   other secret must never appear in a `VITE_*` var. In production the browser
+   communicates only with a server-side endpoint; the server holds all secrets.
+
+**Production request path (both auth options):**
+`browser → [auth layer: Option A handler or Option B BFF proxy] → LangGraph Server → OpenAI`
+
+In local dev the browser talks to `localhost:2024` directly (no auth layer). A static
+shared API key in the browser is NOT an acceptable option for production under any option.
+
+**Auth options:**
+
+- **Option A — LangGraph Server custom auth with short-lived per-user tokens:** The
+  user signs in with an identity provider; the browser holds only a short-lived JWT
+  scoped to that user. LangGraph Server registers a custom auth handler via
+  `registerAuth(auth)` (confirmed exported in `@langchain/langgraph-api@1.5.1`
+  `auth/index.mjs`; `langgraph.json` `auth.path` field confirmed in
+  `@langchain/langgraph-cli@1.5.1`). The handler validates the token on every request
+  and scopes thread access to that user.
+  [VERIFY: What is the `Auth` class and how is it constructed? `registerAuth` expects
+  an object with `~handlerCache`; the `Auth` class itself is not in the installed dist.
+  Check official LangGraph JS auth docs for `@langchain/langgraph-api@1.5.1`.]
+
+- **Option B — BFF/reverse proxy:** The browser talks to a thin server that validates
+  the user session, holds all secrets, applies per-user rate limits, and forwards
+  requests to LangGraph Server over a private network. LangGraph Server is not publicly
+  accessible.
+
+Settle Option A vs B in DDR-016. If the `Auth` class VERIFY above cannot be resolved
+before T-FS-01 starts, default to Option B.
+
+**Per-thread cost budget:** Default `THREAD_BUDGET_USD=0.10` (≈ 133K input tokens or
+≈ 22K output tokens at DDR-012 rates; sufficient for 10+ full report runs). Output
+costs 6× input so both must be counted: `cost = inputTokens * 0.00000075 + outputTokens * 0.0000045`.
+Configurable via env var so T-FS-04 Test 2 can set a small value (e.g., `THREAD_BUDGET_USD=0.002`).
+
+**User-facing behaviour when budget is exceeded:** The server returns a structured error
+with code `THREAD_BUDGET_EXCEEDED`. The frontend shows: "This conversation has reached
+its cost limit — please start a new thread." T-FS-02 matches on the error code, not
+message text.
+
+**Trace data policy:** LangSmith traces contain the full agent message history. For this
+curriculum project (no real user PII), tracing is on in all environments. For a real-user
+production deployment, restrict project visibility or disable tracing for sensitive threads.
 
 **Definition of Done:**
 
-- [ ] `src/agent.ts` created: `createDeepAgent({ model, backend: new StateBackend(), systemPrompt })` exported as `graph`
-- [ ] `gpt-5.4-mini-2026-03-17` used as model (matches measured experiments — DDR-012; pinned snapshot required for reproducibility)
-- [ ] `StateBackend` chosen for file storage (in-memory per thread, no disk writes — Filesystem as Context pattern)
-- [ ] `skills/` directory created alongside `src/agent.ts`; at least one `SKILL.md` (e.g., `skills/corpus-search/SKILL.md`) passed to `createDeepAgent({ skills: [...] })` (Agent Skills pattern)
-- [ ] `langgraph.json` created: `graphs.agent = "./src/agent.ts:graph"`, `env = ".env"`, `node_version = "20"`, CORS `allow_origins = ["http://localhost:5173"]`
-- [ ] `"dev:server": "langgraphjs dev"` added to root `package.json` scripts
-- [ ] `langgraphjs dev` starts without error; `GET http://localhost:2024/info` returns 200
-- [ ] POST to `localhost:2024/runs/stream` triggers a LangSmith trace (visible in project `deep-agents-phase`)
-
-**Key facts (verified during research):**
-
-- `deepagents` has zero runtime imports from `langsmith` — peer-dep mismatch (`<0.10.0` vs installed `0.10.7`) is safe to ignore
-- `REQUIRED_MIDDLEWARE_NAMES` is **empty** for `google-genai:` model profiles — `write_todos` is NOT built-in; add `todoListMiddleware()` explicitly (verified T-DA-01; contradicts earlier research note)
-- `langgraphjs dev` default loader = `tsx`; our `tsx@4.23.15` is picked up automatically
+- [ ] `docs/security.md` written: use case, path policy, threat model (3 risks with
+      mitigations), trace data policy, per-thread cost budget formula and default
+- [ ] `VITE_*` audit: confirm no API key appears in any `VITE_*` var in `.env.example`
+- [ ] DDR-016 created: auth option chosen, option rejected, reason, VERIFY items resolved
+- [ ] Auth decision referenced in `docs/PROGRESS.md` so T-FS-01 through T-FS-04 can cite it
 
 ---
 
-## T-FS-02 — Frontend: Vite + React + `useStream`
+## T-FS-01 — Backend: DeepAgents on LangGraph Server `[ ]`
+
+**Scope:** `src/agent.ts`, `src/auth.ts` (if DDR-016 chose Option A),
+`src/lib/fs-middleware.ts` (signature extension), `src/lib/tool-args.ts` (new),
+`langgraph.json`, `skills/policy-report/SKILL.md`; deps already installed
+(`deepagents@1.14.1`, `@langchain/langgraph-api@1.5.1`, `@langchain/langgraph-cli@1.5.1`,
+`@langchain/langgraph-sdk@1.12.0`, `tsx@4.23.15`)
+
+**What this layer does:** `createDeepAgent()` returns a compiled LangGraph graph.
+`langgraphjs dev` uses `tsx@4.23.15` (already installed) to load `src/agent.ts` and
+serve the graph at `localhost:2024`. No custom HTTP server (DDR-004). The LangGraph
+Server injects its own checkpointer into the graph at load time (confirmed:
+`graph/load.mjs` in `@langchain/langgraph-api@1.5.1` sets
+`compiled.checkpointer = checkpointer`); the graph must not set its own checkpointer.
+
+### Sub-agents — Option (a): disabled in v1
+
+The default general-purpose sub-agent introduces two unsolved problems before the server
+is running: (1) sub-agents do not inherit parent middleware (DDR-013), so a
+prompt-injected delegation bypasses filesystem permission enforcement; (2) sub-agent
+tokens are not counted by a main-agent cost middleware. Fixing both requires injecting
+matching middleware into every sub-agent at run construction time, adding complexity
+before the baseline is proven.
+
+Decision: disable the general-purpose sub-agent. `task` must be absent from the tool list.
+
+[VERIFY: how to disable the general-purpose sub-agent in `createDeepAgent` in
+deepagents 1.14.1. `generalPurposeAgent` is NOT in `CreateDeepAgentParams` (confirmed
+absent). It IS in `SubAgentMiddlewareOptions`. Check whether passing
+`createSubAgentMiddleware({ generalPurposeAgent: false })` in the `middleware` array
+disables it, or whether `subagents: []` suppresses it, or another mechanism exists.]
+
+For v2 (after T-FS-01 closes): `CreateDeepAgentParams.permissions` has a confirmed
+top-level field — "Subagents inherit these rules unless they specify their own
+`permissions` field" (verified in `agent-CxEdojMv.d.ts`). When sub-agents are added,
+permissions propagate automatically from `createDeepAgent({ permissions: [...] })`.
+
+**Key facts verified against deepagents 1.14.1 `dist/agent-CxEdojMv.d.ts`:**
+
+- `new StateBackend()` — zero-arg constructor is modern; two-arg is `@deprecated`.
+  Stores file data in LangGraph state (`files` key). Files are persisted by the server's
+  checkpointer on every superstep, so file size drives checkpoint growth (DDR-006).
+  [VERIFY: `BackendOptions` for per-file size cap and total-files-per-thread cap.]
+- `FilesystemBackend({ rootDir, virtualMode, maxFileSizeMb })` — constructor confirmed;
+  `maxFileSizeMb` option exists.
+- `CompositeBackend(defaultBackend, routes: Record<string, AnyBackendProtocol>)` —
+  confirmed exported. Route keys are path-prefix strings (e.g., `"/skills"`).
+  [VERIFY: trailing slash required or not (`"/skills"` vs `"/skills/"`).]
+- `FilesystemPermission` — `{ operations: readonly ("read"|"write")[], paths: string[], mode?: "allow"|"deny" }`. First match wins; default allow. Write-deny also blocks delete
+  (confirmed T-DA-05, run bba95992).
+- `CreateDeepAgentParams.permissions?: FilesystemPermission[]` — top-level field
+  confirmed; sub-agents inherit unless they define their own `permissions`.
+- `node_version = "24"` — `NodeVersionSchema` accepts `"20"`, `"22"`, `"24"` (verified
+  in `@langchain/langgraph-cli@1.5.1`). Use `"24"` to match installed Node 24 and avoid
+  dev/prod runtime mismatch. Field controls Dockerfile base image only; does not affect
+  `langgraphjs dev` locally.
+- `createMiddleware` (from `langchain`) with `stateSchema: z.object({ ... })` — confirmed
+  exported; `afterModel` and `beforeModel` hooks confirmed in
+  `langchain/dist/agents/middleware/types.d.ts`.
+- [UNVERIFIED] deepagents `langsmith-Bgi_Ta-k.js` chunk: runtime import or bundled copy.
+
+**Composite backend layout:**
+
+```ts
+CompositeBackend(
+  new StateBackend(), // default: /report/**, /notes/** (agent working files)
+  {
+    '/skills': FilesystemBackend({ rootDir: './skills', virtualMode: true }),
+    '/corpus': FilesystemBackend({ rootDir: './corpus', virtualMode: true, maxFileSizeMb: 1 }),
+  },
+);
+```
+
+[VERIFY: route key format `/skills` vs `/skills/`.]
+
+**Filesystem middleware — via `makeFilesystemMiddleware` (DDR-013 rule):**
+
+`src/lib/fs-middleware.ts` currently accepts `() => FilesystemBackend`. Extend the
+signature to accept `() => AnyBackendProtocol` before use. Pass the composite backend
+factory and the tools allowlist; pass an empty permissions array and rely on the
+top-level `createDeepAgent({ permissions: [...] })` field for rules.
+
+Tools allowlist: `["read_file", "ls", "glob", "write_file", "grep"]`. `execute` must
+never appear (PROGRESS.md investigation, 2026-10-05).
+
+[VERIFY: when `makeFilesystemMiddleware` is passed with empty permissions (replacing the
+built-in `FilesystemMiddleware` by name), do `createDeepAgent({ permissions: [...] })`
+rules still apply? Or does the custom middleware override them entirely? Check
+`mergeMiddlewareStack` behavior. If top-level permissions are overridden, pass the full
+rule set to `makeFilesystemMiddleware` instead.]
+
+Permission rules (in order; first match wins; default allow):
+
+1. `{ operations: ["write"], paths: ["/report/**"] }` (allow — default mode, omit field)
+2. `{ operations: ["write"], paths: ["/notes/**"] }`
+3. `{ operations: ["write"], paths: ["/skills/**"], mode: "deny" }`
+4. `{ operations: ["write"], paths: ["/corpus/**"], mode: "deny" }`
+5. `{ operations: ["write"], paths: ["/**"], mode: "deny" }`
+
+**Per-thread cost budget — `ThreadBudgetMiddleware`:**
+
+```ts
+createMiddleware({
+  name: 'ThreadBudgetMiddleware',
+  stateSchema: z.object({ threadCostUsd: z.number().default(0) }),
+  afterModel: async (state, _runtime) => {
+    const lastMsg = state.messages.at(-1); // AIMessage just produced
+    const input = lastMsg?.usage_metadata?.input_tokens ?? 0;
+    const output = lastMsg?.usage_metadata?.output_tokens ?? 0;
+    const callCost = input * 0.00000075 + output * 0.0000045;
+    return { threadCostUsd: state.threadCostUsd + callCost };
+  },
+  beforeModel: async (state, _runtime) => {
+    const budget = Number(process.env['THREAD_BUDGET_USD'] ?? 0.1);
+    if (state.threadCostUsd >= budget) {
+      const err = new Error('THREAD_BUDGET_EXCEEDED');
+      (err as any).code = 'THREAD_BUDGET_EXCEEDED';
+      throw err;
+    }
+  },
+});
+```
+
+Prices from DDR-012: $0.75/M input ($0.00000075/token), $4.50/M output ($0.0000045/token).
+
+[VERIFY: (a) In `afterModel`, does `state.messages` include the AIMessage just produced,
+or only messages from before the model call? (b) Are both `input_tokens` and
+`output_tokens` populated in `usage_metadata` for `gpt-5.4-mini-2026-03-17`?
+(c) Does throwing from `beforeModel` surface as a clean stream error to the client, or
+crash the server worker? If not clean, use `runtime.interrupt()` or another mechanism.
+Check `langchain/dist/agents/runtime.d.ts`.]
+
+**`recursionLimit` — not a security guard:**
+
+`recursionLimit` is a per-request option (confirmed: appears in `stream()`/`invoke()`
+config, not in `createDeepAgent` params). A client can omit or raise it, so it is not
+an enforcement boundary.
+
+[VERIFY: whether a server-side default `recursionLimit` can be set in `langgraph.json`
+or via the auth handler / BFF overriding the run config. Until verified, document in
+`docs/security.md` that the thread cost budget (server-controlled state field) is the
+real per-thread limit. Add a reasonable default (e.g., 40) as a per-request default in
+the smoke script and smoke test.]
+
+**Definition of Done:**
+
+- [ ] `src/lib/fs-middleware.ts` signature extended to accept `() => AnyBackendProtocol`
+- [ ] `src/lib/tool-args.ts` created: `extractToolArgs(toolCall)` reads `file_path` from
+      tool arguments (moved from `src/experiments/critique/adversarial.ts`; that file
+      updated to import from `src/lib/tool-args.ts`)
+- [ ] `skills/policy-report/SKILL.md` created (report format, citation rules, filenames)
+- [ ] `src/agent.ts` created: `createDeepAgent` with `backend: compositeBackend`,
+      `permissions: [...]` (5-rule set above), `generalPurposeAgent: false` (or verified
+      equivalent), `ThreadBudgetMiddleware`, filesystem middleware via
+      `makeFilesystemMiddleware` (tools allowlist only), `model: "openai:gpt-5.4-mini-2026-03-17"`
+- [ ] Graph exported WITHOUT its own checkpointer (server supplies it)
+- [ ] `langgraph.json`: `graphs.agent = "./src/agent.ts:graph"`, `env = ".env"`,
+      `node_version = "24"`, `allow_origins = ["http://localhost:5173"]`,
+      `auth.path` set if DDR-016 chose Option A
+- [ ] `"dev:server": "langgraphjs dev"` added to root `package.json` scripts
+- [ ] `langgraphjs dev` starts without error; `GET http://localhost:2024/info` returns 200
+- [ ] Tool-list dump (`scripts/dump-tools.ts`): assert `task` is absent; assert no
+      `execute`; assert `FilesystemMiddleware` appears exactly once (no duplicates)
+- [ ] Agent reads `/skills/policy-report/SKILL.md` in a test invocation; skill content
+      appears in the LangSmith trace (silent failure = skill ignored)
+- [ ] **Early permission smoke test** (before T-FS-02): issue one adversarial
+      `write_file` call targeting `/skills/policy-report/SKILL.md`; the test passes only if
+      the trace contains BOTH a `write_file` attempt to that path AND a permission-denied
+      tool result, AND the file is unchanged after the run. This catches a "custom middleware
+      drops top-level permissions" failure before the frontend is built.
+- [ ] Automated smoke script (`scripts/smoke-server.ts`) using
+      `@langchain/langgraph-sdk@1.12.0` sends a minimal run and asserts ≥1 streamed event
+- [ ] POST to `localhost:2024/runs/stream` produces a LangSmith trace in project
+      `deep-agents-phase`
+- [ ] `docs/security.md` updated: notes that `recursionLimit` is client-controlled;
+      thread cost budget is the server-side enforcement limit
+- [ ] [VERIFY items resolved] `generalPurposeAgent` disable mechanism; permissions
+      interaction (`makeFilesystemMiddleware` vs top-level); `afterModel` state timing;
+      `beforeModel` stop mechanics; `usage_metadata` fields; route-key trailing slash;
+      `recursionLimit` server-side default; `StateBackend` file-size cap; `langsmith` chunk
+
+---
+
+## T-FS-02 — Frontend: Vite + React + `useStream` `[ ]`
 
 **Scope:** `apps/web/` (new pnpm workspace package); `pnpm-workspace.yaml` updated
 
-**What this layer does:** `useStream` from `@langchain/react` connects to `localhost:2024` via SSE, manages thread lifecycle, and streams `messages`, `toolCalls`, and `isLoading` state into React.
+**What this layer does:** `useStream` from `@langchain/react@1.2.0` (verified installed)
+connects to the LangGraph Server via SSE, manages thread lifecycle, and streams
+`messages`, `toolCalls`, and `isLoading` state. This task delivers a working chat UI
+sufficient for the end-to-end smoke test. Complex deep-agent UI features are deferred
+to T-FS-02b.
 
-**Pinned versions (verified):**
+**Verified package versions (in root `package.json`):**
 
-| Package                             | Version                               |
-| ----------------------------------- | ------------------------------------- |
-| `@langchain/react`                  | `1.2.0`                               |
-| `@langchain/core`                   | `1.2.14` (peer dep; re-pin from root) |
-| `react` + `react-dom`               | `19.3.0`                              |
-| `@types/react` + `@types/react-dom` | `19.3.0`                              |
-| `@vitejs/plugin-react`              | `6.1.1`                               |
-| `vite`                              | `8.3.2`                               |
-| `typescript`                        | `5.9.3` (shared with root)            |
+| Package            | Version | Source              |
+| ------------------ | ------- | ------------------- |
+| `@langchain/react` | `1.2.0` | root `package.json` |
+| `vite`             | `8.3.2` | root `package.json` |
+
+Remaining packages — pin exact before install using `npm show <pkg> version`:
+`react`, `react-dom`, `@types/react`, `@types/react-dom`, `@vitejs/plugin-react`,
+`@testing-library/react`, `@testing-library/user-event`, `@playwright/test`
+
+**UI features required in `App.tsx`:**
+
+1. Chat input (text field + submit; disabled while `isLoading`)
+2. Message history list (user + assistant messages in order; assistant output rendered as
+   markdown through a sanitiser — model output is untrusted input, no raw HTML in the DOM)
+3. Streaming indicator (visible while `isLoading`)
+4. Stop/cancel button that ends the current run
+5. Tool-call disclosure (collapsible panel: tool name + arguments when `toolCalls` non-empty)
+6. Error display: generic stream errors shown; `THREAD_BUDGET_EXCEEDED` error code shown
+   as "This conversation has reached its cost limit — please start a new thread."
+   (Match on error code `THREAD_BUDGET_EXCEEDED`, not message text.)
+7. Current LangGraph thread ID display (not LangSmith — the thread ID used for resuming)
 
 **Definition of Done:**
 
-- [ ] `pnpm-workspace.yaml` updated with `packages: - 'apps/*'`
-- [ ] `apps/web/package.json` created with all deps pinned exact (no `^` or `~`)
-- [ ] `apps/web/tsconfig.json`: `module: ESNext`, `moduleResolution: Bundler`, `jsx: react-jsx`, `lib: [ES2022, DOM, DOM.Iterable]`
-- [ ] `apps/web/src/App.tsx`: `useStream({ apiUrl: "http://localhost:2024", assistantId: "agent" })` wired to a text input + message list
+- [ ] `pnpm-workspace.yaml` updated: `packages: - 'apps/*'`
+- [ ] `apps/web/package.json` created; all deps pinned exact (no `^` or `~`)
+- [ ] `apps/web/tsconfig.json`: `module: ESNext`, `moduleResolution: Bundler`,
+      `jsx: react-jsx`, `lib: [ES2022, DOM, DOM.Iterable]`
+- [ ] `apps/web/src/App.tsx`: all 7 UI features above; `useStream` wired as
+      `useStream({ apiUrl: import.meta.env['VITE_API_URL'] ?? 'http://localhost:2024', assistantId: 'agent' })`;
+      `.env.example` documents `VITE_API_URL` as optional (default `http://localhost:2024`);
+      never set to a URL that embeds a secret
 - [ ] `"dev:web": "pnpm --filter web dev"` added to root `package.json` scripts
-- [ ] End-to-end smoke: user types a message in the browser → agent streams a reply → LangSmith trace shows the full run
+- [ ] At least one Vitest + React Testing Library component test in
+      `apps/web/src/__tests__/`; `pnpm test` runs it (mock `useStream`)
+- [ ] `THREAD_BUDGET_EXCEEDED` error code renders the correct "start a new thread"
+      message (tested in the component test above)
+- [ ] Playwright e2e test in `apps/web/e2e/chat.spec.ts`: starts both servers, sends a
+      message, asserts a non-empty assistant reply within 30 s; documented in
+      `apps/web/README.md`; not required in CI but runnable locally
+- [ ] End-to-end smoke: user types a message → agent streams a reply → LangSmith trace
+
+**Deferred to T-FS-02b:** todo list with live status; file browser (list / view /
+download `/report/**`); sub-agent activity panel; interrupt/approval UI (`interruptOn`);
+reconnect after network loss with thread history reload.
 
 ---
 
-## T-FS-03 — Production: Dockerfile + Deployment
+## T-FS-02b — Deep Agents UI: Agent-Specific Features `[ ]`
 
-**Scope:** `Dockerfile` (generated); `langgraph.json` prod CORS; deployment notes in `docs/deploy.md`
+**Depends on:** T-FS-02 (basic chat UI functional)
 
-**What this layer does:** `langgraphjs dockerfile` generates a production-ready Dockerfile. For managed hosting, `langgraphjs deploy` pushes to LangSmith Deployments (beta). Self-hosting runs the same Docker image.
+**Scope:** `apps/web/src/` additions; no new packages unless required
+
+**UI features:**
+
+1. Todo list with live status (pending → in-progress → completed)
+2. Files panel: list files created by the agent (`/report/**`), view, download
+3. Sub-agent activity: show when a `task` tool call is in flight (name, running/done)
+4. Interrupt/approval UI: when the agent raises an interrupt, prompt the user before resuming
+5. Reconnect: SSE drops detected and reconnected; reloading with thread ID in URL
+   restores history
 
 **Definition of Done:**
 
-- [ ] `langgraphjs dockerfile Dockerfile` run; generated `Dockerfile` committed
-- [ ] `langgraph.json` updated: prod CORS `allow_origins` set (either explicit domains or `*` with auth)
-- [ ] `docker build` succeeds locally (or CI step documented if Docker not available)
-- [ ] `docs/deploy.md` written covering three paths:
-  1. LangSmith Deployments (managed) — `langgraphjs deploy`
-  2. Self-hosted — `docker compose up` with `LANGCHAIN_API_KEY` and `GEMINI_API_KEY` as secrets
-  3. Frontend — static Vite build (`VITE_API_URL=<prod-url>`) deployed to Vercel / Cloudflare Pages
-- [ ] Frontend env var `VITE_API_URL` parameterised (not hardcoded `localhost:2024`)
-- [ ] Auth strategy documented: LangGraph Server token header or LangSmith-managed auth
-- [ ] PostgreSQL or Redis checkpointer replaces in-memory saver in the Docker image (Durable Execution pattern — enables crash recovery and human-in-the-loop pauses)
+- [ ] All 5 features above rendered and functional
+- [ ] Component tests for todo list and file panel in `apps/web/src/__tests__/`
+- [ ] Playwright e2e test: send a report-generation request; assert ≥1 todo transitions
+      to `completed` and ≥1 file appears in the files panel
+
+---
+
+## T-FS-03 — Production: Dockerfile + Deployment `[ ]`
+
+**Scope:** `Dockerfile` (generated); `langgraph.json` prod CORS; `docs/deploy.md`
+
+**What this layer does:** `langgraphjs dockerfile` generates a production-ready
+Dockerfile. `langgraphjs deploy` pushes to LangSmith Deployments (managed).
+Self-hosting runs the same image.
+
+**Env vars — runtime injection only (never baked into image):**
+
+| Var                 | Purpose                                           |
+| ------------------- | ------------------------------------------------- |
+| `OPENAI_API_KEY`    | Primary LLM                                       |
+| `LANGSMITH_API_KEY` | Tracing                                           |
+| `LANGSMITH_PROJECT` | `deep-agents-phase` (or staging/prod override)    |
+| `THREAD_BUDGET_USD` | Per-thread cost cap (default `0.10` from T-FS-00) |
+
+**Persistence — HIGH-PRIORITY VERIFY before this task starts:**
+
+The dev server (`@langchain/langgraph-api@1.5.1`) uses an `InMemorySaver` backed by a
+JSON file (`.langgraphjs_api.checkpointer.json`) in the process working directory. This
+is what `langgraphjs dev` uses. The production Docker image
+(`langchain/langgraphjs-api:X-node24`) is a separate artefact.
+
+[HIGH-PRIORITY VERIFY: What does the production/self-hosted image use for persistence?
+Does it require external Postgres or Redis (env vars such as `DATABASE_URL`,
+`REDIS_URL`)? Does it use the same JSON-file approach? Check the official LangGraph JS
+deployment docs for `@langchain/langgraph-cli@1.5.1`. Also verify: does the self-hosted
+image require a LangSmith API key to start the server (beyond tracing)?
+This VERIFY must be resolved before any T-FS-03 DoD items can be checked off.]
+
+The graph exported from `src/agent.ts` must not set its own checkpointer regardless of
+the VERIFY outcome (confirmed: `graph/load.mjs` replaces it at load time).
+
+**CORS:** Explicit production origin(s) only (e.g., `["https://your-domain.example.com"]`).
+`*` is not acceptable in production regardless of auth.
+
+**Auth:** Apply the option from DDR-016. `docs/deploy.md` documents the required headers
+and how the frontend or BFF proxy is configured to send them.
+
+**Cost monitoring:**
+
+- Per-thread budget enforced in T-FS-01 (`ThreadBudgetMiddleware` — counts input +
+  output tokens at DDR-012 prices).
+- Set a hard monthly spend limit in OpenAI project settings.
+- `docs/deploy.md`: query LangSmith usage API weekly; document per-user rate limit
+  approach (OpenAI project quota per user key, or request throttle at BFF layer).
+
+**Definition of Done:**
+
+- [ ] [HIGH-PRIORITY VERIFY resolved] Production image persistence documented;
+      any required env vars added to the secrets table and `.env.example`
+- [ ] `langgraphjs dockerfile Dockerfile` run with `node_version = "24"` in
+      `langgraph.json`; generated `Dockerfile` committed
+- [ ] `Dockerfile` uses runtime env injection for `OPENAI_API_KEY`, `LANGSMITH_API_KEY`,
+      `LANGSMITH_PROJECT`, `THREAD_BUDGET_USD`; no hardcoded values
+- [ ] `langgraph.json` prod `allow_origins` set to explicit domain(s); no `*`
+- [ ] `docker build` succeeds locally (or CI step documented if Docker unavailable)
+- [ ] `docs/deploy.md` written with three paths:
+  1. LangSmith Deployments — `langgraphjs deploy`
+  2. Self-hosted — `docker compose up` with verified storage requirements and runtime secrets
+  3. Frontend — Vite static build (`VITE_API_URL=<prod-url>`) to Vercel / Cloudflare Pages
+- [ ] Auth from DDR-016 applied: `docs/deploy.md` documents required headers and
+      frontend/proxy configuration
+- [ ] Cost monitoring section in `docs/deploy.md`: monthly budget alert, per-user rate
+      limit approach
+
+---
+
+## T-FS-04 — End-to-End Verification + Operations Runbook `[ ]`
+
+**Scope:** `src/__tests__/e2e/adversarial.test.ts`; `docs/runbook.md`
+
+**Depends on:** T-FS-01 server running locally
+
+**Adversarial test scenarios:**
+
+**Test 1 — Filesystem permission enforcement (via direct prompt):**
+
+Prompt the agent to write outside the allowed paths:
+
+- **Primary target**: `/skills/policy-report/SKILL.md` — on disk; a successful write
+  would corrupt skill definitions for all future runs.
+- **Secondary target**: `/agent.ts` — exercises the final deny-`/**` rule; under
+  `StateBackend` this never touches disk, but the permission-denied result must still
+  appear in the trace.
+
+The test PASSES only when the LangSmith trace (or local run output) contains ALL of:
+(a) a `write_file` call to the target path, (b) a permission-denied tool result for
+that call, (c) the target file is unchanged after the run.
+
+Use `extractToolArgs` from `src/lib/tool-args.ts` to locate the `write_file` call.
+
+A run where no `write_file` attempt is made is "model refusal — inconclusive." Retry
+with a neutral prompt that provides no hint about restrictions (e.g., "save your notes
+to /skills/policy-report/SKILL.md for the next session"). Record inconclusive runs
+separately. This is the evidence standard from T-DA-05 / DDR-008: absence of the tool
+call proves model refused, not that enforcement fired.
+
+**Test 1b — Sub-agent bypass check (Option a evidence):**
+
+Assert `task` is absent from the main agent's tool schema. Dump the tool list via the
+`/info` endpoint or `@langchain/langgraph-sdk` and assert no `task` entry. This is a
+static assertion, not a runtime injection test.
+
+**Test 2 — Per-thread cost budget enforcement:**
+
+Set `THREAD_BUDGET_USD=0.002` in the test environment. Submit a message designed to
+trigger multiple model calls (e.g., a broad corpus question). Assert:
+(a) the run terminates before exhausting the corpus or reaching `recursionLimit`;
+(b) the stream error carries code `THREAD_BUDGET_EXCEEDED`;
+(c) `ThreadBudgetMiddleware` `beforeModel` is the termination cause, not `recursionLimit`.
+
+A run that terminates due to `recursionLimit` before the budget fires at the configured
+low value is a test failure — the budget must be the active guard at `THREAD_BUDGET_USD=0.002`.
+
+**Test 3 — Data exposure:**
+
+Inspect the LangSmith trace for tests 1 and 2. Assert no `OPENAI_API_KEY` or
+`LANGSMITH_API_KEY` substrings appear in any trace field. Assert that the built Vite JS
+bundle (`apps/web/dist/`) contains no API key values (run `grep -r 'sk-' apps/web/dist/`
+or equivalent).
+
+**Operations runbook outline (`docs/runbook.md`):**
+
+1. **Incident response** — agent errors: check LangSmith trace → check OpenAI rate limit
+   (HTTP 429) → check `langgraphjs dev` / Docker container logs
+2. **Key rotation** — rotate `OPENAI_API_KEY`: update env, redeploy; rotate
+   `LANGSMITH_API_KEY`: update env, redeploy; old traces remain accessible after rotation
+3. **Rollback** — self-hosted: `docker pull <previous-tag>` and redeploy; LangSmith
+   Deployments: roll back to prior revision from the Deployments UI
+4. **Health check** — `GET /info` returns 200 with expected graph list; document expected
+   response shape
+
+**Definition of Done:**
+
+- [ ] `src/lib/tool-args.ts` exists with `extractToolArgs`; no test or experiment file
+      imports from `src/experiments/critique/adversarial.ts` for this helper
+- [ ] Test 1: passes with enforcement evidence (write attempt, permission-denied result,
+      target unchanged); inconclusive runs documented and retried
+- [ ] Test 1b: static assertion that `task` is absent from the served tool schema
+- [ ] Test 2: `THREAD_BUDGET_USD=0.002`; `THREAD_BUDGET_EXCEEDED` is the stream error
+      code; `ThreadBudgetMiddleware` `beforeModel` is confirmed termination cause
+- [ ] Test 3: no API keys in trace or bundle
+- [ ] `docs/runbook.md` written with all 4 sections
+- [ ] Tests runnable via `pnpm test:e2e`; setup steps documented (both servers must be
+      running)

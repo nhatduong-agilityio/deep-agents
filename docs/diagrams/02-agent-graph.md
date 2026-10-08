@@ -27,7 +27,7 @@ stateDiagram-v2
     Planning --> Executing : todos written
     Executing --> ToolCall : agent emits tool_call
     ToolCall --> Executing : tool result returned
-    Executing --> BudgetCheck : pre-step hook
+    Executing --> BudgetCheck : beforeModel hook
     BudgetCheck --> Executing : within budget
     BudgetCheck --> Halted : budget exceeded
     Executing --> Done : no tool_calls in response
@@ -41,7 +41,7 @@ stateDiagram-v2
 graph LR
     subgraph Required["REQUIRED_MIDDLEWARE_NAMES"]
         FM["FilesystemMiddleware\nread_file · write_file\nls · glob · grep · mkdir"]
-        SM["SubAgentMiddleware\ntask tool — spawns fresh-context sub-agent"]
+        SM["SubAgentMiddleware\ntask tool\n(disabled in T-FS v1 — budget bypass risk)"]
     end
 
     subgraph BuiltIn["Built-in (always present)"]
@@ -62,22 +62,23 @@ graph LR
     CHK -.->|"added per experiment"| Agent
 ```
 
-## Budget Guard (BGA Pattern) — counter.ts
+## Budget Guard (BGA Pattern) — ThreadBudgetMiddleware
 
 ```mermaid
 flowchart LR
-    subgraph Counter["counter.ts — 4 dimensions"]
-        TC["token_count\ncumulative input+output"]
-        CO["cost_usd\nestimated at $0.75/1M input"]
-        TM["wall_ms\nDate.now() delta"]
-        CC["tool_call_count\nincremented each ToolNode exec"]
+    subgraph TBM["ThreadBudgetMiddleware (T-FS-01)"]
+        AF["afterModel\naccumulate per-call cost:\ninput × $0.00000075 + output × $0.0000045"]
+        ST["threadCostUsd\nstate field — persisted per thread"]
+        BF["beforeModel\ncheck threadCostUsd ≥ THREAD_BUDGET_USD"]
+        AF --> ST --> BF
     end
 
-    PreStep["pre-step hook"] -->|"read counter"| Guard{within budget?}
-    Guard -->|Yes| AgentNode["Agent Node"]
-    Guard -->|No| Halt["return HALT\nlog reason + final counter"]
-    AgentNode -->|"after response"| Counter
+    BF -->|"within budget"| AgentNode["Agent Node"]
+    BF -->|"budget exceeded"| Halt["throw THREAD_BUDGET_EXCEEDED\nstructured error code"]
+    AgentNode -->|"afterModel fires"| AF
 ```
+
+> **T-DA experiments** use `counter.ts` (4 dims: tokens / cost / ms / calls) as a run-level observer. `ThreadBudgetMiddleware` is the server-side enforcement layer for T-FS-01+.
 
 ## Sub-Agent Isolation (CIP Pattern) — task tool
 
