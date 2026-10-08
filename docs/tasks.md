@@ -589,7 +589,7 @@ reconnect after network loss with thread history reload.
 
 ---
 
-## T-FS-02b — Deep Agents UI: Agent-Specific Features `[ ]`
+## T-FS-02b — Deep Agents UI: Agent-Specific Features `[x]` (report: reports/T-FS-02b-report.md)
 
 **Depends on:** T-FS-02 (basic chat UI functional)
 
@@ -606,10 +606,11 @@ reconnect after network loss with thread history reload.
 
 **Definition of Done:**
 
-- [ ] All 5 features above rendered and functional
-- [ ] Component tests for todo list and file panel in `apps/web/src/__tests__/`
+- [x] All 5 features above rendered and functional
+- [x] Component tests for todo list and file panel in `apps/web/src/__tests__/`
 - [ ] Playwright e2e test: send a report-generation request; assert ≥1 todo transitions
       to `completed` and ≥1 file appears in the files panel
+      _deferred — requires live server + real API keys; no e2e runner configured_
 
 ---
 
