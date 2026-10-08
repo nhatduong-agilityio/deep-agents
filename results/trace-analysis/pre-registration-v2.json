@@ -1,0 +1,116 @@
+{
+  "preRegistration": "v2",
+  "registeredAt": "2026-10-08T16:38:00Z",
+  "task": "T-DA-07 fix v2 — diff-based verification gate (Option A)",
+  "scorer": "src/experiments/trace-analysis/scorer.ts:scoreDraft",
+  "scorerVersion": "2 — audited 2026-10-08; F2/F3 section-presence guards; F4 Article-99-or-no-6%; F5 positive-term guard; no-draft status on length < 200 chars",
+
+  "baseline": {
+    "source": "T-DA-05 V1 final (draft-v3) and V2 final (draft-v4), re-scored with corrected scorer",
+    "flawsFixed": 4,
+    "knownFlawsCount": 5,
+    "persistentFlaw": "F1 — Annex III / Article 6 citation never added across 3 rounds",
+    "model": "gpt-5.4-mini-2026-03-17",
+    "langsmithRunIds": ["9a320206-8ffe-4cea-80cf-a8c13729dfe0"]
+  },
+
+  "conditions": {
+    "control": {
+      "id": "baseline",
+      "description": "No diff-verification gate — same setup as T-DA-05 V1 supervisor run",
+      "middleware": ["hashGuardMiddleware", "filesystemPermissionMiddleware"],
+      "n": 3
+    },
+    "treatment": {
+      "id": "diff-gate",
+      "description": "Option A: after each draft write, middleware diffs draft-vN vs draft-v(N-1) and runs a Groq single-call judge per feedback item; blocks if any item judged not-addressed",
+      "middleware": [
+        "hashGuardMiddleware",
+        "diffVerificationGateMiddleware",
+        "filesystemPermissionMiddleware"
+      ],
+      "groqModel": "openai/gpt-oss-20b",
+      "groqRole": "single-call judge per item per round — not a measurement tool (judge calibration failed 2/3 in T-DA-05)",
+      "n": 3
+    }
+  },
+
+  "processGates": {
+    "validRun": "final committed draft exists (scoreDraft returns status='scored')",
+    "invalidRun": "no committed final draft (status='no-draft') — count as process failure, exclude from flaw score, report separately"
+  },
+
+  "primaryMetric": {
+    "name": "seeded_flaws_fixed_median",
+    "description": "Median flawsFixed across n=3 scored runs per condition (runs with status=no-draft excluded from median but counted as failures)",
+    "gate": "treatment median ≥ 4 AND ≥ 1 process-complete run per condition",
+    "gateRationale": "Corrected baseline is 4/5; gate must be at least equal to baseline to demonstrate improvement. ≥4/5 means F1 still not fixed (expected) but all other 4 fixed."
+  },
+
+  "secondaryMetrics": [
+    {
+      "name": "rounds_completed",
+      "description": "Number of critic rounds before convergence or cap",
+      "regressionThreshold": "treatment median < baseline median (3)"
+    },
+    {
+      "name": "gate_triggered_corrections",
+      "description": "Number of times the diff-gate blocked a write and the model successfully adapted (wrote a corrected draft on retry)",
+      "note": "Distinguishes gate effectiveness from gate-induced termination (T-DA-07 v1 failure mode)"
+    },
+    {
+      "name": "process_failure_rate",
+      "description": "Fraction of runs with no committed final draft (status=no-draft)",
+      "regressionThreshold": "treatment process_failure_rate > control"
+    },
+    {
+      "name": "cost_per_run",
+      "description": "supervisor AIMessage token sum × $0.75/$4.50 per 1M; Groq judge calls billed separately at Groq rates"
+    }
+  ],
+
+  "preRegisteredFailureModes": [
+    {
+      "id": "FP4",
+      "name": "Groq judge unreliable at item level",
+      "prediction": "Groq single-call judge may mark items as 'not addressed' when the diff does address them (false negatives on item-level judgment). This would cause the gate to block valid drafts and could reproduce the T-DA-07 recursion-limit failure.",
+      "detection": "Count gate blocks in treatment runs; if process_failure_rate > 0 and gate_triggered_corrections = 0, this failure mode is active.",
+      "mitigation": "Use a majority-vote across 3 single Groq calls per item (3 calls → take 2/3); or fall back to structural heuristics (diff line count > 0 for sections touching the item) if judge fails calibration check."
+    },
+    {
+      "id": "FP5",
+      "name": "Model still batches all writes in one turn",
+      "prediction": "Even with a post-write diff gate, the model may batch draft-vN write + notes write in a single AIMessage. If the draft write is gated and returned an error, the notes write in the same batch may be skipped by the model on the next turn.",
+      "detection": "If gate_triggered_corrections = 0 across all 3 treatment runs (gate fires but model never adapts), this failure mode is active.",
+      "mitigation": "Switch to wrapModelCall to inject unaddressed items into context before each model call — changes the model's generation plan rather than blocking post-hoc."
+    },
+    {
+      "id": "FP6",
+      "name": "F1 remains unfixed in all runs",
+      "prediction": "F1 (Annex III / Article 6 citation in high-risk section) was not fixed in T-DA-05 V1, V2, or T-DA-07. Expected to remain unfixed; gate cannot require fixing F1 since it was not fixed in the baseline.",
+      "detection": "scoreDraft details[F1].fixed = false in all runs — expected outcome, not a failure.",
+      "mitigation": "No mitigation needed. F1 requires the model to proactively add a citation not present in the original draft — a production-quality addition, not a removal of an error."
+    }
+  ],
+
+  "estimatedCosts": {
+    "modelCalls": {
+      "baselinePerRun": "~6 supervisor model calls (3 rounds × ~2 calls per round)",
+      "treatmentPerRun": "~6 supervisor model calls + ~7–14 Groq judge calls (1 per item per blocked write; 7 feedback items × 0–2 blocks)",
+      "note": "Groq calls are sequential per BRC pattern (single-call roles only); add ~$0.0002 per Groq call at Groq rates"
+    },
+    "estimatedTotalCost": "$0.40–$0.65 for 6 runs (3 control + 3 treatment) at primary model pricing",
+    "costBasis": "$0.75/$4.50 per 1M input/output for gpt-5.4-mini-2026-03-17; ~$0.001–$0.003 per run for Groq judge"
+  },
+
+  "stopConditions": [
+    "All 3 runs per condition complete with status=scored OR status=no-draft recorded",
+    "If all 3 treatment runs hit recursion limit (process_failure_rate=1.0), abort and record FP4/FP5 as active — do not continue to n=3"
+  ],
+
+  "notes": [
+    "Do not run any v2 fix experiment until this file exists — pre-registration timestamp must precede results.json timestamp",
+    "Groq judge calibration failed 2/3 in T-DA-05 — judge steers the loop only; do NOT use judge scores as the primary flaw measurement",
+    "Primary flaw measurement is always scoreDraft on the committed final draft text, not judge output"
+  ]
+}

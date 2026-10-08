@@ -2,7 +2,7 @@
 
 ## Resume Point
 
-**Next action:** T-DA-07 — "Loses the Plot" Trace Analysis
+**Next action:** T-DA-08 — DDR Index Finalization + Phase Report
 
 ## Pinned Versions (established T-DA-01)
 
@@ -117,3 +117,6 @@ Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
 | 2026-10-07 | Started   | T-DA-06 — Harness Optimization Drills                                                                                      | —                                                                               |
 | 2026-10-07 | Completed | T-DA-06 — Harness Optimization Drills                                                                                      | reports/T-DA-06-report.md                                                       |
 | 2026-10-07 | Completed | T-DA-06 v2 — deep-agent coding benchmark (run_tests tool, isolated child_process, 5 middleware steps)                      | reports/T-DA-06-v2-report.md, results/harness-v2/results.json                   |
+| 2026-10-07 | Started   | T-DA-07 — "Loses the Plot" Trace Analysis                                                                                  | —                                                                               |
+| 2026-10-07 | Completed | T-DA-07 — "Loses the Plot" Trace Analysis                                                                                  | reports/T-DA-07-report.md                                                       |
+| 2026-10-08 | Completed | T-DA-05 — Critique Workflow (closed with deviation: 4/5 flaws fixed; F1 root-caused in T-DA-07; v2 pre-registered)         | reports/T-DA-05-report.md                                                       |

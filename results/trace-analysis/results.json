@@ -1,0 +1,119 @@
+{
+  "experiment": "trace-analysis",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "deepagents_version": "1.14.1",
+  "date": "2026-10-07",
+  "task_id": "T-DA-07",
+  "baseline": {
+    "source": "T-DA-05 supervisor-results.json",
+    "langsmithRunId": "9a320206-8ffe-4cea-80cf-a8c13729dfe0",
+    "flawsFixed": 1,
+    "knownFlawsCount": 5,
+    "criticRounds": 3,
+    "feedbackItemsPerRound": [10, 12, 17]
+  },
+  "fix": {
+    "middleware": "RevisionGateMiddleware",
+    "file": "src/experiments/critique/feedback-coverage.ts",
+    "langsmithRunId": "8f2ff0f1-6dfb-46c2-841d-f7c29e3b54c8",
+    "flawsFixed": 1,
+    "knownFlawsCount": 5,
+    "gateBlockCount": 4,
+    "gateRecords": [
+      {
+        "round": 1,
+        "draftVersion": 2,
+        "feedbackItems": 7,
+        "revisionItems": 0,
+        "blocked": true
+      },
+      {
+        "round": 1,
+        "draftVersion": 2,
+        "feedbackItems": 7,
+        "revisionItems": 0,
+        "blocked": true
+      },
+      {
+        "round": 1,
+        "draftVersion": 2,
+        "feedbackItems": 7,
+        "revisionItems": 0,
+        "blocked": true
+      },
+      {
+        "round": 1,
+        "draftVersion": 2,
+        "feedbackItems": 7,
+        "revisionItems": 0,
+        "blocked": true
+      }
+    ],
+    "criticRounds": 1,
+    "capRefused": false,
+    "rounds": [
+      {
+        "round": 1,
+        "feedbackItems": 7,
+        "revisionItems": 0,
+        "draftsFixed": 1,
+        "gateBlocked": true,
+        "judge": {
+          "totalCritiques": 7,
+          "validCritiques": 7,
+          "critiquePrecision": 1,
+          "itemRatings": [
+            {
+              "item": 1,
+              "valid": true,
+              "reason": "The draft incorrectly presents the US Executive Order as a binding regulatory framework equivalent to the EU AI Act, which is a factual misrepresentation."
+            },
+            {
+              "item": 2,
+              "valid": true,
+              "reason": "The EU AI Act’s high‑risk categories are broader than listed, so the draft’s incomplete description misleads readers."
+            },
+            {
+              "item": 3,
+              "valid": true,
+              "reason": "The claim that all AI systems interacting with humans must disclose their nature overstates the EU AI Act’s transparency obligations, which are limited to certain categories."
+            },
+            {
+              "item": 4,
+              "valid": true,
+              "reason": "Stating that recommendation systems and automated decision‑making tools across all sectors must always disclose AI nature is an overgeneralization not supported by the Act."
+            },
+            {
+              "item": 5,
+              "valid": true,
+              "reason": "The draft attributes a universal safety‑testing and annual OMB reporting mandate to all federal AI deployments, which is likely inaccurate and overly specific."
+            },
+            {
+              "item": 6,
+              "valid": true,
+              "reason": "The penalty figure of 6% of global turnover is not clearly supported by the EU AI Act and may be incorrect, creating a factual error."
+            },
+            {
+              "item": 7,
+              "valid": true,
+              "reason": "The conclusion’s vague claim about convergence lacks definition and relevance to earlier sections, creating a structural gap."
+            }
+          ]
+        },
+        "supervisorInputTokens": 4156,
+        "supervisorOutputTokens": 104
+      }
+    ],
+    "totalInputTokens": 64632,
+    "totalOutputTokens": 3026,
+    "costUsd": 0.062091,
+    "elapsedMs": 40043,
+    "retryCount": 0
+  },
+  "gate": {
+    "metric": "flaws_fixed",
+    "baseline_value": 1,
+    "pass_threshold": 3,
+    "result": "FAIL"
+  }
+}

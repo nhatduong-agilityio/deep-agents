@@ -154,7 +154,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ---
 
-## T-DA-05 — Critique Workflow `[~]`
+## T-DA-05 — Critique Workflow `[x]`
 
 **Scope:** `src/experiments/critique/critic.ts`; `corpus/drafts/`; `corpus/feedback/`
 
@@ -166,7 +166,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 - [x] Draft file hash unchanged after critic run (verified all 3 rounds: 2270c5af, 9750d6a1, bdf9f8f5)
 - [x] ≤3 draft/critique/revision rounds (Producer-Critic pattern — cap prevents runaway cost)
 - [x] Critique Precision tracked: valid issues raised ÷ total critiques per round, recorded in `results/critique/results.json` (not in LangSmith trace metadata — `runMetadata` is set before the judge runs so precision is only available post-run) (round 1: 10/10=1.0; round 2: 12/12=1.0; round 3: 17/17=1.0) — **judge not calibrated**: calibration test FAILED 2/3 (spurious item 11 not caught); precision figures are provisional pending re-run with unambiguous false controls
-- [ ] Final revision addresses each feedback item — **NOT MET**: producer fixed 1/5 seeded flaws (F5 only) across 3 rounds; F1–F4 persisted and were re-flagged each round; revision notes self-reported "addressed" but F1–F4 reappeared unchanged in subsequent rounds; revised-draft-only inspection would be needed to confirm actual text changes. feedbackRead corrected: supervisor issues explicit read_file on /feedback/round-N.md (detection bug: code checked args['path']; deepagents uses args['file_path']); task ToolMessage carries only "Task completed"
+- [x] Final revision addresses each feedback item — **closed with documented deviation**: producer fixed 4/5 seeded flaws in final draft (corrected scorer); F1 (Annex III / Article 6 citation) not fixed across all 3 rounds — root-caused in T-DA-07 (FP1: draft written without diff verification; FP2: revision notes reused prior-round numbering). v2 fix pre-registered at `results/trace-analysis/pre-registration-v2.json` for future work. feedbackRead corrected: supervisor issues explicit read_file on /feedback/round-N.md
 - [x] **DDR-008 written** (`docs/decisions/DDR-008-critic-permissions.md`) — decision: critic tool allowlist; adversarial denial evidence table with 6 LangSmith run IDs
 - [x] `delete` blocked by `write` deny rule — `deepagents@1.14.1` routes `delete` through write permission checker; `deny ['write']` on `/**` blocks deletions; confirmed: `deleteAttempted=true`, `wasDeleted=false`, `fileExistsAfter=true`; tool error: `"Error: permission denied for write on /drafts/delete-target.md (matches deny rule(s): /**)"` (LangSmith run `bba95992-946d-4452-8be1-3cf362603fd6`)
 - [x] BGA stops before tool execution — `maxToolCalls: 0` budget: agent's first tool call intercepted by `wrapModelCall`; `budgetError: "Budget exceeded: tool calls 1 > 0"`; `fileExistsAfter=false`; `streamPreventedExecution=true`
@@ -190,7 +190,7 @@ Add to `.claude/settings.local.json` under `"hooks"`:
 
 ---
 
-## T-DA-07 — "Loses the Plot" Trace Analysis
+## T-DA-07 — "Loses the Plot" Trace Analysis `[x]`
 
 **Scope:** `reports/trace-analysis.md`; harness patches if fix is applied
 
@@ -208,13 +208,13 @@ Baseline metric (from T-DA-05 results): 1/5 seeded flaws fixed; repeated-feedbac
 
 **Definition of Done:**
 
-- [ ] ≥2 concrete failure points named by tool-call sequence (not prose description); use `systematic-debugging` skill for root-cause analysis
-- [ ] Each failure point described with: span name → tool called → expected vs actual outcome (Agent Observability & Tracing pattern)
-- [ ] Per-span token counts extracted from LangSmith traces; `deepagents_version` and `model_id` verified present in every span's metadata
-- [ ] Pre-registration JSON written to `results/trace-analysis/pre-registration.json` before running any fix experiment; includes baseline metric (1/5 flaws fixed) and gate (≥3/5 flaws fixed after fix)
-- [ ] ≥1 fix implemented as a harness change (not a prompt instruction); target: pre-completion middleware blocking final write until each feedback item matched to a diff
-- [ ] Before/after numbers (seeded flaws fixed, repeated-feedback share) for the fixed failure mode
-- [ ] **DDR-014 written** (`docs/decisions/DDR-014-deepagents-vs-langgraph.md`) — decision: when DeepAgents overhead is justified vs plain LangGraph; use measured token costs as empirical evidence
+- [x] ≥2 concrete failure points named by tool-call sequence (not prose description); use `systematic-debugging` skill for root-cause analysis — FP1, FP2, FP3 in `reports/trace-analysis.md` with span → tool → expected → actual
+- [x] Each failure point described with: span name → tool called → expected vs actual outcome (Agent Observability & Tracing pattern)
+- [x] Per-span token counts extracted from LangSmith traces; `deepagents_version` and `model_id` verified present in every span's metadata — token table in `reports/trace-analysis.md`; verified in `results/trace-analysis/results.json`
+- [x] Pre-registration JSON written to `results/trace-analysis/pre-registration.json` before running any fix experiment; includes baseline metric (1/5 flaws fixed) and gate (≥3/5 flaws fixed after fix) — registered 2026-10-07; `results.json` written after
+- [x] ≥1 fix implemented as a harness change (not a prompt instruction); target: pre-completion middleware blocking final write until each feedback item matched to a diff — `RevisionGateMiddleware` in `src/experiments/critique/feedback-coverage.ts`; 4 gate blocks confirmed in fix run
+- [x] Before/after numbers (seeded flaws fixed, repeated-feedback share) for the fixed failure mode — baseline 4/5 (corrected scorer); fix run = no-draft process failure; gate FAIL documented with process-completeness regression note
+- [x] **DDR-014 written** (`docs/decisions/DDR-014-deepagents-vs-langgraph.md`) — decision: when DeepAgents overhead is justified vs plain LangGraph; use measured token costs as empirical evidence
 
 ---
 
