@@ -218,7 +218,7 @@ Baseline metric (from T-DA-05 results): 1/5 seeded flaws fixed; repeated-feedbac
 
 ---
 
-## T-DA-08 — DDR Index Finalization + Phase Report
+## T-DA-08 — DDR Index Finalization + Phase Report `[x]`
 
 **Scope:** `docs/decisions/README.md`; `reports/phase-report.md`
 
@@ -236,10 +236,10 @@ DDRs are written inline during their respective experiment tasks (see DoD items 
 
 **Definition of Done:**
 
-- [ ] Verify every DDR in `docs/decisions/` exists on disk; any listed DDR missing from disk blocks this task
-- [ ] `docs/decisions/README.md` index complete — one entry per DDR file in `docs/decisions/`
-- [ ] Phase report covers: evidence for each required output, cost summary, lessons learned
-- [ ] Phase report links to all LangSmith trace IDs
+- [x] Verify every DDR in `docs/decisions/` exists on disk — 15 files on disk, 15 entries in index; no missing DDR
+- [x] `docs/decisions/README.md` index complete — one entry per DDR file; "Pattern / Task" column added
+- [x] Phase report covers: evidence for each required output, cost summary, lessons learned — `reports/phase-report.md`
+- [x] Phase report links to all LangSmith trace IDs — 28 run IDs in appendix
 
 ---
 
