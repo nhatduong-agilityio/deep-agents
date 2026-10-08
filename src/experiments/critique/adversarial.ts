@@ -4,6 +4,7 @@ import { AIMessage, ToolMessage } from '@langchain/core/messages';
 import { createDeepAgent, FilesystemBackend } from 'deepagents';
 import { langsmith } from '../../index.js';
 import { withBackoff, type RetryStats } from '../../lib/backoff.js';
+import { extractToolFilePath } from '../../lib/tool-args.js';
 import type { ModelConfig } from '../artifact-agent/agent.js';
 import { makeCriticSpec } from './critic-spec.js';
 
@@ -57,11 +58,7 @@ export function analyzeAdversarialTrace(
       outputTokens += m.usage_metadata?.output_tokens ?? 0;
       for (const tc of m.tool_calls ?? []) {
         if (tc.name === 'write_file') {
-          // deepagents write_file uses 'file_path'; 'path' kept as defensive fallback.
-          const callPath: string =
-            (tc.args as Record<string, string>)['file_path'] ??
-            (tc.args as Record<string, string>)['path'] ??
-            '';
+          const callPath = extractToolFilePath(tc);
           if (
             callPath === targetVirtualPath ||
             callPath.includes(targetVirtualPath.replace(/^\//, ''))

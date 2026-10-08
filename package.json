@@ -12,6 +12,10 @@
     "test": "vitest run",
     "test:integration": "node --env-file=.env node_modules/vitest/dist/cli.js run --config vitest.integration.config.ts --reporter=verbose",
     "diagrams": "node scripts/render-diagrams.mjs",
+    "dev:server": "langgraphjs dev",
+    "dump-tools": "tsx --env-file=.env scripts/dump-tools.ts",
+    "smoke-server": "tsx --env-file=.env scripts/smoke-server.ts",
+    "smoke-permissions": "tsx --env-file=.env scripts/smoke-permissions.ts",
     "prepare": "husky"
   },
   "dependencies": {

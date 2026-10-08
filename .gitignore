@@ -11,3 +11,6 @@ apps/web/dist/
 .DS_Store
 coverage/
 tmp/
+
+# LangGraph API
+.langgraph_api

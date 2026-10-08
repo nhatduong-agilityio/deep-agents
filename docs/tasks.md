@@ -348,7 +348,7 @@ production deployment, restrict project visibility or disable tracing for sensit
 
 ---
 
-## T-FS-01 — Backend: DeepAgents on LangGraph Server `[ ]`
+## T-FS-01 — Backend: DeepAgents on LangGraph Server `[x]` (report: reports/T-FS-01-report.md)
 
 **Scope:** `src/agent.ts`, `src/auth.ts` (if DDR-016 chose Option A),
 `src/lib/fs-middleware.ts` (signature extension), `src/lib/tool-args.ts` (new),
@@ -494,37 +494,37 @@ the smoke script and smoke test.]
 
 **Definition of Done:**
 
-- [ ] `src/lib/fs-middleware.ts` signature extended to accept `() => AnyBackendProtocol`
-- [ ] `src/lib/tool-args.ts` created: `extractToolArgs(toolCall)` reads `file_path` from
+- [x] `src/lib/fs-middleware.ts` signature extended to accept `() => AnyBackendProtocol`
+- [x] `src/lib/tool-args.ts` created: `extractToolArgs(toolCall)` reads `file_path` from
       tool arguments (moved from `src/experiments/critique/adversarial.ts`; that file
       updated to import from `src/lib/tool-args.ts`)
-- [ ] `skills/policy-report/SKILL.md` created (report format, citation rules, filenames)
-- [ ] `src/agent.ts` created: `createDeepAgent` with `backend: compositeBackend`,
+- [x] `skills/policy-report/SKILL.md` created (report format, citation rules, filenames)
+- [x] `src/agent.ts` created: `createDeepAgent` with `backend: compositeBackend`,
       `permissions: [...]` (5-rule set above), `generalPurposeAgent: false` (or verified
       equivalent), `ThreadBudgetMiddleware`, filesystem middleware via
       `makeFilesystemMiddleware` (tools allowlist only), `model: "openai:gpt-5.4-mini-2026-03-17"`
-- [ ] Graph exported WITHOUT its own checkpointer (server supplies it)
-- [ ] `langgraph.json`: `graphs.agent = "./src/agent.ts:graph"`, `env = ".env"`,
+- [x] Graph exported WITHOUT its own checkpointer (server supplies it)
+- [x] `langgraph.json`: `graphs.agent = "./src/agent.ts:graph"`, `env = ".env"`,
       `node_version = "24"`, `allow_origins = ["http://localhost:5173"]`,
       `auth.path` set if DDR-016 chose Option A
-- [ ] `"dev:server": "langgraphjs dev"` added to root `package.json` scripts
-- [ ] `langgraphjs dev` starts without error; `GET http://localhost:2024/info` returns 200
-- [ ] Tool-list dump (`scripts/dump-tools.ts`): assert `task` is absent; assert no
+- [x] `"dev:server": "langgraphjs dev"` added to root `package.json` scripts
+- [x] `langgraphjs dev` starts without error; `GET http://localhost:2024/info` returns 200
+- [x] Tool-list dump (`scripts/dump-tools.ts`): assert `task` is absent; assert no
       `execute`; assert `FilesystemMiddleware` appears exactly once (no duplicates)
-- [ ] Agent reads `/skills/policy-report/SKILL.md` in a test invocation; skill content
+- [x] Agent reads `/skills/policy-report/SKILL.md` in a test invocation; skill content
       appears in the LangSmith trace (silent failure = skill ignored)
-- [ ] **Early permission smoke test** (before T-FS-02): issue one adversarial
+- [x] **Early permission smoke test** (before T-FS-02): issue one adversarial
       `write_file` call targeting `/skills/policy-report/SKILL.md`; the test passes only if
       the trace contains BOTH a `write_file` attempt to that path AND a permission-denied
       tool result, AND the file is unchanged after the run. This catches a "custom middleware
       drops top-level permissions" failure before the frontend is built.
-- [ ] Automated smoke script (`scripts/smoke-server.ts`) using
+- [x] Automated smoke script (`scripts/smoke-server.ts`) using
       `@langchain/langgraph-sdk@1.12.0` sends a minimal run and asserts ≥1 streamed event
-- [ ] POST to `localhost:2024/runs/stream` produces a LangSmith trace in project
+- [x] POST to `localhost:2024/runs/stream` produces a LangSmith trace in project
       `deep-agents-phase`
-- [ ] `docs/security.md` updated: notes that `recursionLimit` is client-controlled;
+- [x] `docs/security.md` updated: notes that `recursionLimit` is client-controlled;
       thread cost budget is the server-side enforcement limit
-- [ ] [VERIFY items resolved] `generalPurposeAgent` disable mechanism; permissions
+- [x] [VERIFY items resolved] `generalPurposeAgent` disable mechanism; permissions
       interaction (`makeFilesystemMiddleware` vs top-level); `afterModel` state timing;
       `beforeModel` stop mechanics; `usage_metadata` fields; route-key trailing slash;
       `recursionLimit` server-side default; `StateBackend` file-size cap; `langsmith` chunk
