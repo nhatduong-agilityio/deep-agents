@@ -2,7 +2,7 @@
 
 ## Resume Point
 
-**Next action:** T-FS-00 — Security Baseline: Use Case, Threat Model, and Auth Decision
+**Next action:** T-FS-01 — Backend: DeepAgents on LangGraph Server
 
 ## Pinned Versions (established T-DA-01)
 
@@ -69,6 +69,22 @@ in parallel by default — sequential behaviour would require explicit coordinat
 
 ---
 
+## Auth Decision (T-FS-00 — 2026-10-08)
+
+**Settled in DDR-016:** Option A — LangGraph Server custom auth handler.
+
+`registerAuth` (from `@langchain/langgraph-api@1.5.1`) loads the module at `langgraph.json`
+`auth.path` and duck-type checks for `~handlerCache`. No `Auth` class to import — the
+implementer creates an object with `~handlerCache.authenticate(request: Request)`. This was
+the open VERIFY from the T-FS plan; it is now resolved.
+
+T-FS-01 creates `src/auth.ts` exporting `{ '~handlerCache': { authenticate, callbacks } }`.
+`langgraph.json` adds `"auth": { "path": "./src/auth.ts:auth", "disable_studio_auth": true }`.
+
+**T-FS-01 through T-FS-04 must cite DDR-016 for the auth approach.**
+
+---
+
 ## A1 LangSmith Re-query Note (2026-10-06)
 
 Original B1 measurement (validation-run.json) showed only 6 LangSmith spans and
@@ -122,3 +138,5 @@ Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
 | 2026-10-08 | Completed | T-DA-05 — Critique Workflow (closed with deviation: 4/5 flaws fixed; F1 root-caused in T-DA-07; v2 pre-registered)         | reports/T-DA-05-report.md                                                       |
 | 2026-10-08 | Started   | T-DA-08 — DDR Index Finalization + Phase Report                                                                            | —                                                                               |
 | 2026-10-08 | Completed | T-DA-08 — DDR Index Finalization + Phase Report                                                                            | reports/T-DA-08-report.md                                                       |
+| 2026-10-08 | Started   | T-FS-00 — Security Baseline: Use Case, Threat Model, and Auth Decision                                                     | —                                                                               |
+| 2026-10-08 | Completed | T-FS-00 — Security Baseline: Use Case, Threat Model, and Auth Decision                                                     | reports/T-FS-00-report.md                                                       |

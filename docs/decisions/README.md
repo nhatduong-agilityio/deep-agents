@@ -22,3 +22,4 @@ Index of all design decisions made in this project. Each DDR is a numbered file:
 | DDR-013 | Sub-agent Filesystem Middleware Must Be Injected Per-Run with Backend  | Accepted              | 2026-10-06 | CIP; T-DA-04    |
 | DDR-014 | DeepAgents vs Plain LangGraph — When Delegation Overhead Is Justified  | Accepted              | 2026-10-07 | SVW; T-DA-07    |
 | DDR-015 | PC Loop: Critic as `task`-Tool Sub-Agent with Hash-Guard Middleware    | Accepted              | 2026-10-07 | BRC+PC; T-DA-05 |
+| DDR-016 | Auth Strategy for LangGraph Server — Option A custom handler           | Accepted              | 2026-10-08 | T-FS-00         |

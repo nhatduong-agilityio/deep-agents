@@ -243,7 +243,7 @@ DDRs are written inline during their respective experiment tasks (see DoD items 
 
 ---
 
-## T-FS-00 — Security Baseline: Use Case, Threat Model, and Auth Decision `[ ]`
+## T-FS-00 — Security Baseline: Use Case, Threat Model, and Auth Decision `[x]`
 
 **Scope:** `docs/security.md`; `docs/decisions/DDR-016-auth-strategy.md`
 
@@ -340,11 +340,11 @@ production deployment, restrict project visibility or disable tracing for sensit
 
 **Definition of Done:**
 
-- [ ] `docs/security.md` written: use case, path policy, threat model (3 risks with
+- [x] `docs/security.md` written: use case, path policy, threat model (3 risks with
       mitigations), trace data policy, per-thread cost budget formula and default
-- [ ] `VITE_*` audit: confirm no API key appears in any `VITE_*` var in `.env.example`
-- [ ] DDR-016 created: auth option chosen, option rejected, reason, VERIFY items resolved
-- [ ] Auth decision referenced in `docs/PROGRESS.md` so T-FS-01 through T-FS-04 can cite it
+- [x] `VITE_*` audit: confirm no API key appears in any `VITE_*` var in `.env.example`
+- [x] DDR-016 created: auth option chosen, option rejected, reason, VERIFY items resolved
+- [x] Auth decision referenced in `docs/PROGRESS.md` so T-FS-01 through T-FS-04 can cite it
 
 ---
 
