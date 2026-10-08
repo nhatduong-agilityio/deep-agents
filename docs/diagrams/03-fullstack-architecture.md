@@ -1,6 +1,6 @@
 # Fullstack Architecture
 
-How the React frontend (T-FS-02) connects to the LangGraph Server backend (T-FS-01) and streams responses.
+How the React frontend (T-FS-02) connects to the LangGraph Server backend (T-FS-01) and streams responses. Auth baseline defined in T-FS-00.
 
 ## Request / Response Flow
 
@@ -16,7 +16,8 @@ sequenceDiagram
 
     User->>UI: type message + submit
     UI->>Hook: submit({ messages: [HumanMessage] })
-    Hook->>LGS: POST /runs/stream — X-Thread-Id: uuid
+    Hook->>LGS: POST /runs/stream — X-Thread-Id: uuid + Authorization: Bearer JWT
+    Note over LGS: auth check — T-FS-00 / DDR-016 [VERIFY]
     LGS->>Graph: invoke(state, config)
 
     loop Agent loop
@@ -33,6 +34,12 @@ sequenceDiagram
     LGS-->>Hook: stream end
     Hook-->>UI: isLoading = false
     Graph-.->LS: async trace (full run)
+
+    break budget exceeded (ThreadBudgetMiddleware — T-FS-01)
+        Graph-->>LGS: throw THREAD_BUDGET_EXCEEDED
+        LGS-->>Hook: SSE error event
+        Hook-->>UI: 'This conversation has reached its cost limit — start a new thread'
+    end
 ```
 
 ## Component Architecture
@@ -51,8 +58,8 @@ graph TB
     end
 
     subgraph Hook["useStream() — @langchain/react 1.2.0"]
-        US["useStream({\n  apiUrl: 'http://localhost:2024',\n  assistantId: 'agent'\n})"]
-        Returns["returns:\n{ messages, submit,\n  isLoading, stop }"]
+        US["useStream({\n  apiUrl: import.meta.env['VITE_API_URL']\n    ?? 'http://localhost:2024',\n  assistantId: 'agent'\n})"]
+        Returns["returns:\n{ messages, submit,\n  isLoading, stop, threadId }"]
         US --> Returns
     end
 
@@ -74,12 +81,12 @@ graph LR
     subgraph langgraph.json
         G["graphs:\n  agent: ./src/agent.ts:graph"]
         E["env: .env"]
-        N["node_version: 20"]
+        N["node_version: 24"]
         C["http.cors:\n  allow_origins:\n    - http://localhost:5173"]
     end
 
     G -->|"tsx loads"| AT["src/agent.ts\nexport const graph =\ncreateDeepAgent({...})"]
-    E -->|"injects"| ENV["OPENAI_API_KEY\nLANGSMITH_API_KEY\n..."]
+    E -->|"injects"| ENV["OPENAI_API_KEY\nLANGSMITH_API_KEY\nTHREAD_BUDGET_USD\n..."]
     C -->|"allows"| FE["Frontend at :5173"]
 ```
 
@@ -95,5 +102,7 @@ stateDiagram-v2
     Active --> Streaming : follow-up submit() — same thread_id
     Active --> Stopped : stop() called
     Stopped --> Active : new submit()
+    Streaming --> BudgetExceeded : THREAD_BUDGET_EXCEEDED
+    BudgetExceeded --> [*] : start a new thread
     Active --> [*] : page close
 ```

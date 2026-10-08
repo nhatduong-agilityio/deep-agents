@@ -23,8 +23,8 @@ graph TB
         Graph["Compiled Graph"]
         Todos["write_todos (built-in)"]
         FS["FilesystemMiddleware"]
-        SA["SubAgentMiddleware"]
-        BGA["counter.ts — Budget Guard"]
+        SA["SubAgentMiddleware\n(disabled in T-FS v1)"]
+        BGA["ThreadBudgetMiddleware\nafterModel/beforeModel — USD budget"]
         Graph --> Todos
         Graph --> FS
         Graph --> SA
@@ -42,7 +42,7 @@ graph TB
 
     subgraph Storage["Storage (by task)"]
         Disk["FilesystemBackend\ndisk-persistent — T-DA-03 experiments"]
-        Mem["StateBackend\nin-memory per thread — T-FS-01 demo"]
+        Mem["CompositeBackend\nStateBackend default + /skills + /corpus\nT-FS-01"]
     end
 
     Hook -->|"POST /runs/stream (SSE)"| LGS
@@ -113,8 +113,8 @@ graph LR
     subgraph Prod["Production"]
         CDN["CDN / Vercel\nVite static build"]
         Docker["Docker Container\nlanggraphjs dockerfile"]
-        PG["PostgreSQL / Redis\ndurable execution + HITL"]
-        CDN -->|"REST + SSE + auth header"| Docker
+        PG["Persistence\ndev: InMemorySaver → JSON file\nprod: [VERIFY]"]
+        CDN -->|"REST + SSE + Bearer JWT (T-FS-00)"| Docker
         Docker --> PG
     end
 

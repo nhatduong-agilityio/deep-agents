@@ -2,7 +2,7 @@
 
 ## Resume Point
 
-**Next action:** T-FS-01 — Backend: DeepAgents on LangGraph Server
+**Next action:** T-FS-00 — Security Baseline: Use Case, Threat Model, and Auth Decision
 
 ## Pinned Versions (established T-DA-01)
 
