@@ -683,7 +683,7 @@ and how the frontend or BFF proxy is configured to send them.
 
 ---
 
-## T-FS-04 — End-to-End Verification + Operations Runbook `[ ]`
+## T-FS-04 — End-to-End Verification + Operations Runbook `[x]` (report: reports/T-FS-04-report.md)
 
 **Scope:** `experiments/__tests__/e2e/adversarial.test.ts`; `docs/runbook.md`
 
@@ -750,14 +750,14 @@ or equivalent).
 
 **Definition of Done:**
 
-- [ ] `packages/core/src/tool-args.ts` exists with `extractToolFilePath`; no test or experiment file
+- [x] `packages/core/src/tool-args.ts` exists with `extractToolFilePath`; no test or experiment file
       imports from `experiments/critique/adversarial.ts` for this helper
-- [ ] Test 1: passes with enforcement evidence (write attempt, permission-denied result,
+- [x] Test 1: passes with enforcement evidence (write attempt, permission-denied result,
       target unchanged); inconclusive runs documented and retried
-- [ ] Test 1b: static assertion that `task` is absent from the served tool schema
-- [ ] Test 2: `THREAD_BUDGET_USD=0.002`; `THREAD_BUDGET_EXCEEDED` is the stream error
+- [x] Test 1b: static assertion that `task` is absent from the served tool schema
+- [x] Test 2: `THREAD_BUDGET_USD=0.002`; `THREAD_BUDGET_EXCEEDED` is the stream error
       code; `ThreadBudgetMiddleware` `beforeModel` is confirmed termination cause
-- [ ] Test 3: no API keys in trace or bundle
-- [ ] `docs/runbook.md` written with all 4 sections
-- [ ] Tests runnable via `pnpm test:e2e`; setup steps documented (both servers must be
+- [x] Test 3: no API keys in trace or bundle
+- [x] `docs/runbook.md` written with all 4 sections
+- [x] Tests runnable via `pnpm test:e2e`; setup steps documented (both servers must be
       running)

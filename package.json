@@ -12,6 +12,7 @@
     "test": "vitest run && pnpm --filter web test",
     "dev:web": "pnpm --filter web dev",
     "test:integration": "node --env-file=.env node_modules/vitest/dist/cli.js run --config vitest.integration.config.ts --reporter=verbose",
+    "test:e2e": "node --env-file=.env node_modules/vitest/dist/cli.js run --config vitest.e2e.config.ts --reporter=verbose",
     "diagrams": "node scripts/render-diagrams.mjs",
     "dev:server": "langgraphjs dev",
     "dump-tools": "tsx --env-file=.env scripts/dump-tools.ts",
