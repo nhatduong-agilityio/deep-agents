@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+.git
+.gitignore
+node_modules
+**/node_modules
+*.log
+.DS_Store
+dist
+.langgraphjs_api.checkpointer.json
+results/
+benchmark/
+docs/
+reports/
+apps/web/

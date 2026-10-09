@@ -7,6 +7,8 @@ dist/
 skills-lock.json
 apps/web/dist/
 .env
+.env.local
+**/.env.local
 *.log
 .DS_Store
 coverage/
