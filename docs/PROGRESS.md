@@ -2,7 +2,7 @@
 
 ## Resume Point
 
-**Next action:** T-FS-04 — End-to-End Verification + Operations Runbook
+**Next action:** All T-FS tasks complete — project phase closed.
 
 ## Pinned Versions (established T-DA-01)
 
@@ -150,3 +150,5 @@ Evidence snapshot (runId `c2f857f4-9da1-425a-b4b3-52403b011385`):
 | 2026-10-08 | Updated   | T-FS-02b — DoD bullets verified; report corrected (85 tests, e2e gap noted, stop-bug + hooks-order bugs documented)        | reports/T-FS-02b-report.md                                                      |
 | 2026-10-09 | Started   | T-FS-03 — Production: Dockerfile + Deployment                                                                              | —                                                                               |
 | 2026-10-09 | Completed | T-FS-03 — Production: Dockerfile + Deployment                                                                              | reports/T-FS-03-report.md                                                       |
+| 2026-10-09 | Started   | T-FS-04 — End-to-End Verification + Operations Runbook                                                                     | —                                                                               |
+| 2026-10-09 | Completed | T-FS-04 — End-to-End Verification + Operations Runbook                                                                     | reports/T-FS-04-report.md                                                       |
