@@ -5,7 +5,8 @@ import Markdown from 'react-markdown';
 import { TodoPanel } from './TodoPanel.js';
 import { FilesPanel } from './FilesPanel.js';
 
-const API_URL = import.meta.env['VITE_API_URL'] ?? 'http://localhost:2024';
+// Vite proxy at /api injects the auth header server-side; never expose auth tokens in the bundle.
+const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:2024';
 const BUDGET_EXCEEDED_CODE = 'THREAD_BUDGET_EXCEEDED';
 const BUDGET_EXCEEDED_MSG =
   'This conversation has reached its cost limit — please start a new thread.';
@@ -27,14 +28,18 @@ function isNetworkError(error: unknown): boolean {
   return /network|fetch|connection|sse|stream/i.test(msg);
 }
 
-function getThreadIdFromUrl(): string | undefined {
-  return new URLSearchParams(window.location.search).get('thread') ?? undefined;
+const SESSION_THREAD_KEY = 'deep-agents-thread';
+
+function getStoredThreadId(): string | undefined {
+  return sessionStorage.getItem(SESSION_THREAD_KEY) ?? undefined;
 }
 
-function setThreadIdInUrl(id: string) {
-  const params = new URLSearchParams(window.location.search);
-  params.set('thread', id);
-  window.history.replaceState({}, '', `?${params.toString()}`);
+function storeThreadId(id: string) {
+  sessionStorage.setItem(SESSION_THREAD_KEY, id);
+}
+
+function clearStoredThreadId() {
+  sessionStorage.removeItem(SESSION_THREAD_KEY);
 }
 
 // OpenAI returns content as [{type:'text', text:'...'}] blocks, not a plain string.
@@ -57,13 +62,14 @@ export function App() {
   const [input, setInput] = useState('');
   const [interruptResponse, setInterruptResponse] = useState('');
 
-  // Read URL thread param once on mount — avoids calling window.location on every render.
-  const initialThreadId = useRef(getThreadIdFromUrl()).current;
+  // Thread ID from sessionStorage — cleared automatically when the tab closes,
+  // so stale IDs from previous dev sessions never survive into a new session.
+  const [effectiveThreadId] = useState<string | undefined>(getStoredThreadId);
 
   const stream = useStream({
     apiUrl: API_URL,
     assistantId: 'agent',
-    threadId: initialThreadId,
+    threadId: effectiveThreadId,
   });
 
   const {
@@ -81,9 +87,9 @@ export function App() {
     disconnect,
   } = stream;
 
-  // Persist threadId in URL after first run.
+  // Persist threadId in sessionStorage after first run so page-refreshes resume the same thread.
   useEffect(() => {
-    if (threadId) setThreadIdInUrl(threadId);
+    if (threadId) storeThreadId(threadId);
   }, [threadId]);
 
   // Auto-scroll message log to bottom on new messages.
@@ -127,6 +133,11 @@ export function App() {
   }, [respond, interruptResponse]);
 
   const handleReconnect = useCallback(() => void disconnect(), [disconnect]);
+
+  // Clear stored thread when budget is exceeded so "new thread" actually starts fresh.
+  useEffect(() => {
+    if (isBudgetExceeded(error)) clearStoredThreadId();
+  }, [error]);
 
   const errorMsg = isBudgetExceeded(error)
     ? BUDGET_EXCEEDED_MSG

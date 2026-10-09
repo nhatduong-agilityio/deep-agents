@@ -25,7 +25,113 @@ TypeScript + DeepAgents curriculum project. Demonstrates agentic AI patterns on 
 | Frontend          | `@langchain/react` + Vite                       | `1.2.0` + `8.3.2` |
 | Runtime           | Node 24 / pnpm 11                               | —                 |
 
-## Commands
+## Getting started
+
+### Prerequisites
+
+- **Node 24** and **pnpm 11** (`corepack enable && corepack prepare pnpm@11 --activate`)
+- API keys: OpenAI and LangSmith
+
+### 1 — Environment files
+
+Two env files are required. Neither is committed to git.
+
+**Root `.env`** (server-side secrets — never sent to the browser):
+
+```bash
+cp .env.example .env
+```
+
+Then fill in:
+
+```dotenv
+OPENAI_API_KEY=sk-...
+LANGSMITH_API_KEY=ls__...
+LANGSMITH_PROJECT=deep-agents-phase
+LANGSMITH_TRACING=true
+
+# Bearer token the API requires on every request.
+# Pick any string; must match AUTH_TOKEN in apps/web/.env.local.
+AUTH_TOKEN=changeme-dev
+
+# Per-thread spending cap in USD (default 0.10).
+THREAD_BUDGET_USD=0.10
+```
+
+**`apps/web/.env.local`** (frontend — Vite reads this; only `VITE_*` vars reach the browser):
+
+```bash
+# For local dev (server runs with pnpm dev:server):
+cat > apps/web/.env.local <<'EOF'
+VITE_API_URL=http://localhost:5173/api
+AUTH_TOKEN=changeme-dev
+API_TARGET=http://localhost:2024
+EOF
+```
+
+> **How the proxy works:** `VITE_API_URL` points to the Vite dev server's own `/api` prefix.
+> Vite proxies those requests to `API_TARGET` and injects `Authorization: Bearer <AUTH_TOKEN>`
+> server-side. `AUTH_TOKEN` has no `VITE_` prefix so it is **never baked into the JS bundle**.
+
+---
+
+### Path A — Local dev (Node process, no Docker)
+
+```bash
+pnpm install              # install all workspace dependencies
+
+# Terminal 1 — LangGraph agent server (hot-reloads on save)
+pnpm dev:server           # → http://localhost:2024
+
+# Terminal 2 — Vite frontend (proxies /api → port 2024)
+pnpm dev:web              # → http://localhost:5173
+```
+
+Open <http://localhost:5173> in your browser.
+
+---
+
+### Path B — Docker (API + PostgreSQL + Redis containerised)
+
+The Dockerfile bakes the LangGraph API image. The frontend still runs via Vite so
+hot-reload and the proxy work normally.
+
+**Step 1 — add the Docker-specific origin to `.env`:**
+
+```dotenv
+# Root .env — add this line so the container allows the Vite origin:
+LANGGRAPH_ALLOW_ORIGIN=http://localhost:5173
+```
+
+**Step 2 — start containers:**
+
+```bash
+docker compose up --build   # first run: builds image + starts API, Postgres, Redis
+docker compose up           # subsequent runs (image already built)
+docker compose up -d        # detached (background)
+```
+
+**Step 3 — start the frontend** (same as local dev):
+
+```bash
+pnpm dev:web                # → http://localhost:5173
+```
+
+Open <http://localhost:5173> in your browser. `apps/web/.env.local` is unchanged — the
+Vite proxy still forwards `/api` to `http://localhost:2024` which is now the Docker container.
+
+**Other Docker commands:**
+
+```bash
+docker compose logs -f langgraph-api   # tail API logs
+docker compose down                    # stop all containers (data preserved)
+docker compose down -v                 # stop + delete the Postgres volume
+docker compose --profile guardrails up # also start the LLM Guard sidecar (port 8000)
+```
+
+---
+
+### Dev commands
 
 ```bash
 pnpm typecheck        # tsc --noEmit
@@ -33,8 +139,6 @@ pnpm lint             # eslint experiments/ packages/ scripts/
 pnpm test             # vitest run (root) + pnpm --filter web test
 pnpm format           # prettier --write .
 pnpm diagrams         # render docs/diagrams/*.md → docs/diagrams/img/*.svg
-pnpm dev:server       # langgraphjs dev → localhost:2024
-pnpm dev:web          # pnpm --filter web dev → Vite frontend (localhost:5173)
 pnpm dump-tools       # assert tool list (execute absent, FilesystemMiddleware×1)
 pnpm smoke-server     # live LangGraph Server SSE smoke test
 pnpm smoke-permissions # permission enforcement smoke test
@@ -58,20 +162,20 @@ pnpm smoke-permissions # permission enforcement smoke test
 | T-FS-00   | Security Baseline + Auth Decision  | `[x]`  |
 | T-FS-01   | LangGraph Server backend           | `[x]`  |
 | T-FS-02   | React + `useStream` frontend       | `[x]`  |
-| T-FS-02b  | Deep Agents UI: Agent Features     | `[ ]`  |
-| T-FS-03   | Dockerfile + Deployment            | `[ ]`  |
+| T-FS-02b  | Deep Agents UI: Agent Features     | `[x]`  |
+| T-FS-03   | Dockerfile + Deployment            | `[x]`  |
 | T-FS-04   | E2E Verification + Runbook         | `[ ]`  |
 
 ## Directory structure
 
-```
+```text
 apps/
   api/src/
     agent.ts                  ← createDeepAgent + ThreadBudgetMiddleware
     auth.ts                   ← custom auth handler (DDR-016)
   web/src/
     App.tsx                   ← chat UI: useStream, 7 features (T-FS-02)
-    __tests__/                ← React Testing Library tests (9 tests)
+    __tests__/                ← React Testing Library tests (85 tests)
     e2e/                      ← Playwright end-to-end tests
 packages/
   core/src/                   ← @deep-agents/core — shared utilities
@@ -99,15 +203,18 @@ corpus/                       ← fixed AI-regulation docs (EU AI Act, US EO)
 skills/policy-report/         ← agent skill: report format + citation rules
 benchmark/                    ← 20-problem TS subset (T-DA-06)
 results/                      ← JSON run logs per experiment
-reports/                      ← task reports (T-DA-00.1 through T-FS-02)
+reports/                      ← task reports (T-DA-00.1 through T-FS-03)
 docs/
   tasks.md                    ← canonical task list with DoD
   PROGRESS.md                 ← resume point + activity log
   decisions/                  ← DDR-001 through DDR-016
   diagrams/                   ← Mermaid diagrams + rendered SVGs
   security.md                 ← threat model, path policy, auth decision
+  deploy.md                   ← deployment runbook (3 paths + cost monitoring)
   CODING-STANDARDS.md
 langgraph.json                ← LangGraph Server manifest (apps/api/src/agent.ts)
+Dockerfile                    ← production image (generated by langgraphjs dockerfile)
+docker-compose.yml            ← PostgreSQL + Redis + API; optional LLM Guard sidecar
 ```
 
 ## Key constraints
@@ -139,4 +246,6 @@ langgraph.json                ← LangGraph Server manifest (apps/api/src/agent.
 - [`docs/PROGRESS.md`](docs/PROGRESS.md) — resume point + findings log
 - [`docs/decisions/`](docs/decisions/) — all DDRs
 - [`docs/diagrams/`](docs/diagrams/) — architecture and flow diagrams
+- [`docs/deploy.md`](docs/deploy.md) — deployment runbook (LangSmith, Docker, Vercel)
+- [`docs/security.md`](docs/security.md) — threat model, path policy, auth decision
 - [`reports/`](reports/) — per-task evidence reports

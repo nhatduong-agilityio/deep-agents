@@ -6,6 +6,9 @@
     "dev": "langgraphjs dev",
     "typecheck": "tsc --noEmit"
   },
+  "devDependencies": {
+    "@types/node": "26.6.4"
+  },
   "dependencies": {
     "@deep-agents/core": "workspace:*",
     "@langchain/core": "1.2.14",

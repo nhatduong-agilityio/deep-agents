@@ -614,7 +614,7 @@ reconnect after network loss with thread history reload.
 
 ---
 
-## T-FS-03 — Production: Dockerfile + Deployment `[ ]`
+## T-FS-03 — Production: Dockerfile + Deployment `[x]` (report: reports/T-FS-03-report.md)
 
 **Scope:** `Dockerfile` (generated); `langgraph.json` prod CORS; `docs/deploy.md`
 
@@ -664,21 +664,21 @@ and how the frontend or BFF proxy is configured to send them.
 
 **Definition of Done:**
 
-- [ ] [HIGH-PRIORITY VERIFY resolved] Production image persistence documented;
+- [x] [HIGH-PRIORITY VERIFY resolved] Production image persistence documented;
       any required env vars added to the secrets table and `.env.example`
-- [ ] `langgraphjs dockerfile Dockerfile` run with `node_version = "24"` in
+- [x] `langgraphjs dockerfile Dockerfile` run with `node_version = "24"` in
       `langgraph.json`; generated `Dockerfile` committed
-- [ ] `Dockerfile` uses runtime env injection for `OPENAI_API_KEY`, `LANGSMITH_API_KEY`,
+- [x] `Dockerfile` uses runtime env injection for `OPENAI_API_KEY`, `LANGSMITH_API_KEY`,
       `LANGSMITH_PROJECT`, `THREAD_BUDGET_USD`; no hardcoded values
-- [ ] `langgraph.json` prod `allow_origins` set to explicit domain(s); no `*`
-- [ ] `docker build` succeeds locally (or CI step documented if Docker unavailable)
-- [ ] `docs/deploy.md` written with three paths:
+- [x] `langgraph.json` prod `allow_origins` set to explicit domain(s); no `*`
+- [x] `docker build` succeeds locally (or CI step documented if Docker unavailable)
+- [x] `docs/deploy.md` written with three paths:
   1. LangSmith Deployments — `langgraphjs deploy`
   2. Self-hosted — `docker compose up` with verified storage requirements and runtime secrets
   3. Frontend — Vite static build (`VITE_API_URL=<prod-url>`) to Vercel / Cloudflare Pages
-- [ ] Auth from DDR-016 applied: `docs/deploy.md` documents required headers and
+- [x] Auth from DDR-016 applied: `docs/deploy.md` documents required headers and
       frontend/proxy configuration
-- [ ] Cost monitoring section in `docs/deploy.md`: monthly budget alert, per-user rate
+- [x] Cost monitoring section in `docs/deploy.md`: monthly budget alert, per-user rate
       limit approach
 
 ---

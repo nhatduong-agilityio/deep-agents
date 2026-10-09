@@ -1,8 +1,57 @@
-# LLM Guard input/output guard sidecar.
-# Start with: docker compose --profile guardrails up
-# Activated when GUARDRAIL_ENABLED=true in .env
+# LangGraph Server + dependencies.
+# Run: docker compose up
+# LLM Guard sidecar (optional): docker compose --profile guardrails up
 
 services:
+  langgraph-redis:
+    image: redis:6
+    healthcheck:
+      test: redis-cli ping
+      interval: 5s
+      start_period: 10s
+      timeout: 1s
+      retries: 5
+
+  langgraph-postgres:
+    image: pgvector/pgvector:pg16
+    expose:
+      - '5432'
+    command: ['postgres', '-c', 'shared_preload_libraries=vector']
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - langgraph-data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 5s
+      start_period: 10s
+      timeout: 1s
+      retries: 5
+
+  langgraph-api:
+    build: .
+    ports:
+      - '2024:8000'
+    environment:
+      REDIS_URI: redis://langgraph-redis:6379
+      POSTGRES_URI: postgres://postgres:postgres@langgraph-postgres:5432/postgres?sslmode=disable
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      LANGSMITH_API_KEY: ${LANGSMITH_API_KEY}
+      LANGSMITH_PROJECT: ${LANGSMITH_PROJECT:-deep-agents-phase}
+      LANGSMITH_TRACING: ${LANGSMITH_TRACING:-true}
+      THREAD_BUDGET_USD: ${THREAD_BUDGET_USD:-0.10}
+      AUTH_TOKEN: ${AUTH_TOKEN}
+      # Override CORS at runtime; allow_headers must include authorization so the Bearer token works.
+      LANGGRAPH_HTTP: '{"cors":{"allow_origins":["http://localhost:5173","${LANGGRAPH_ALLOW_ORIGIN:-https://your-app.example.com}"],"allow_headers":["content-type","authorization","x-api-key"],"allow_methods":["GET","POST","PUT","PATCH","DELETE","OPTIONS"]}}'
+    depends_on:
+      langgraph-redis:
+        condition: service_healthy
+      langgraph-postgres:
+        condition: service_healthy
+
+  # LLM Guard input/output guard sidecar (optional)
   llm-guard:
     image: ghcr.io/protectai/llm-guard-api:latest
     profiles:
@@ -12,3 +61,7 @@ services:
     environment:
       AUTH_REQUIRED: 'false'
       LOG_LEVEL: 'info'
+
+volumes:
+  langgraph-data:
+    driver: local
