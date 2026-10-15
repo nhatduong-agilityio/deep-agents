@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import { App } from '../App.js';
 
@@ -391,6 +392,32 @@ describe('Form interactions', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: /stop/i }));
     expect(stopMock).toHaveBeenCalledOnce();
+  });
+});
+
+// ─── 5b. Multi-line input (issue #1: "Line breaks are not possible") ─────────
+
+describe('Multi-line input', () => {
+  it('Enter without Shift sends the message', async () => {
+    const user = userEvent.setup();
+    const submitMock = vi.fn();
+    mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
+    render(<App />);
+    await user.type(screen.getByRole('textbox', { name: /message input/i }), 'line one');
+    await user.keyboard('{Enter}');
+    expect(submitMock).toHaveBeenCalledWith({ messages: [{ type: 'human', content: 'line one' }] });
+  });
+
+  it('Shift+Enter inserts a line break and does not send the message', async () => {
+    const user = userEvent.setup();
+    const submitMock = vi.fn();
+    mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
+    render(<App />);
+    const input = screen.getByRole('textbox', { name: /message input/i }) as HTMLInputElement;
+    await user.type(input, 'line one');
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+    expect(submitMock, 'Shift+Enter must not send the message').not.toHaveBeenCalled();
+    expect(input.value, 'Shift+Enter must insert a line break').toBe('line one\n');
   });
 });
 
