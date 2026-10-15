@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import { App } from '../App.js';
+import '../theme.css';
 
 // ─── mock factory ─────────────────────────────────────────────────────────────
 
@@ -279,6 +280,45 @@ describe('Message bubbles', () => {
     // Only one message row should be rendered
     const rows = log.querySelectorAll('.msg-row');
     expect(rows.length).toBe(1);
+  });
+});
+
+// ─── 3b. Human bubble line breaks (issue #8, E1-01) ──────────────────────────
+
+describe('Human bubble line breaks', () => {
+  function renderHuman(content: string) {
+    mockUseStream.mockReturnValue(
+      mockReturn({ messages: [new HumanMessage({ content, id: 'h1' })] }),
+    );
+    render(<App />);
+    return document.querySelector('.msg-bubble--human') as HTMLElement;
+  }
+
+  it('AC1: human bubble keeps line breaks (white-space: pre-wrap)', () => {
+    const bubble = renderHuman('line one\nline two');
+    expect(getComputedStyle(bubble).whiteSpace).toBe('pre-wrap');
+  });
+
+  it('AC2: human bubble wraps long unbroken strings (overflow-wrap: anywhere)', () => {
+    const bubble = renderHuman(`https://example.com/${'a'.repeat(300)}`);
+    expect(getComputedStyle(bubble).overflowWrap).toBe('anywhere');
+  });
+
+  it('AC3: human content is shown exactly as sent, without Markdown or HTML', () => {
+    const content = '**bold**\n<b>x</b>\n# h\n- item';
+    const bubble = renderHuman(content);
+    expect(bubble.textContent).toBe(content);
+    expect(bubble.querySelector('strong, b, h1, ul')).toBeNull();
+  });
+
+  it('AC4: AI bubble is unchanged (still Markdown, no pre-wrap)', () => {
+    mockUseStream.mockReturnValue(
+      mockReturn({ messages: [new AIMessage({ content: '**bold**', id: 'a1' })] }),
+    );
+    render(<App />);
+    const bubble = document.querySelector('.msg-bubble--ai') as HTMLElement;
+    expect(bubble.querySelector('strong')?.textContent).toBe('bold');
+    expect(getComputedStyle(bubble).whiteSpace).not.toBe('pre-wrap');
   });
 });
 
