@@ -311,14 +311,16 @@ describe('Human bubble line breaks', () => {
     expect(bubble.querySelector('strong, b, h1, ul')).toBeNull();
   });
 
-  it('AC4: AI bubble is unchanged (still Markdown, no pre-wrap)', () => {
+  it('AC4: AI bubble is unchanged (still Markdown, white-space stays normal)', () => {
     mockUseStream.mockReturnValue(
       mockReturn({ messages: [new AIMessage({ content: '**bold**', id: 'a1' })] }),
     );
     render(<App />);
     const bubble = document.querySelector('.msg-bubble--ai') as HTMLElement;
     expect(bubble.querySelector('strong')?.textContent).toBe('bold');
-    expect(getComputedStyle(bubble).whiteSpace).not.toBe('pre-wrap');
+    // max-width comes from .msg-bubble, proving theme.css applied to this bubble.
+    expect(getComputedStyle(bubble).maxWidth).toBe('82%');
+    expect(['', 'normal']).toContain(getComputedStyle(bubble).whiteSpace);
   });
 });
 
