@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { HumanMessage, AIMessage } from '@langchain/core/messages';
 import { App } from '../App.js';
 
@@ -345,7 +346,7 @@ describe('Form interactions', () => {
 
   it('clears the input after submit', () => {
     render(<App />);
-    const input = screen.getByRole('textbox', { name: /message input/i }) as HTMLInputElement;
+    const input = screen.getByRole('textbox', { name: /message input/i }) as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: 'question' } });
     fireEvent.submit(input.closest('form')!);
     expect(input.value).toBe('');
@@ -374,7 +375,7 @@ describe('Form interactions', () => {
   it('input is disabled while loading', () => {
     mockUseStream.mockReturnValue(mockReturn({ isLoading: true }));
     render(<App />);
-    const input = screen.getByRole('textbox') as HTMLInputElement;
+    const input = screen.getByRole('textbox') as HTMLTextAreaElement;
     expect(input.disabled).toBe(true);
   });
 
@@ -391,6 +392,68 @@ describe('Form interactions', () => {
     render(<App />);
     fireEvent.click(screen.getByRole('button', { name: /stop/i }));
     expect(stopMock).toHaveBeenCalledOnce();
+  });
+});
+
+// ─── 5b. Multi-line input (issue #1: "Line breaks are not possible") ─────────
+
+describe('Multi-line input', () => {
+  it('Enter without Shift sends the message', async () => {
+    const user = userEvent.setup();
+    const submitMock = vi.fn();
+    mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
+    render(<App />);
+    await user.type(screen.getByRole('textbox', { name: /message input/i }), 'line one');
+    await user.keyboard('{Enter}');
+    expect(submitMock).toHaveBeenCalledWith({ messages: [{ type: 'human', content: 'line one' }] });
+  });
+
+  it('Shift+Enter inserts a line break and does not send the message', async () => {
+    const user = userEvent.setup();
+    const submitMock = vi.fn();
+    mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
+    render(<App />);
+    const input = screen.getByRole('textbox', { name: /message input/i }) as HTMLTextAreaElement;
+    await user.type(input, 'line one');
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+    expect(submitMock, 'Shift+Enter must not send the message').not.toHaveBeenCalled();
+    expect(input.value, 'Shift+Enter must insert a line break').toBe('line one\n');
+  });
+
+  it('sends a multi-line message with its line break', async () => {
+    const user = userEvent.setup();
+    const submitMock = vi.fn();
+    mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
+    render(<App />);
+    const input = screen.getByRole('textbox', { name: /message input/i });
+    await user.type(input, 'line one');
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+    await user.type(input, 'line two');
+    await user.keyboard('{Enter}');
+    expect(submitMock).toHaveBeenCalledWith({
+      messages: [{ type: 'human', content: 'line one\nline two' }],
+    });
+  });
+
+  it('Enter that confirms IME composition does not send the message', () => {
+    const submitMock = vi.fn();
+    mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
+    render(<App />);
+    const input = screen.getByRole('textbox', { name: /message input/i });
+    fireEvent.change(input, { target: { value: 'xin chao' } });
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(submitMock).not.toHaveBeenCalled();
+  });
+
+  // Safari fires the IME-confirming Enter after compositionend: isComposing is false, keyCode is 229.
+  it('Safari-style IME Enter (keyCode 229) does not send the message', () => {
+    const submitMock = vi.fn();
+    mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
+    render(<App />);
+    const input = screen.getByRole('textbox', { name: /message input/i });
+    fireEvent.change(input, { target: { value: 'xin chao' } });
+    fireEvent.keyDown(input, { key: 'Enter', keyCode: 229, isComposing: false });
+    expect(submitMock).not.toHaveBeenCalled();
   });
 });
 
