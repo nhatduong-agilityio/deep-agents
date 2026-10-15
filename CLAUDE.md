@@ -79,7 +79,7 @@ Current resume point: see `docs/PROGRESS.md`.
 - `rules/` — path-scoped conventions for `apps/web`, Node code and tests
 - `agents/ui-verifier.md` — checks UI ACs in a real browser (needs both dev servers running)
 - `skills/verify/` — project verify recipe; other skills under `.claude/skills/` are machine-local and gitignored
-- `.mcp.json` — GitLab MCP (OAuth via `/mcp`); personal settings go in `.claude/settings.local.json`
+- GitLab MCP is per user, not in the repo: `claude mcp add -s user --transport http GitLab https://gitlab.asoft-python.com/api/v4/mcp`, then `/mcp` to sign in (needs the instance's "Allow access to the MCP server" setting); personal settings go in `.claude/settings.local.json`
 
 ## Key patterns (from agentic-design.ai)
 
