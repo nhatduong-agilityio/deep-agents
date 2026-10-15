@@ -346,7 +346,7 @@ describe('Form interactions', () => {
 
   it('clears the input after submit', () => {
     render(<App />);
-    const input = screen.getByRole('textbox', { name: /message input/i }) as HTMLInputElement;
+    const input = screen.getByRole('textbox', { name: /message input/i }) as HTMLTextAreaElement;
     fireEvent.change(input, { target: { value: 'question' } });
     fireEvent.submit(input.closest('form')!);
     expect(input.value).toBe('');
@@ -375,7 +375,7 @@ describe('Form interactions', () => {
   it('input is disabled while loading', () => {
     mockUseStream.mockReturnValue(mockReturn({ isLoading: true }));
     render(<App />);
-    const input = screen.getByRole('textbox') as HTMLInputElement;
+    const input = screen.getByRole('textbox') as HTMLTextAreaElement;
     expect(input.disabled).toBe(true);
   });
 
@@ -413,7 +413,7 @@ describe('Multi-line input', () => {
     const submitMock = vi.fn();
     mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
     render(<App />);
-    const input = screen.getByRole('textbox', { name: /message input/i }) as HTMLInputElement;
+    const input = screen.getByRole('textbox', { name: /message input/i }) as HTMLTextAreaElement;
     await user.type(input, 'line one');
     await user.keyboard('{Shift>}{Enter}{/Shift}');
     expect(submitMock, 'Shift+Enter must not send the message').not.toHaveBeenCalled();
