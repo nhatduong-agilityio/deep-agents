@@ -419,6 +419,31 @@ describe('Multi-line input', () => {
     expect(submitMock, 'Shift+Enter must not send the message').not.toHaveBeenCalled();
     expect(input.value, 'Shift+Enter must insert a line break').toBe('line one\n');
   });
+
+  it('sends a multi-line message with its line break', async () => {
+    const user = userEvent.setup();
+    const submitMock = vi.fn();
+    mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
+    render(<App />);
+    const input = screen.getByRole('textbox', { name: /message input/i });
+    await user.type(input, 'line one');
+    await user.keyboard('{Shift>}{Enter}{/Shift}');
+    await user.type(input, 'line two');
+    await user.keyboard('{Enter}');
+    expect(submitMock).toHaveBeenCalledWith({
+      messages: [{ type: 'human', content: 'line one\nline two' }],
+    });
+  });
+
+  it('Enter that confirms IME composition does not send the message', () => {
+    const submitMock = vi.fn();
+    mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
+    render(<App />);
+    const input = screen.getByRole('textbox', { name: /message input/i });
+    fireEvent.change(input, { target: { value: 'xin chao' } });
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(submitMock).not.toHaveBeenCalled();
+  });
 });
 
 // ─── 6. Interrupt Dialog ──────────────────────────────────────────────────────
