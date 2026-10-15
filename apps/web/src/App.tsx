@@ -298,8 +298,13 @@ export function App() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => {
-              // Enter sends, Shift+Enter inserts a newline; skip Enter that confirms IME composition.
-              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+              // Enter sends, Shift+Enter inserts a newline; skip Enter that confirms IME composition (keyCode 229 for Safari).
+              if (
+                e.key === 'Enter' &&
+                !e.shiftKey &&
+                !e.nativeEvent.isComposing &&
+                e.nativeEvent.keyCode !== 229
+              ) {
                 e.preventDefault();
                 e.currentTarget.form?.requestSubmit();
               }
