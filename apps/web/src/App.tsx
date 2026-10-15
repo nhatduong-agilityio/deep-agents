@@ -122,6 +122,19 @@ export function App() {
     [input, isLoading, submit],
   );
 
+  const handleInputKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    // Enter sends, Shift+Enter inserts a newline; skip Enter that confirms IME composition (keyCode 229 for Safari).
+    if (
+      e.key === 'Enter' &&
+      !e.shiftKey &&
+      !e.nativeEvent.isComposing &&
+      e.nativeEvent.keyCode !== 229
+    ) {
+      e.preventDefault();
+      e.currentTarget.form?.requestSubmit();
+    }
+  }, []);
+
   const handleApprove = useCallback(() => {
     void respond({ approved: true, comment: interruptResponse.trim() || undefined });
     setInterruptResponse('');
@@ -297,18 +310,7 @@ export function App() {
             rows={1}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              // Enter sends, Shift+Enter inserts a newline; skip Enter that confirms IME composition (keyCode 229 for Safari).
-              if (
-                e.key === 'Enter' &&
-                !e.shiftKey &&
-                !e.nativeEvent.isComposing &&
-                e.nativeEvent.keyCode !== 229
-              ) {
-                e.preventDefault();
-                e.currentTarget.form?.requestSubmit();
-              }
-            }}
+            onKeyDown={handleInputKeyDown}
             disabled={isLoading}
             placeholder="Ask a policy question…"
             className="input-text"
