@@ -1,6 +1,6 @@
 # E1-01 — Show line breaks in sent human messages
 
-Source: GitLab nhat.duong/generative-ai#8 ("Sent messages show line breaks on one row"); backlog `docs/BACKLOG.md` E1-01 · Branch: `fix/E1-01-human-message-line-breaks` · Status: In review
+Source: GitLab nhat.duong/generative-ai#8 ("Sent messages show line breaks on one row"); backlog `docs/BACKLOG.md` E1-01 · Branch: `fix/E1-01-human-message-line-breaks` · Status: Done (MR !157)
 
 ## Context
 
