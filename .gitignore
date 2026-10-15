@@ -3,7 +3,8 @@ dist/
 
 # machine-local Claude Code tooling
 .agents/
-.claude/skills/
+.claude/skills/*
+!.claude/skills/verify/
 skills-lock.json
 apps/web/dist/
 .env
@@ -16,3 +17,9 @@ tmp/
 
 # LangGraph API
 .langgraph_api
+
+# Claude Code — personal files, never commit
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/current-task
+.claude/worktrees/
