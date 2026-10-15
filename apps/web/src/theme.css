@@ -347,6 +347,8 @@ body {
   background: var(--c-bubble-human);
   color: var(--c-bubble-human-text);
   border-bottom-right-radius: var(--r-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .msg-bubble--ai {
