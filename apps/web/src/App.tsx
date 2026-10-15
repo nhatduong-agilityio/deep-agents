@@ -291,10 +291,19 @@ export function App() {
         )}
 
         <form onSubmit={handleSubmit} className="chat-form">
-          <input
+          {/* textarea, not input: a single-line input submits on any Enter and drops line breaks. */}
+          <textarea
             aria-label="Message input"
+            rows={1}
             value={input}
             onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => {
+              // Enter sends, Shift+Enter inserts a newline; skip Enter that confirms IME composition.
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                e.currentTarget.form?.requestSubmit();
+              }
+            }}
             disabled={isLoading}
             placeholder="Ask a policy question…"
             className="input-text"
