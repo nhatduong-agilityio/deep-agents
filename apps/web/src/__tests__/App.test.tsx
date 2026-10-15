@@ -444,6 +444,17 @@ describe('Multi-line input', () => {
     fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
     expect(submitMock).not.toHaveBeenCalled();
   });
+
+  // Safari fires the IME-confirming Enter after compositionend: isComposing is false, keyCode is 229.
+  it('Safari-style IME Enter (keyCode 229) does not send the message', () => {
+    const submitMock = vi.fn();
+    mockUseStream.mockReturnValue(mockReturn({ submit: submitMock }));
+    render(<App />);
+    const input = screen.getByRole('textbox', { name: /message input/i });
+    fireEvent.change(input, { target: { value: 'xin chao' } });
+    fireEvent.keyDown(input, { key: 'Enter', keyCode: 229, isComposing: false });
+    expect(submitMock).not.toHaveBeenCalled();
+  });
 });
 
 // ─── 6. Interrupt Dialog ──────────────────────────────────────────────────────
