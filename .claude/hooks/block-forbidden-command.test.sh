@@ -49,6 +49,10 @@ done <<'T'
 2|feat|cat <<EOF\nit's fine\nEOF\ngit reset --hard
 2|feat|gh pr create --body-file - <<'EOF'\nDon't push\nEOF\ngit push origin main
 2|feat|grep KEY -r .env apps
+2|feat|echo "use <<EOF here"\ngit push origin main
+2|feat|echo $((1<<n))\ngit reset --hard
+2|feat|cat <<EOF | bash\ngit push origin main\nEOF
+2|feat|cd /tmp && bash <<EOF\ngit push origin main\nEOF
 2|feat|git status && git push origin main
 2|feat|git status\ngit push origin main
 2|feat|git add .\ngit commit --no-verify -m x

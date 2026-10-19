@@ -37,6 +37,30 @@ def block(reason):
     sys.exit(2)
 
 HEREDOC = re.compile(r"<<(-?)\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\2")
+FEEDS_SHELL = re.compile(r"(^|[|;&]|\b(sudo|env|exec|time|nohup)\s)\s*(\S*/)?(bash|sh|zsh)\b")
+
+def heredocs(line):
+    # `<<` operators outside quotes and outside $(( )) arithmetic; `<<<` is a here-string
+    found, quote, arith, i = [], None, 0, 0
+    while i < len(line):
+        c = line[i]
+        if quote:
+            quote = None if c == quote else quote
+        elif c in "'\"":
+            quote = c
+        elif line.startswith("$((", i):
+            arith += 1; i += 2
+        elif arith and line.startswith("))", i):
+            arith -= 1; i += 1
+        elif not arith and line.startswith("<<<", i):
+            i += 2
+        elif not arith and line.startswith("<<", i):
+            m = HEREDOC.match(line, i)
+            if m:
+                found.append(m)
+                i = m.end() - 1
+        i += 1
+    return found
 
 def strip_heredocs(text):
     # Heredoc bodies are data, not commands (`cat > f <<EOF`, `gh pr create --body-file - <<'EOF'`),
@@ -46,13 +70,13 @@ def strip_heredocs(text):
         line = lines[i]
         out.append(line)
         i += 1
-        for m in HEREDOC.finditer(line.replace("<<<", "")):
+        for m in heredocs(line):
             body = []
             while i < len(lines) and (lines[i].lstrip("\t") if m.group(1) else lines[i]) != m.group(3):
                 body.append(lines[i])
                 i += 1
             i += 1  # the delimiter line
-            if re.match(r"\s*(\S*/)?(bash|sh|zsh)\b", line):
+            if FEEDS_SHELL.search(line):
                 out.extend(body)
     return "\n".join(out)
 
