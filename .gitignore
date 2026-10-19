@@ -24,3 +24,4 @@ CLAUDE.local.md
 .claude/settings.local.json
 .claude/current-task
 .claude/worktrees/
+.playwright-mcp/
