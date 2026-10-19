@@ -25,3 +25,10 @@ CLAUDE.local.md
 .claude/current-task
 .claude/worktrees/
 .playwright-mcp/
+
+# devkit UI evidence (published as an artifact, not committed)
+.claude/reports/
+**/evidence/
+
+# devkit security scan reports
+security-scan/

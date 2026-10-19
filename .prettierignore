@@ -1,3 +1,5 @@
 dist/
 node_modules/
 pnpm-lock.yaml
+# devkit reads `- key: value` lines as raw globs; Prettier would rewrite __x__ and *.x.* as Markdown emphasis
+docs/devkit.md
