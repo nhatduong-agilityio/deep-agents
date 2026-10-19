@@ -5,6 +5,7 @@ dist/
 .agents/
 .claude/skills/*
 !.claude/skills/verify/
+!.claude/skills/release-checklist/
 skills-lock.json
 apps/web/dist/
 .env
