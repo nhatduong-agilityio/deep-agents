@@ -77,7 +77,7 @@ Current resume point: see `docs/PROGRESS.md`.
 
 ## Claude Code setup (`.claude/`)
 
-- `settings.json` — permissions (`.env*` reads denied) and hooks: Prettier on every Edit/Write; context restored after compact/resume
+- `settings.json` — permissions (`.env*` reads denied) and hooks: Prettier on every Edit/Write; `pnpm typecheck && pnpm lint` before every `git commit` (blocks on failure); context restored after compact/resume
 - `rules/` — path-scoped conventions for `apps/web`, Node code and tests
 - `agents/ui-verifier.md` — checks UI ACs in a real browser (needs both dev servers running)
 - `skills/verify/` — project verify recipe; `skills/release-checklist/` — release steps (gate, secrets by name, API-before-frontend deploy, health/smoke, rollback), stops before every deploy/push/tag. Both are tracked via `!` exceptions in `.gitignore`; any other skill under `.claude/skills/` is machine-local and gitignored
@@ -102,10 +102,13 @@ Current resume point: see `docs/PROGRESS.md`.
 - No defensive try/catch on internal code — validate at boundaries only
 - All artifacts in English: code, comments, commits, plans, specs, MR descriptions, docs
 
+## Removed / reversed
+
+- None yet: one line per reversed decision, newest first (`YYYY-MM-DD — removed/reversed X: why`)
+
 ## Gotchas
 
 - `langgraphjs dev` reads `.env` only at startup — restart `pnpm dev:server` after changing keys
 - Failed agent runs still return HTTP 200 with an `__error__` field; check the body, not the status
 - `pnpm build` writes `dist/`, and root vitest then also runs the compiled tests (incl. e2e, needs keys) — `rm -rf dist` after building
-- `pnpm format:check` currently fails on `apps/web/src/theme.css` and `reports/T-FS-00-report.md` (pre-existing)
 - `docs/CODING-STANDARDS.md` is partly stale (says Gemini, `src/__tests__`, "no mocking"); this file and `.claude/rules/` win
