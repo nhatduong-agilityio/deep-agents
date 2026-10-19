@@ -78,7 +78,7 @@ Current resume point: see `docs/PROGRESS.md`.
 
 ## Claude Code setup (`.claude/`)
 
-- `settings.json` — permissions (`.env*` reads denied) and hooks: `block-forbidden-command` before every Bash call (blocks `--no-verify`, pushes to `main`/`deep-agents`, `git reset --hard`, shell reads of `.env*`; exit 2 + reason); `pnpm typecheck && pnpm lint` before every `git commit` (blocks on failure); Prettier on every Edit/Write; context restored after compact/resume
+- `settings.json` — permissions (`.env*` reads denied) and hooks: `block-forbidden-command` before every Bash call (best effort: blocks hook-skipping commits/pushes, pushes to `main`/`deep-agents`, `git reset --hard`, common shell reads of `.env*`; exit 2 + reason; table test `.claude/hooks/block-forbidden-command.test.sh`); `pnpm typecheck && pnpm lint` before every `git commit` (blocks on failure); Prettier on every Edit/Write; context restored after compact/resume
 - `rules/` — path-scoped conventions for `apps/web`, Node code and tests
 - `agents/ui-verifier.md` — checks UI ACs in a real browser (needs both dev servers running)
 - `skills/verify/` — project verify recipe; `skills/release-checklist/` — release steps (gate, secrets by name, API-before-frontend deploy, health/smoke, rollback), stops before every deploy/push/tag. Both are tracked via `!` exceptions in `.gitignore`; any other skill under `.claude/skills/` is machine-local and gitignored
