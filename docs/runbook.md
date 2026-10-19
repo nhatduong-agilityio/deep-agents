@@ -16,10 +16,10 @@
    Look for startup errors (missing env var, failed DB connection) vs runtime errors (5xx during a run).
 4. **Check LangGraph API health:**
    ```bash
-   curl -s http://localhost:2024/ok
-   # Expected: {"status":"ok"}
+   curl -s http://localhost:2024/ok -H "Authorization: Bearer $AUTH_TOKEN"
+   # Expected: {"ok":true} (without the token: 401 Unauthorized)
    curl -s http://localhost:2024/info
-   # Expected: {"graphs":{"agent":"..."},...}
+   # Expected: {"version":"...","langgraph_js_version":"...",...} (no auth needed; no graph list)
    ```
 5. **Reproduce locally** using the thread ID from LangSmith:
    ```bash
@@ -123,23 +123,26 @@ docker compose up -d
 
 ### Expected responses
 
-| Endpoint   | Method | Expected                                                               |
-| ---------- | ------ | ---------------------------------------------------------------------- |
-| `/ok`      | GET    | `{"status":"ok"}` — HTTP 200                                           |
-| `/info`    | GET    | `{"graphs":{"agent":{"..."}}}` — HTTP 200, `agent` key present         |
-| `/threads` | POST   | HTTP 200 with new thread ID (requires `Authorization: Bearer <token>`) |
+| Endpoint             | Method | Expected                                                                                |
+| -------------------- | ------ | --------------------------------------------------------------------------------------- |
+| `/ok`                | GET    | `{"ok":true}` — HTTP 200 (requires `Authorization: Bearer <token>`; 401 without)        |
+| `/info`              | GET    | `{"version":"...","langgraph_js_version":"...",...}` — HTTP 200, no auth, no graph list |
+| `/assistants/search` | POST   | JSON array with an item whose `graph_id` is `agent` (requires the token)                |
+| `/threads`           | POST   | HTTP 200 with new thread ID (requires `Authorization: Bearer <token>`)                  |
+
+Observed 2026-10-19 on `langgraphjs dev` (`@langchain/langgraph-api` 1.5.1) with `AUTH_TOKEN` set: `/ok` returns 401
+without the token (`auth.ts` exempts only `OPTIONS`), while the server answers `/info` without running auth. TODO: confirm on the production Docker image.
 
 ### Automated health check
 
 ```bash
-# Quick liveness check (no auth required)
-curl -sf http://localhost:2024/ok | grep '"ok"'
+# Liveness (auth required when AUTH_TOKEN is set)
+curl -sf http://localhost:2024/ok -H "Authorization: Bearer $AUTH_TOKEN" | grep '"ok"'
 
-# Full readiness check (auth required)
-curl -sf http://localhost:2024/info \
-  -H "Authorization: Bearer $AUTH_TOKEN" \
-  | python3 -c "import sys,json; d=json.load(sys.stdin); assert 'agent' in d.get('graphs',{}), 'agent graph missing'"
-echo "API healthy"
+# Readiness: the agent graph is registered (auth required). /info has no graph list, so it can't be used here.
+curl -sf -X POST http://localhost:2024/assistants/search \
+  -H "Authorization: Bearer $AUTH_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"graph_id":"agent","limit":1}' | grep -q '"graph_id":"agent"' && echo "API healthy"
 ```
 
 ### Smoke test suite
