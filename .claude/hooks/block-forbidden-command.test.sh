@@ -44,6 +44,11 @@ done <<'T'
 2|feat|cp .env /tmp/leak
 2|feat|cp -t /tmp .env
 2|feat|bash -c "cat .env"
+2|feat|bash -lc "git push origin main"
+2|feat|bash <<EOF\ngit push origin main\nEOF
+2|feat|cat <<EOF\nit's fine\nEOF\ngit reset --hard
+2|feat|gh pr create --body-file - <<'EOF'\nDon't push\nEOF\ngit push origin main
+2|feat|grep KEY -r .env apps
 2|feat|git status && git push origin main
 2|feat|git status\ngit push origin main
 2|feat|git add .\ngit commit --no-verify -m x
@@ -74,6 +79,9 @@ done <<'T'
 0|feat|git reset HEAD file.ts
 0|feat|cat .env.example
 0|feat|grep -n AUTH_TOKEN .env.example
+0|feat|grep .env .gitignore
+0|feat|cat > notes.md <<EOF\ngit push origin main\nEOF
+0|feat|cat > notes.md <<'EOF'\ngit reset --hard\ncat .env\nEOF
 0|feat|cp .env.example .env
 0|feat|cp .env.example .env 2>/dev/null
 0|feat|echo "git push origin main"

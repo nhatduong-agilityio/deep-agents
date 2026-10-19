@@ -36,6 +36,26 @@ def block(reason):
     print(f"Blocked by .claude/hooks/block-forbidden-command.sh: {reason}", file=sys.stderr)
     sys.exit(2)
 
+HEREDOC = re.compile(r"<<(-?)\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\2")
+
+def strip_heredocs(text):
+    # Heredoc bodies are data, not commands (`cat > f <<EOF`, `gh pr create --body-file - <<'EOF'`),
+    # and an apostrophe in one would break shlex. Keep a body only when it feeds a shell.
+    lines, out, i = text.split("\n"), [], 0
+    while i < len(lines):
+        line = lines[i]
+        out.append(line)
+        i += 1
+        for m in HEREDOC.finditer(line.replace("<<<", "")):
+            body = []
+            while i < len(lines) and (lines[i].lstrip("\t") if m.group(1) else lines[i]) != m.group(3):
+                body.append(lines[i])
+                i += 1
+            i += 1  # the delimiter line
+            if re.match(r"\s*(\S*/)?(bash|sh|zsh)\b", line):
+                out.extend(body)
+    return "\n".join(out)
+
 def tokenize(text):
     lex = shlex.shlex(text, posix=True, punctuation_chars=";&|()<>\n")
     lex.whitespace = " \t\r"
@@ -55,10 +75,12 @@ def branch_of(path):
         return ""
 
 def check(text, cwd, depth=0):
+    text = strip_heredocs(text)
     try:
         tokens = tokenize(text)
-    except ValueError:
-        tokens = text.split()
+    except ValueError:  # unbalanced quote: still split on newlines and separators
+        tokens = re.sub(r"([;&|()<>\n])", r" \1 ", text).replace("\n", " \n ").split(" ")
+        tokens = [t for t in tokens if t]
     segments, cur = [], []
     for t in tokens:
         if t and set(t) <= SEPARATORS:
@@ -100,10 +122,11 @@ def check(text, cwd, depth=0):
         if prog == "cd" and rest:
             cwd = os.path.join(cwd, os.path.expanduser(rest[0]))
             continue
-        if prog in SHELLS and "-c" in rest and depth < 3:
-            j = rest.index("-c")
-            if j + 1 < len(rest):
-                check(rest[j + 1], cwd, depth + 1)
+        flags = [k for k, a in enumerate(rest) if re.fullmatch(r"-[a-zA-Z]*c[a-zA-Z]*", a)]
+        if prog in SHELLS and flags and depth < 3:
+            script = [a for a in rest[flags[0] + 1:] if a != "--"]
+            if script:
+                check(script[0], cwd, depth + 1)
             continue
         if prog == "eval" and depth < 3:
             check(" ".join(rest), cwd, depth + 1)
@@ -111,6 +134,9 @@ def check(text, cwd, depth=0):
 
         if prog in READERS:
             files = [a for a in rest if not a.startswith("-")]
+            if prog in {"grep", "rg", "awk", "sed"} and files and not any(
+                    a in {"-e", "-f", "--regexp", "--file"} for a in rest):
+                files = files[1:]  # the first operand is the pattern or script, not a file
             if prog == "cp":
                 if "-t" in rest:
                     k = rest.index("-t")
