@@ -15,6 +15,10 @@ Spec / plan:
 
 ```
 
+## Full report
+
+<!-- Link the devkit PR report artifact (private): ACs with evidence, verification output, manual steps, risks. Built from command output, never from memory. -->
+
 ## Why
 
 <!-- The bug report (steps / expected / actual / environment) or the requirement, then the cause found. -->

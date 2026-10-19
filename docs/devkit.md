@@ -12,7 +12,7 @@ Most lines (added plus deleted) one PR may change, so reviewers can read it in a
 
 Most files one PR may touch, so a change stays about one concern.
 
-- pr_size_exclude: *.lock, package-lock.json, pnpm-lock.yaml, yarn.lock, go.sum, Cargo.lock, **/**snapshots**/**, *.snap, dist/**, build/**, _.min._
+- pr_size_exclude: *.lock, package-lock.json, pnpm-lock.yaml, yarn.lock, go.sum, Cargo.lock, **/__snapshots__/**, *.snap, dist/**, build/**, *.min.*
 
 Comma-separated globs for files that do not count toward the limits, because they are generated and nobody reviews them line by line. Matching rule: `*` matches any characters including `/`; a glob without `/` is also matched against the file name alone (so `yarn.lock` covers `apps/web/yarn.lock`); a leading `**/` also matches zero directories. Setting this key replaces the whole default list. `dist/**` and `build/**` match only at the repo root; in a monorepo, use `**/dist/**`.
 

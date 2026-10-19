@@ -47,6 +47,7 @@ Current resume point: see `docs/PROGRESS.md`.
 - Remote `origin` is self-hosted GitLab (MRs, not PRs); MR template: `.gitlab/merge_request_templates/Default.md`
 - Remote `github` (`nhatduong-agilityio/deep-agents`, **public**): its `main` mirrors GitLab `deep-agents`. `.claude/` tooling changes go there as GitHub PRs into `main` (same template sections); app work stays on GitLab. The two can drift; after a GitHub merge, bring it to GitLab `deep-agents` via an MR (ask first)
 - Before reporting done: every AC/goal has evidence (test names + results, command + output, screenshot)
+- Every PR links a devkit PR report artifact under `## Full report` (built from command output via `render-report.mjs`), whichever command opened the PR
 - Never push without approval
 - When compacting: keep the SPEC/plan path in progress, the modified files, and the test commands in use
 
