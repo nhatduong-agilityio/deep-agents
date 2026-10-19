@@ -125,8 +125,10 @@ Production request path:
 browser → LangGraph Server (custom auth handler validates JWT) → OpenAI
 ```
 
-In local development (`localhost:2024`) no auth layer is active. The auth handler is only
-registered when `langgraph.json` includes an `auth.path` field (T-FS-03).
+The auth handler is registered through the `auth.path` field in `langgraph.json` (T-FS-03), so it is active in
+local development too: with `AUTH_TOKEN` set, requests to `localhost:2024` without the bearer token get 401
+(observed 2026-10-19). With `AUTH_TOKEN` unset, `apps/api/src/auth.ts` allows all requests in dev and fails
+closed (500) when `NODE_ENV=production`.
 
 ---
 

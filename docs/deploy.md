@@ -141,9 +141,12 @@ proxy_set_header Authorization "Bearer $AUTH_TOKEN";
 ### Verify the deployment
 
 ```bash
-# Health check (docs/runbook.md §4): /ok needs no auth, /info needs the bearer token
-curl -sf http://localhost:2024/ok
-curl -sf http://localhost:2024/info -H "Authorization: Bearer $AUTH_TOKEN"
+# Health check (docs/runbook.md §4). With AUTH_TOKEN set, /ok and the API routes need the bearer token;
+# /info answers without auth but returns server version info only (no graph list).
+curl -sf http://localhost:2024/ok -H "Authorization: Bearer $AUTH_TOKEN"   # {"ok":true}
+curl -sf -X POST http://localhost:2024/assistants/search \
+  -H "Authorization: Bearer $AUTH_TOKEN" -H 'Content-Type: application/json' \
+  -d '{"graph_id":"agent","limit":1}' | grep -q '"graph_id":"agent"' && echo "agent graph registered"
 
 # Smoke test (requires VITE_API_URL=http://localhost:2024 and AUTH_TOKEN in env)
 pnpm smoke-server

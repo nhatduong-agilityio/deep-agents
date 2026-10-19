@@ -48,10 +48,10 @@ The frontend's origin must already be in `LANGGRAPH_ALLOW_ORIGIN` on the API bef
 
 ## 5. After deploy — health and smoke
 
-Health checks (`docs/runbook.md` §4, `docs/deploy.md` "Verify the deployment"). `/ok` needs no auth; `/info` needs the bearer token:
+Health checks (`docs/runbook.md` §4, `docs/deploy.md` "Verify the deployment"). With `AUTH_TOKEN` set, both need the bearer token:
 
-- `curl -sf <api>/ok` → `{"status":"ok"}`, HTTP 200
-- `curl -sf <api>/info -H "Authorization: Bearer $AUTH_TOKEN"` → the `graphs.agent` key is present
+- Liveness: `curl -sf <api>/ok -H "Authorization: Bearer $AUTH_TOKEN"` → `{"ok":true}` (401 without the token)
+- Readiness: `POST <api>/assistants/search` with the token and `{"graph_id":"agent","limit":1}` → an item with `"graph_id":"agent"`. Don't use `/info` for this: it has no graph list.
 
 Smoke tests ⛔ (they read `.env` and call real APIs, which costs money): `pnpm smoke-server`, `pnpm smoke-permissions`. `pnpm test:e2e` (full adversarial + budget suite) needs a separate "go".
 
