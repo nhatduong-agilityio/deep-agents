@@ -64,7 +64,10 @@ for seg in segments:
         continue
     prog = os.path.basename(seg[0])
 
-    if prog in READERS and any(is_env_file(a) for a in seg[1:] if not a.startswith("-")):
+    files = [a for a in seg[1:] if not a.startswith("-")]
+    if prog == "cp":
+        files = files[:-1]  # the destination is written, not read: `cp .env.example .env` is the setup step
+    if prog in READERS and any(is_env_file(a) for a in files):
         block("reading .env files is denied (secrets). Name the variable instead; .env.example is fine.")
 
     if prog != "git":
