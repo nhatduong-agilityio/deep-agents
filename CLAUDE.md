@@ -34,6 +34,7 @@ Use slash commands for all task work:
 - `/start-task <ID>` — reads task from `docs/tasks.md`, plans, waits for "go"
 - `/finish-task <ID>` — verifies DoD with real evidence, writes report, advances progress
 - `/ddr <topic>` — creates a Design Decision Record in `docs/decisions/`
+- `/standup [since]` — read-only Yesterday / Today / Blockers from git log, open PRs and `docs/PROGRESS.md`
 - Backlog/BA tickets (e.g. GitLab #8, #9): `/devkit:task <item>`; specs live in `docs/tasks/<ID>-<slug>/SPEC.md`
 - Other changes: `/devkit:plan` → `/devkit:cook` → `/devkit:ship`; plans live in `plans/`
 
@@ -41,9 +42,10 @@ Current resume point: see `docs/PROGRESS.md`.
 
 ## Git & review
 
-- Integration branch is `deep-agents` (`main` holds only the README). Branch from it: `fix/<slug>`, `feat/<slug>`, `chore/<slug>`, `docs/<slug>`
+- Integration branch is `deep-agents` (GitLab `main` holds only the README). Branch from it: `fix/<slug>`, `feat/<slug>`, `chore/<slug>`, `docs/<slug>`
 - Conventional Commits (commitlint + husky); bug fixes go test-first: failing `test:` commit, then `fix:`
-- Remote is self-hosted GitLab (MRs, not PRs); MR template: `.gitlab/merge_request_templates/Default.md`
+- Remote `origin` is self-hosted GitLab (MRs, not PRs); MR template: `.gitlab/merge_request_templates/Default.md`
+- Remote `github` (`nhatduong-agilityio/deep-agents`, **public**): its `main` mirrors GitLab `deep-agents`. `.claude/` tooling changes go there as GitHub PRs into `main` (same template sections); app work stays on GitLab. The two can drift; after a GitHub merge, bring it to GitLab `deep-agents` via an MR (ask first)
 - Before reporting done: every AC/goal has evidence (test names + results, command + output, screenshot)
 - Never push without approval
 - When compacting: keep the SPEC/plan path in progress, the modified files, and the test commands in use
@@ -78,7 +80,7 @@ Current resume point: see `docs/PROGRESS.md`.
 - `settings.json` — permissions (`.env*` reads denied) and hooks: Prettier on every Edit/Write; context restored after compact/resume
 - `rules/` — path-scoped conventions for `apps/web`, Node code and tests
 - `agents/ui-verifier.md` — checks UI ACs in a real browser (needs both dev servers running)
-- `skills/verify/` — project verify recipe; other skills under `.claude/skills/` are machine-local and gitignored
+- `skills/verify/` — project verify recipe; `skills/release-checklist/` — release steps (gate, secrets by name, API-before-frontend deploy, health/smoke, rollback), stops before every deploy/push/tag. Both are tracked via `!` exceptions in `.gitignore`; any other skill under `.claude/skills/` is machine-local and gitignored
 - GitLab MCP is per user, not in the repo: `claude mcp add -s user --transport http GitLab https://gitlab.asoft-python.com/api/v4/mcp`, then `/mcp` to sign in (needs the instance's "Allow access to the MCP server" setting); personal settings go in `.claude/settings.local.json`
 
 ## Key patterns (from agentic-design.ai)
