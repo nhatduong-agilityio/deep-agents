@@ -15,7 +15,7 @@ Run from the repo root and report each command with its exit code and key output
    - The files you touched first: `pnpm exec vitest run <file>` or `pnpm --filter web exec vitest run <file>`
    - Then the full suite: `pnpm test` (root and web counts both reported)
 3. Build: `pnpm build`, then `rm -rf dist` — otherwise the next `pnpm test` also runs the compiled tests in `dist/`, including e2e
-4. Formatting of changed files only: `pnpm exec prettier --check <changed files>`. A repo-wide `pnpm format:check` already fails on `apps/web/src/theme.css` and `reports/T-FS-00-report.md`; don't count those.
+4. Formatting: `pnpm format:check` (repo-wide; passes on `main` since the theme.css / T-FS-00 report reformat), or `pnpm exec prettier --check <changed files>` for a quick check.
 5. UI changes (anything under `apps/web/src`)
    - Start `pnpm dev:server` and `pnpm dev:web` in the background; wait until `http://localhost:5173` responds. The agent needs real keys in `.env`, and the server reads `.env` only at startup.
    - Use the `ui-verifier` agent with the SPEC's UI acceptance criteria, or drive the flow with `@playwright/test` (`chromium.launch({ channel: 'chrome' })`) from `apps/web`.

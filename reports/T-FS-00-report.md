@@ -36,7 +36,7 @@
   exports. The implementer creates a plain object with `~handlerCache.authenticate(request)`.
   This is a structural protocol, not a class hierarchy.
 
-- _*VITE_* public surface:_* `VITE_*` vars are bundled into the Vite client JS at build time.
+- _\*VITE_* public surface:_* `VITE_*` vars are bundled into the Vite client JS at build time.
   Any secret placed in a `VITE_*` var is readable by any browser user via DevTools. Only
   `VITE_API_URL` (a non-secret URL) is acceptable; API keys must be server-only.
 
