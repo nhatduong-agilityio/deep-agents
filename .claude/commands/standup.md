@@ -5,13 +5,17 @@ argument-hint: '[since] — default "yesterday"; e.g. "3 days ago", "2026-10-16"
 
 # /standup
 
-Draft a standup for the current git user, covering work since **$ARGUMENTS** (use `yesterday` if empty;
-on a Monday, `yesterday` means since last Friday).
+Draft a standup for the current git user, covering work since **$ARGUMENTS**.
+
+Resolve `<since>` to a date before running git. Never pass `yesterday` straight to `git log`: it means "24 h ago",
+which drops yesterday's early work. If `$ARGUMENTS` is empty or `yesterday`, run
+`[ "$(date +%u)" = 1 ] && date -v-3d +%F || date -v-1d +%F` (macOS; `date -d` on Linux), which gives the start of the
+previous working day. Otherwise use `$ARGUMENTS` as given. Print the resolved date on the first output line.
 
 This command is read-only. Don't edit, commit, push, comment or change any state. Report only what a command returned.
 
 1. Who and where: `git config user.email`, `git branch --show-current`.
-2. Commits: `git log --all --since="<since>" --author="<email>" --no-merges --format='%h %ad %s' --date=short`.
+2. Commits: `git log --all --since="<since> 00:00" --author="<email>" --no-merges --format='%h %ad %s' --date=short`.
    Group them by branch if more than one branch has commits (`git branch -a --contains <sha>`).
 3. Open PRs/MRs: `gh pr list --author @me --state open --json number,title,url,reviewDecision,isDraft,statusCheckRollup`
    for the GitHub remote. If `gh` fails, say so; don't guess. GitLab MRs: only if the GitLab MCP is connected,
@@ -21,7 +25,7 @@ This command is read-only. Don't edit, commit, push, comment or change any state
 5. Blockers: failing checks or "changes requested" from step 3, and `TODO`s in the in-progress plan or SPEC that need
    someone else's answer. If there are none, say "None found". Don't invent any.
 
-Output only this, short enough to read aloud in under a minute:
+Output only this (after the resolved-date line), short enough to read aloud in under a minute:
 
 ```markdown
 **Yesterday** — <bullets: what was done, each with a commit SHA or PR number>
