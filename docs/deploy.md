@@ -70,9 +70,14 @@ After deployment, LangSmith provides the API URL. Set it as `VITE_API_URL` in th
 # Generate the Dockerfile (already committed — only re-run if langgraph.json changes)
 pnpm exec langgraphjs dockerfile Dockerfile
 
-# Build
-docker build -t deep-agents:latest .
+# Build — tag with the git SHA (rollback depends on it, see docs/runbook.md §3), then move `latest`
+docker build -t deep-agents:$(git rev-parse --short HEAD) .
+docker tag deep-agents:$(git rev-parse --short HEAD) deep-agents:latest
 ```
+
+> **Back up first.** Rolling back the image does not roll back the database (`langgraph-data` volume). Take a
+> backup before every deploy that may change the schema; the runbook's restore reads `langgraph-data.dump`.
+> TODO: the backup command is not agreed yet; record the team's command here.
 
 ### Configure secrets
 
@@ -124,21 +129,10 @@ The API uses a bearer token (`AUTH_TOKEN`). Every request from the frontend or a
 Authorization: Bearer <AUTH_TOKEN>
 ```
 
-**Frontend configuration (`apps/web`):** The `useStream` hook does not add auth headers by default. Pass them via the `headers` option:
+**Never put the token in the frontend bundle.** No `VITE_*` variable may hold a token: Vite inlines every `VITE_*` value into the built JS, where anyone can read it (`CLAUDE.md` hard constraints, T-FS-00 threat 3). The header is always added server-side:
 
-```ts
-const stream = useStream({
-  apiUrl: import.meta.env['VITE_API_URL'],
-  assistantId: 'agent',
-  headers: {
-    Authorization: `Bearer ${import.meta.env['VITE_AUTH_TOKEN']}`,
-  },
-});
-```
-
-> `VITE_AUTH_TOKEN` is acceptable here only if it is a **public, low-privilege token** scoped to read-only or rate-limited access. The full `AUTH_TOKEN` (admin-level) must stay server-side.
-
-**BFF / reverse proxy configuration:** If routing through a proxy (Nginx, Caddy, Cloudflare Worker), inject the header server-side:
+- **Local dev:** the Vite dev server's `/api` proxy (`apps/web/vite.config.ts`) reads `AUTH_TOKEN` from `.env` and sets the header on each proxied request.
+- **Production (static build):** the Vite proxy does not exist, so put a BFF / reverse proxy (Nginx, Caddy, Cloudflare Worker) in front of the API and inject the header there:
 
 ```nginx
 proxy_set_header Authorization "Bearer $AUTH_TOKEN";
@@ -147,8 +141,9 @@ proxy_set_header Authorization "Bearer $AUTH_TOKEN";
 ### Verify the deployment
 
 ```bash
-# Health check
-curl http://localhost:2024/info
+# Health check (docs/runbook.md §4): /ok needs no auth, /info needs the bearer token
+curl -sf http://localhost:2024/ok
+curl -sf http://localhost:2024/info -H "Authorization: Bearer $AUTH_TOKEN"
 
 # Smoke test (requires VITE_API_URL=http://localhost:2024 and AUTH_TOKEN in env)
 pnpm smoke-server
