@@ -6,7 +6,7 @@ description: Release checklist for deep-agents — the gate, tag, secrets, deplo
 # Release checklist (deep-agents)
 
 Walk the steps in order and report a table at the end: step · command or check · result (pass/fail/skipped + evidence).
-Sources: `docs/deploy.md`, `docs/runbook.md`, `CLAUDE.md`. Where they disagree, `CLAUDE.md` and the runbook win; say so in the report.
+Sources: `docs/deploy.md`, `docs/runbook.md`, `CLAUDE.md`. If you find them disagreeing, `CLAUDE.md` and the runbook win; flag the conflict in the report so the docs get fixed.
 
 **Stop and ask the user before every step marked ⛔.** Those steps deploy, push, tag, cost money, or call real APIs. Without an explicit "go" for that step, stop there and report what is ready. A dry run ("prepare a release", "what would a release need") stops at the first ⛔.
 
@@ -27,32 +27,31 @@ Ask the user to confirm that each required variable is set **in the target envir
 - Recommended: `AUTH_TOKEN`. Unset means the API allows every request (dev only).
 - Optional: `LANGSMITH_PROJECT`, `LANGSMITH_TRACING`, `THREAD_BUDGET_USD` (default `0.10`)
 
-Never bake secrets into the image. **Never put a token in a `VITE_*` variable** (`CLAUDE.md`, hard constraints).
-`docs/deploy.md` "Auth headers" suggests `VITE_AUTH_TOKEN`. That contradicts `CLAUDE.md`, so don't follow it; flag it in the report. The Vite `/api` proxy injects `AUTH_TOKEN` server-side.
+Never bake secrets into the image. **Never put a token in a `VITE_*` variable** (`CLAUDE.md`, hard constraints). In production a reverse proxy injects `AUTH_TOKEN` server-side (`docs/deploy.md` "Auth headers").
 
 ## 3. Choose the path and back up
 
 Ask which path: **LangSmith Deployments**, **self-hosted Docker**, and/or **frontend only** (`docs/deploy.md` table).
 
 Before a Docker deploy: back up the `langgraph-data` Postgres volume. Rolling back the image does not roll back the database (`docs/runbook.md` §3).
-TODO: no document says how to create the dump that the runbook's restore command reads (`/backup/langgraph-data.dump`). Ask the user how they back it up; don't improvise a `pg_dump` command as if it were the procedure.
+TODO (team decision, also open in `docs/deploy.md` "Build the image"): the backup command is not agreed. Ask the user how they back it up; don't improvise a `pg_dump` command as if it were the procedure.
 
 ## 4. Deploy — API first, then frontend
 
 The frontend's origin must already be in `LANGGRAPH_ALLOW_ORIGIN` on the API before the frontend goes live; otherwise the browser rejects every SSE connection (`docs/deploy.md` "CORS prerequisite").
 
 - **LangSmith** ⛔: `pnpm exec langgraphjs deploy` (`--recreate` for a redeploy). Note the API URL it returns.
-- **Docker** ⛔: tag the image with the SHA from step 1, not only `latest`. Rollback depends on the SHA tag (`docs/runbook.md` §3); `docs/deploy.md` builds only `:latest`, so note the difference.
+- **Docker** ⛔: tag the image with the SHA from step 1, then move `latest` (`docs/deploy.md` "Build the image"; rollback needs the SHA tag, `docs/runbook.md` §3).
   `docker build -t deep-agents:<sha> . && docker tag deep-agents:<sha> deep-agents:latest`, then `docker compose up -d`.
   Regenerate the `Dockerfile` (`pnpm exec langgraphjs dockerfile Dockerfile`) only if `langgraph.json` changed.
 - **Frontend** ⛔: `VITE_API_URL=<api-url> pnpm --filter web build`, then from `apps/web/` `npx vercel --prod` or `npx wrangler pages deploy dist --project-name deep-agents-web`.
 
 ## 5. After deploy — health and smoke
 
-Health checks (`docs/runbook.md` §4). `/ok` needs no auth; `/info` needs the bearer token, although `docs/deploy.md` curls it without auth, so follow the runbook:
+Health checks (`docs/runbook.md` §4, `docs/deploy.md` "Verify the deployment"). With `AUTH_TOKEN` set, both need the bearer token:
 
-- `curl -sf <api>/ok` → `{"status":"ok"}`, HTTP 200
-- `curl -sf <api>/info -H "Authorization: Bearer $AUTH_TOKEN"` → the `graphs.agent` key is present
+- Liveness: `curl -sf <api>/ok -H "Authorization: Bearer $AUTH_TOKEN"` → `{"ok":true}` (401 without the token)
+- Readiness: `POST <api>/assistants/search` with the token and `{"graph_id":"agent","limit":1}` → an item with `"graph_id":"agent"`. Don't use `/info` for this: it has no graph list.
 
 Smoke tests ⛔ (they read `.env` and call real APIs, which costs money): `pnpm smoke-server`, `pnpm smoke-permissions`. `pnpm test:e2e` (full adversarial + budget suite) needs a separate "go".
 
@@ -66,4 +65,4 @@ Record in the report the previous good SHA or revision and the exact rollback fo
 
 ## Report
 
-End with the table, the release SHA, the path(s) deployed, which ⛔ steps ran or are still waiting, every TODO you hit, and any document conflicts you found.
+End with the table, the release SHA, the path(s) deployed, which ⛔ steps ran or are still waiting, every TODO you hit, and any conflicts between the docs you found.
