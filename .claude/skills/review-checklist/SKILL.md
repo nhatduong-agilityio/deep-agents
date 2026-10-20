@@ -5,12 +5,14 @@ description: Team code-review checklist for deep-agents — correctness, tests, 
 
 # Review checklist (deep-agents)
 
-Review the diff, not the whole repo. Read-only: never edit, commit or push while reviewing.
+Review the diff, not the whole repo. Read-only for the repo: never edit tracked files, commit or push while
+reviewing. Probes (step 3) live in the system temp dir only.
 
 ## 1. Read the diff
 
-- Base is `main` unless the user names another: `git diff --stat main...HEAD`, then `git diff main...HEAD`.
-- Read the commit messages too (`git log --oneline main..HEAD`). A `refactor`/`style`/`chore` commit that changes
+- Base is the branch the change targets: `main` for a GitHub PR (`.claude/` tooling), `deep-agents` for a GitLab
+  MR (app work), or the one the user names. Then `git diff --stat <base>...HEAD` and `git diff <base>...HEAD`.
+- Read the commit messages too (`git log --oneline <base>..HEAD`). A `refactor`/`style`/`chore` commit that changes
   behavior is itself a finding.
 - Read `CLAUDE.md` and the `.claude/rules/` files that match the changed paths.
 
@@ -26,8 +28,8 @@ Review the diff, not the whole repo. Read-only: never edit, commit or push while
 
 ## 3. Test each suspicion before writing it down
 
-- Prove it with a command: a probe script in the system temp dir, a throwaway test file, or a `node -e` one-liner.
-  Delete the probe afterwards; never commit it.
+- Prove it with a command: a probe script or throwaway test file in the system temp dir, or a `node -e` one-liner.
+  Delete the probe afterwards; never put it in the repo.
 - If it can't be proved here, keep it but label it "unverified" with what would prove it.
 
 ## 4. Report
