@@ -2,21 +2,23 @@
 # PreToolUse (Bash): block commands the team never runs through Claude. Exit 2 blocks the call and
 # shows the reason (stderr) to Claude; exit 0 allows it. Covers what permission rules can't express:
 #   - git commit/push that skips hooks: --no-verify (or a prefix git accepts), commit -n, HUSKY=0
-#     (also `export HUSKY=0`), -c core.hooksPath=… or GIT_CONFIG_* pointing core.hooksPath elsewhere,
-#     and `git config` that changes or unsets core.hooksPath (husky's own `.husky/_` is allowed)
+#     (also exported via export/declare -x/typeset -x), -c/--config-env core.hooksPath or GIT_CONFIG_*
+#     pointing elsewhere, and `git config` that changes/unsets core.hooksPath or drops the [core] section
+#     (husky's own `.husky/_` is allowed)
 #   - git push to main or deep-agents (explicit refspec, HEAD/@ or a bare push while on one of them),
 #     and push --all / --mirror
 #   - git reset --hard: discards uncommitted work
 #   - common shell reads of .env files (cat/less/source/grep/cp/< …, `.env*` globs, `xargs cat`,
 #     grep --include=.env / rg -g .env); .env.example is allowed
-# Wrapper options are skipped (`nice -n 10`, `sudo -u x`, `env -i`), and `xargs <cmd>` is checked as <cmd>.
+# Wrapper options are skipped (`nice -n 10`, `sudo -u x`, `env -i`), `env -S "…"` and `xargs <cmd>` are
+# checked as commands, and xargs feeding a reader or shell is blocked when its pipeline names a .env file.
 # Best effort, not a sandbox: scripts and aliases are not followed.
 # If python3 is missing or the input can't be parsed, it allows (never blocks blindly).
 input="$(cat)"
 command -v python3 >/dev/null 2>&1 || exit 0
 
 HOOK_INPUT="$input" exec python3 - <<'PY'
-import json, os, re, shlex, subprocess, sys
+import fnmatch, json, os, re, shlex, subprocess, sys
 
 PROTECTED = {"main", "deep-agents"}
 READERS = {"cat", "less", "more", "head", "tail", "bat", "source", ".", "grep", "rg", "awk", "sed", "xxd",
@@ -25,16 +27,20 @@ WRAPPERS = {"sudo", "env", "command", "exec", "time", "nice", "nohup", "!", "{",
             "else", "do", "while", "until"}
 # Wrapper options that take a separate value (`nice -n 10`, `sudo -u root`, `env -u NAME`)
 WRAPPER_VALUE_OPTS = {
-    "sudo": {"-u", "-g", "-C", "-D", "-h", "-p", "-r", "-t", "-U", "-T", "--user", "--group", "--chdir"},
+    "sudo": {"-u", "-g", "-C", "-D", "-h", "-p", "-r", "-t", "-U", "-T", "-R", "-a", "-c", "--user", "--group",
+             "--chdir", "--chroot", "--prompt", "--host", "--role", "--type", "--other-user", "--login-class",
+             "--auth-type", "--close-from", "--command-timeout"},
     "nice": {"-n", "--adjustment"},
-    "env": {"-u", "--unset", "-C", "--chdir", "-S", "--split-string"},
+    "env": {"-u", "--unset", "-C", "--chdir"},  # -S/--split-string: its value is the command, checked below
     "time": {"-f", "-o", "--format", "--output"},
     "exec": {"-a"},
 }
-XARGS_VALUE_OPTS = {"-I", "-i", "-n", "-P", "-L", "-l", "-d", "-a", "-E", "-e", "-s", "--max-args",
-                    "--max-procs", "--delimiter", "--arg-file", "--replace"}
-HUSKY_HOOKS_PATHS = {".husky/_", ".husky", "./.husky/_", "./.husky"}  # husky's own setting
-ENV_SAMPLES = [".env", ".env.local", ".env.production", ".env.development", ".envrc"]
+# xargs options with a separate value; GNU -i/-l/-e take only an attached one (-i{}, -l2)
+XARGS_VALUE_OPTS = {"-I", "-J", "-R", "-S", "-n", "-P", "-L", "-d", "-a", "-E", "-s", "--max-args",
+                    "--max-procs", "--delimiter", "--arg-file"}
+GIT_CONFIG_VALUE_OPTS = {"-f", "--file", "--blob", "--type", "--default", "--comment", "--value"}
+HUSKY_HOOKS_PATHS = {".husky/_", ".husky"}  # husky's own setting, compared after norm_path()
+ENV_SAMPLES = [".env", ".env.local", ".env.production", ".env.development", ".env.test", ".env.staging", ".envrc"]
 SHELLS = {"bash", "sh", "zsh"}
 SEPARATORS = set(";&|()\n")
 
@@ -108,24 +114,51 @@ def is_env_file(arg):
         return False  # a glob; is_env_glob decides
     return name != ".env.example" and (re.fullmatch(r"\.env(\..+)?", name) is not None or name == ".envrc")
 
-def is_env_glob(arg, dotfile_rule=True):
+def expand_braces(name):
+    # One level of brace expansion: `.{env,x}` -> `.env`, `.x`
+    m = re.search(r"\{([^{}]*,[^{}]*)\}", name)
+    if not m:
+        return [name]
+    return [name[:m.start()] + part + name[m.end():] for part in m.group(1).split(",")]
+
+def is_env_glob(arg, dotfile_rule=True, nocase=False):
     # A glob that would match a .env file: `cat .env*` (the shell skips dotfiles unless the pattern
-    # starts with '.'); grep/rg include patterns match any name, so `--include=*.env` counts too
-    import fnmatch
+    # starts with '.'); grep --include and find -name match any name, so `*env` counts there too
     name = os.path.basename(arg)
+    if nocase:
+        name = name.lower()
     if not any(c in name for c in "*?["):
         return False
     if dotfile_rule and not name.startswith("."):
         return False
-    return any(fnmatch.fnmatchcase(e, name) for e in ENV_SAMPLES)
+    if any(fnmatch.fnmatchcase(e, name) for e in ENV_SAMPLES):
+        return True
+    # `.env.s*` or `.env.e*` names some .env.<x> file even if it isn't in ENV_SAMPLES; only a pattern whose
+    # literal part already spells `.env.example` (`.env.example*`) is treated as the sample file
+    prefix = re.split(r"[*?\[]", name, maxsplit=1)[0]
+    return prefix.startswith(".env") and not prefix.startswith(".env.example")
 
-def reads_env(arg, dotfile_rule=True):
-    return is_env_file(arg) or is_env_glob(arg, dotfile_rule)
+def reads_env(arg, dotfile_rule=True, nocase=False):
+    arg = arg.lower() if nocase else arg
+    return any(is_env_file(n) or is_env_glob(n, dotfile_rule, nocase) for n in expand_braces(arg))
 
-def hooks_path_override(assignment):
-    # GIT_CONFIG_KEY_<n>=core.hooksPath, GIT_CONFIG_PARAMETERS="'core.hooksPath'=…"
-    name, _, value = assignment.partition("=")
-    return name.startswith("GIT_CONFIG") and "core.hookspath" in value.lower()
+def norm_path(value):
+    value = value.rstrip("/")
+    return value[2:] if value.startswith("./") else value
+
+def hooks_path_overrides(assignments):
+    # GIT_CONFIG_KEY_<n>=core.hooksPath (+ GIT_CONFIG_VALUE_<n>), GIT_CONFIG_PARAMETERS="'core.hooksPath'='…'"
+    env = dict(a.split("=", 1) for a in assignments if "=" in a)
+    for name, value in env.items():
+        m = re.fullmatch(r"GIT_CONFIG_KEY_(\d+)", name)
+        if m and value.lower() == "core.hookspath":
+            if norm_path(env.get(f"GIT_CONFIG_VALUE_{m.group(1)}", "")) not in HUSKY_HOOKS_PATHS:
+                return True
+        if name == "GIT_CONFIG_PARAMETERS":
+            for v in re.findall(r"'core\.hookspath'='([^']*)'", value, re.I):
+                if norm_path(v) not in HUSKY_HOOKS_PATHS:
+                    return True
+    return False
 
 def branch_of(path):
     try:
@@ -141,19 +174,30 @@ def check(text, cwd, depth=0):
     except ValueError:  # unbalanced quote: still split on newlines and separators
         tokens = re.sub(r"([;&|()<>\n])", r" \1 ", text).replace("\n", " \n ").split(" ")
         tokens = [t for t in tokens if t]
-    env_named = any(reads_env(t) for t in tokens if t and not set(t) <= SEPARATORS)
-    segments, cur = [], []
+    segments, cur, pipeline = [], [], 0
     for t in tokens:
         if t and set(t) <= SEPARATORS:
             if cur:
-                segments.append(cur)
+                segments.append((pipeline, cur))
             cur = []
+            if t != "|":
+                pipeline += 1
         else:
             cur.append(t)
     if cur:
-        segments.append(cur)
+        segments.append((pipeline, cur))
 
-    for seg in segments:
+    def names_env(seg):
+        # find -name/-path patterns match dotfiles, so the shell's dotfile rule doesn't apply to them
+        return any(reads_env(t, dotfile_rule=k == 0 or seg[k - 1] not in {"-name", "-iname", "-path", "-ipath"})
+                   for k, t in enumerate(seg))
+
+    env_in_pipeline = {}
+    for pid, seg in segments:
+        env_in_pipeline[pid] = env_in_pipeline.get(pid, False) or names_env(seg)
+
+    husky_assigned = False
+    for pid, seg in segments:
         # Redirections: drop the operator and its target (and a bare fd digit before it); `< file` is a read
         args, i = [], 0
         while i < len(seg):
@@ -162,7 +206,7 @@ def check(text, cwd, depth=0):
                 if args and args[-1].isdigit():
                     args.pop()
                 target = seg[i + 1] if i + 1 < len(seg) else ""
-                if "<" in t and is_env_file(target):
+                if "<" in t and reads_env(target):
                     block("reading .env files is denied (secrets). Name the variable instead; .env.example is fine.")
                 i += 2
                 continue
@@ -170,36 +214,48 @@ def check(text, cwd, depth=0):
             i += 1
 
         # Leading VAR=value assignments and wrappers/keywords
-        no_hooks_env = False
+        assignments, split_cmd = [], None
         while args and (re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", args[0]) or args[0] in WRAPPERS):
-            if re.fullmatch(r"HUSKY=0", args[0]) or hooks_path_override(args[0]):
-                no_hooks_env = True
+            if "=" in args[0] and args[0] not in WRAPPERS:
+                assignments.append(args[0])
             wrapper, args = args[0], args[1:]
             while wrapper in WRAPPER_VALUE_OPTS or wrapper in {"command", "nohup"}:
-                if not args or not args[0].startswith("-") or args[0] == "-":
+                if not args or not args[0].startswith("-") or (args[0] == "-" and wrapper != "env"):
                     break
                 opt, args = args[0], args[1:]
                 if opt == "--":
                     break
+                if wrapper == "env" and (opt in {"-S", "--split-string"} or opt.startswith("--split-string=")):
+                    split_cmd = opt.split("=", 1)[1] if "=" in opt else (args.pop(0) if args else "")
+                    break
                 if opt in WRAPPER_VALUE_OPTS.get(wrapper, set()) and args:
                     args = args[1:]
+            if split_cmd is not None:
+                break
+        no_hooks_env = "HUSKY=0" in assignments or hooks_path_overrides(assignments)
+        if split_cmd is not None and depth < 3:
+            check(" ".join([split_cmd] + args), cwd, depth + 1)
+            continue
         if not args:
+            husky_assigned = husky_assigned or "HUSKY=0" in assignments
             continue
         prog = os.path.basename(args[0])
         rest = args[1:]
 
-        if prog == "export":
-            for a in rest:
-                if re.fullmatch(r"HUSKY=0", a) or hooks_path_override(a):
-                    block("export HUSKY=0 / GIT_CONFIG_* core.hooksPath skips husky and commitlint for every later "
-                          "commit. Fix the hook failure instead.")
+        exporting = prog == "export" or (prog in {"declare", "typeset"} and any(
+            re.fullmatch(r"-[a-zA-Z]*x[a-zA-Z]*", a) for a in rest))
+        if exporting:
+            values = [a for a in rest if not a.startswith("-")]
+            if "HUSKY=0" in values or hooks_path_overrides(values) or (husky_assigned and "HUSKY" in values):
+                block("export HUSKY=0 / GIT_CONFIG_* core.hooksPath skips husky and commitlint for every later "
+                      "commit. Fix the hook failure instead.")
             continue
         if prog == "xargs" and depth < 3:
             k = 0
             while k < len(rest) and rest[k].startswith("-"):
                 k += 2 if rest[k] in XARGS_VALUE_OPTS and k + 1 < len(rest) else 1
             inner = rest[k:]
-            if inner and os.path.basename(inner[0]) in READERS and env_named:
+            if inner and os.path.basename(inner[0]) in READERS | SHELLS and env_in_pipeline.get(pid):
                 block("reading .env files is denied (secrets). Name the variable instead; .env.example is fine.")
             if inner:
                 check(shlex.join(inner), cwd, depth + 1)
@@ -231,14 +287,18 @@ def check(text, cwd, depth=0):
             if any(reads_env(a) for a in files):
                 block("reading .env files is denied (secrets). Name the variable instead; .env.example is fine.")
             if prog in {"grep", "rg"}:
-                patterns = []
+                patterns = []  # (pattern, case-insensitive)
                 for k, a in enumerate(rest):
                     for opt in ("--include", "--glob", "-g", "--iglob"):
                         if a == opt and k + 1 < len(rest):
-                            patterns.append(rest[k + 1])
+                            patterns.append((rest[k + 1], opt == "--iglob"))
                         elif a.startswith(opt + "=") and opt.startswith("--"):
-                            patterns.append(a.split("=", 1)[1])
-                if any(reads_env(p_, dotfile_rule=False) for p_ in patterns):
+                            patterns.append((a.split("=", 1)[1], opt == "--iglob"))
+                        elif opt == "-g" and a.startswith("-g") and len(a) > 2:
+                            patterns.append((a[2:], False))
+                # rg skips hidden files unless --hidden/-., so a bare `*` there doesn't reach .env
+                hidden = prog == "grep" or any(a in {"--hidden", "-.", "-uu", "-uuu"} for a in rest)
+                if any(reads_env(p_, dotfile_rule=not hidden, nocase=nc) for p_, nc in patterns):
                     block("reading .env files is denied (secrets). Name the variable instead; .env.example is fine.")
 
         if prog != "git":
@@ -247,16 +307,23 @@ def check(text, cwd, depth=0):
         git_dir, hooks_override, i = cwd, False, 0
         while i < len(rest) and rest[i].startswith("-"):
             opt = rest[i]
-            if opt in {"-C", "-c", "--git-dir", "--work-tree", "--namespace", "--exec-path"} and i + 1 < len(rest):
-                val = rest[i + 1]
-                if opt == "-C":
-                    git_dir = os.path.join(git_dir, os.path.expanduser(val))
-                if opt == "-c" and val.lower().startswith("core.hookspath") and \
-                        val.split("=", 1)[-1] not in HUSKY_HOOKS_PATHS:
-                    hooks_override = True
-                i += 2
+            if opt in {"-C", "-c", "--config-env", "--git-dir", "--work-tree", "--namespace", "--exec-path"} \
+                    and i + 1 < len(rest):
+                opt, val, i = opt, rest[i + 1], i + 2
+            elif opt.startswith("-c") and len(opt) > 2:
+                opt, val, i = "-c", opt[2:], i + 1
+            elif opt.startswith("--config-env="):
+                opt, val, i = "--config-env", opt.split("=", 1)[1], i + 1
             else:
                 i += 1
+                continue
+            if opt == "-C":
+                git_dir = os.path.join(git_dir, os.path.expanduser(val))
+            if opt == "-c" and val.lower().startswith("core.hookspath") and \
+                    norm_path(val.split("=", 1)[-1]) not in HUSKY_HOOKS_PATHS:
+                hooks_override = True
+            if opt == "--config-env" and val.lower().startswith("core.hookspath"):
+                hooks_override = True  # the value comes from an env var we can't see
         if i >= len(rest):
             continue
         sub, sargs = rest[i], rest[i + 1:]
@@ -284,14 +351,28 @@ def check(text, cwd, depth=0):
                         if ch in "uS":
                             break  # optional attached value
         if sub == "config":
-            positional = [a for a in sargs if not a.startswith("-")]
-            unset = any(a in {"--unset", "--unset-all"} for a in sargs)
-            if positional and positional[0] in {"set", "unset"}:
+            positional, k = [], 0
+            while k < len(sargs):
+                a = sargs[k]
+                if a in GIT_CONFIG_VALUE_OPTS:
+                    k += 2
+                    continue
+                if not a.startswith("-"):
+                    positional.append(a)
+                k += 1
+            flags = {a for a in sargs if a.startswith("--")}
+            unset = bool(flags & {"--unset", "--unset-all"})
+            section_op = bool(flags & {"--remove-section", "--rename-section"})
+            if positional and positional[0] in {"set", "unset", "remove-section", "rename-section"}:
                 unset = unset or positional[0] == "unset"
+                section_op = section_op or positional[0].endswith("-section")
                 positional = positional[1:]
+            if section_op and positional and positional[0].lower() == "core":
+                block("removing or renaming the [core] section drops core.hooksPath, which disables husky and "
+                      "commitlint. Fix the hook failure instead.")
             if positional and positional[0].lower() == "core.hookspath":
                 value = positional[1] if len(positional) > 1 else None
-                if unset or (value is not None and value not in HUSKY_HOOKS_PATHS):
+                if unset or (value is not None and norm_path(value) not in HUSKY_HOOKS_PATHS):
                     block("changing or unsetting core.hooksPath disables husky and commitlint. "
                           "Fix the hook failure instead.")
         if sub == "reset" and any(a.startswith("--ha") and "--hard".startswith(a) for a in sargs):
