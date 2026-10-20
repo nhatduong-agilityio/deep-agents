@@ -67,6 +67,25 @@ done <<'T'
 2|main|git push origin
 2|main|git push origin HEAD
 2|main|git push -u origin @
+2|feat|export HUSKY=0 && git commit -m x
+2|feat|export HUSKY=0\ngit commit -m x
+2|feat|git config core.hooksPath /dev/null
+2|feat|git config --local core.hooksPath /tmp/none
+2|feat|git config --unset core.hooksPath
+2|feat|GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath GIT_CONFIG_VALUE_0=/dev/null git commit -m x
+2|feat|export GIT_CONFIG_KEY_0=core.hooksPath
+2|feat|nice -n 10 git push origin main
+2|feat|sudo -u root git push origin main
+2|feat|env -i git push origin main
+2|feat|env -u HOME git reset --hard
+2|feat|time -p git push origin main
+2|feat|echo .env | xargs cat
+2|feat|find . -name .env | xargs -0 cat
+2|feat|ls | xargs -I {} git push origin main
+2|feat|cat .env*
+2|feat|grep -r --include=.env KEY .
+2|feat|grep -r --include .env.local KEY .
+2|feat|rg -g .env KEY
 0|feat|git status
 0|feat|git push
 0|feat|git push origin HEAD
@@ -93,6 +112,17 @@ done <<'T'
 0|feat|echo maintenance
 0|feat|pnpm test
 0|feat|git log --oneline main..HEAD
+0|feat|git -c core.hooksPath=.husky/_ commit -m x
+0|feat|git config core.hooksPath .husky/_
+0|feat|git config core.hooksPath
+0|feat|git config --get core.hooksPath
+0|feat|nice -n 10 pnpm test
+0|feat|sudo -u root git push origin chore/x
+0|feat|env -i PATH=/usr/bin git status
+0|feat|ls | xargs wc -l
+0|feat|cat .env.example*
+0|feat|grep -r --include=*.ts KEY apps
+0|feat|export NODE_ENV=production
 T
 echo "pass=$pass fail=$fail"
 [ "$fail" = 0 ]

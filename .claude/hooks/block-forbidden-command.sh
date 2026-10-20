@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # PreToolUse (Bash): block commands the team never runs through Claude. Exit 2 blocks the call and
 # shows the reason (stderr) to Claude; exit 0 allows it. Covers what permission rules can't express:
-#   - git commit/push that skips hooks: --no-verify (or a prefix git accepts), commit -n, HUSKY=0,
-#     -c core.hooksPath=…
+#   - git commit/push that skips hooks: --no-verify (or a prefix git accepts), commit -n, HUSKY=0
+#     (also `export HUSKY=0`), -c core.hooksPath=… or GIT_CONFIG_* pointing core.hooksPath elsewhere,
+#     and `git config` that changes or unsets core.hooksPath (husky's own `.husky/_` is allowed)
 #   - git push to main or deep-agents (explicit refspec, HEAD/@ or a bare push while on one of them),
 #     and push --all / --mirror
 #   - git reset --hard: discards uncommitted work
-#   - common shell reads of .env files (cat/less/source/grep/cp/< …); .env.example is allowed
-# Best effort, not a sandbox: scripts, aliases and `xargs` are not followed.
+#   - common shell reads of .env files (cat/less/source/grep/cp/< …, `.env*` globs, `xargs cat`,
+#     grep --include=.env / rg -g .env); .env.example is allowed
+# Wrapper options are skipped (`nice -n 10`, `sudo -u x`, `env -i`), and `xargs <cmd>` is checked as <cmd>.
+# Best effort, not a sandbox: scripts and aliases are not followed.
 # If python3 is missing or the input can't be parsed, it allows (never blocks blindly).
 input="$(cat)"
 command -v python3 >/dev/null 2>&1 || exit 0
@@ -20,6 +23,18 @@ READERS = {"cat", "less", "more", "head", "tail", "bat", "source", ".", "grep", 
            "strings", "cp", "base64", "od", "diff", "vim", "vi", "nano", "view"}
 WRAPPERS = {"sudo", "env", "command", "exec", "time", "nice", "nohup", "!", "{", "}", "if", "then", "elif",
             "else", "do", "while", "until"}
+# Wrapper options that take a separate value (`nice -n 10`, `sudo -u root`, `env -u NAME`)
+WRAPPER_VALUE_OPTS = {
+    "sudo": {"-u", "-g", "-C", "-D", "-h", "-p", "-r", "-t", "-U", "-T", "--user", "--group", "--chdir"},
+    "nice": {"-n", "--adjustment"},
+    "env": {"-u", "--unset", "-C", "--chdir", "-S", "--split-string"},
+    "time": {"-f", "-o", "--format", "--output"},
+    "exec": {"-a"},
+}
+XARGS_VALUE_OPTS = {"-I", "-i", "-n", "-P", "-L", "-l", "-d", "-a", "-E", "-e", "-s", "--max-args",
+                    "--max-procs", "--delimiter", "--arg-file", "--replace"}
+HUSKY_HOOKS_PATHS = {".husky/_", ".husky", "./.husky/_", "./.husky"}  # husky's own setting
+ENV_SAMPLES = [".env", ".env.local", ".env.production", ".env.development", ".envrc"]
 SHELLS = {"bash", "sh", "zsh"}
 SEPARATORS = set(";&|()\n")
 
@@ -89,7 +104,28 @@ def tokenize(text):
 
 def is_env_file(arg):
     name = os.path.basename(arg)
+    if any(c in name for c in "*?["):
+        return False  # a glob; is_env_glob decides
     return name != ".env.example" and (re.fullmatch(r"\.env(\..+)?", name) is not None or name == ".envrc")
+
+def is_env_glob(arg, dotfile_rule=True):
+    # A glob that would match a .env file: `cat .env*` (the shell skips dotfiles unless the pattern
+    # starts with '.'); grep/rg include patterns match any name, so `--include=*.env` counts too
+    import fnmatch
+    name = os.path.basename(arg)
+    if not any(c in name for c in "*?["):
+        return False
+    if dotfile_rule and not name.startswith("."):
+        return False
+    return any(fnmatch.fnmatchcase(e, name) for e in ENV_SAMPLES)
+
+def reads_env(arg, dotfile_rule=True):
+    return is_env_file(arg) or is_env_glob(arg, dotfile_rule)
+
+def hooks_path_override(assignment):
+    # GIT_CONFIG_KEY_<n>=core.hooksPath, GIT_CONFIG_PARAMETERS="'core.hooksPath'=…"
+    name, _, value = assignment.partition("=")
+    return name.startswith("GIT_CONFIG") and "core.hookspath" in value.lower()
 
 def branch_of(path):
     try:
@@ -105,6 +141,7 @@ def check(text, cwd, depth=0):
     except ValueError:  # unbalanced quote: still split on newlines and separators
         tokens = re.sub(r"([;&|()<>\n])", r" \1 ", text).replace("\n", " \n ").split(" ")
         tokens = [t for t in tokens if t]
+    env_named = any(reads_env(t) for t in tokens if t and not set(t) <= SEPARATORS)
     segments, cur = [], []
     for t in tokens:
         if t and set(t) <= SEPARATORS:
@@ -135,14 +172,38 @@ def check(text, cwd, depth=0):
         # Leading VAR=value assignments and wrappers/keywords
         no_hooks_env = False
         while args and (re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*=.*", args[0]) or args[0] in WRAPPERS):
-            if re.fullmatch(r"HUSKY=0", args[0]):
+            if re.fullmatch(r"HUSKY=0", args[0]) or hooks_path_override(args[0]):
                 no_hooks_env = True
-            args = args[1:]
+            wrapper, args = args[0], args[1:]
+            while wrapper in WRAPPER_VALUE_OPTS or wrapper in {"command", "nohup"}:
+                if not args or not args[0].startswith("-") or args[0] == "-":
+                    break
+                opt, args = args[0], args[1:]
+                if opt == "--":
+                    break
+                if opt in WRAPPER_VALUE_OPTS.get(wrapper, set()) and args:
+                    args = args[1:]
         if not args:
             continue
         prog = os.path.basename(args[0])
         rest = args[1:]
 
+        if prog == "export":
+            for a in rest:
+                if re.fullmatch(r"HUSKY=0", a) or hooks_path_override(a):
+                    block("export HUSKY=0 / GIT_CONFIG_* core.hooksPath skips husky and commitlint for every later "
+                          "commit. Fix the hook failure instead.")
+            continue
+        if prog == "xargs" and depth < 3:
+            k = 0
+            while k < len(rest) and rest[k].startswith("-"):
+                k += 2 if rest[k] in XARGS_VALUE_OPTS and k + 1 < len(rest) else 1
+            inner = rest[k:]
+            if inner and os.path.basename(inner[0]) in READERS and env_named:
+                block("reading .env files is denied (secrets). Name the variable instead; .env.example is fine.")
+            if inner:
+                check(shlex.join(inner), cwd, depth + 1)
+            continue
         if prog == "cd" and rest:
             cwd = os.path.join(cwd, os.path.expanduser(rest[0]))
             continue
@@ -167,8 +228,18 @@ def check(text, cwd, depth=0):
                     files = [a for a in files if a != (rest[k + 1] if k + 1 < len(rest) else None)]
                 elif not any(a.startswith("--target-directory") for a in rest):
                     files = files[:-1]  # the destination is written, not read: `cp .env.example .env` is setup
-            if any(is_env_file(a) for a in files):
+            if any(reads_env(a) for a in files):
                 block("reading .env files is denied (secrets). Name the variable instead; .env.example is fine.")
+            if prog in {"grep", "rg"}:
+                patterns = []
+                for k, a in enumerate(rest):
+                    for opt in ("--include", "--glob", "-g", "--iglob"):
+                        if a == opt and k + 1 < len(rest):
+                            patterns.append(rest[k + 1])
+                        elif a.startswith(opt + "=") and opt.startswith("--"):
+                            patterns.append(a.split("=", 1)[1])
+                if any(reads_env(p_, dotfile_rule=False) for p_ in patterns):
+                    block("reading .env files is denied (secrets). Name the variable instead; .env.example is fine.")
 
         if prog != "git":
             continue
@@ -180,7 +251,8 @@ def check(text, cwd, depth=0):
                 val = rest[i + 1]
                 if opt == "-C":
                     git_dir = os.path.join(git_dir, os.path.expanduser(val))
-                if opt == "-c" and val.lower().startswith("core.hookspath"):
+                if opt == "-c" and val.lower().startswith("core.hookspath") and \
+                        val.split("=", 1)[-1] not in HUSKY_HOOKS_PATHS:
                     hooks_override = True
                 i += 2
             else:
@@ -211,6 +283,17 @@ def check(text, cwd, depth=0):
                             break
                         if ch in "uS":
                             break  # optional attached value
+        if sub == "config":
+            positional = [a for a in sargs if not a.startswith("-")]
+            unset = any(a in {"--unset", "--unset-all"} for a in sargs)
+            if positional and positional[0] in {"set", "unset"}:
+                unset = unset or positional[0] == "unset"
+                positional = positional[1:]
+            if positional and positional[0].lower() == "core.hookspath":
+                value = positional[1] if len(positional) > 1 else None
+                if unset or (value is not None and value not in HUSKY_HOOKS_PATHS):
+                    block("changing or unsetting core.hooksPath disables husky and commitlint. "
+                          "Fix the hook failure instead.")
         if sub == "reset" and any(a.startswith("--ha") and "--hard".startswith(a) for a in sargs):
             block("git reset --hard discards uncommitted work. Use git stash, or ask the user to run it.")
 
