@@ -78,10 +78,10 @@ Current resume point: see `docs/PROGRESS.md`.
 
 ## Claude Code setup (`.claude/`)
 
-- `settings.json` — permissions (`.env*` reads denied) and hooks: `block-forbidden-command` before every Bash call (best effort: blocks hook-skipping commits/pushes, pushes to `main`/`deep-agents`, `git reset --hard`, common shell reads of `.env*`; exit 2 + reason; table test `.claude/hooks/block-forbidden-command.test.sh`); `pnpm typecheck && pnpm lint` before every `git commit` (blocks on failure); Prettier on every Edit/Write; context restored after compact/resume
+- `settings.json` — permissions (`.env*` reads denied) and hooks: `block-forbidden-command` before every Bash call (best effort: blocks hook-skipping commits/pushes incl. `export HUSKY=0`, `GIT_CONFIG_*` and `git config` changes to `core.hooksPath` (husky's `.husky/_` allowed), pushes to `main`/`deep-agents`, `git reset --hard`, common shell reads of `.env*` incl. globs, `xargs cat` and `grep --include=.env`; skips wrapper options like `nice -n 10`/`sudo -u x`/`env -i`; exit 2 + reason; table test `.claude/hooks/block-forbidden-command.test.sh`); `pnpm typecheck && pnpm lint` before every `git commit` (blocks on failure); Prettier on every Edit/Write; context restored after compact/resume
 - `rules/` — path-scoped conventions for `apps/web`, Node code and tests
 - `agents/ui-verifier.md` — checks UI ACs in a real browser (needs both dev servers running)
-- `skills/verify/` — project verify recipe; `skills/release-checklist/` — release steps (gate, secrets by name, API-before-frontend deploy, health/smoke, rollback), stops before every deploy/push/tag. Both are tracked via `!` exceptions in `.gitignore`; any other skill under `.claude/skills/` is machine-local and gitignored
+- `skills/verify/` — project verify recipe; `skills/release-checklist/` — release steps (gate, secrets by name, API-before-frontend deploy, health/smoke, rollback), stops before every deploy/push/tag; `skills/review-checklist/` — review order (correctness → tests → readability → security basics → scope), every suspicion proved by a probe, read-only. All three are tracked via `!` exceptions in `.gitignore`; any other skill under `.claude/skills/` is machine-local and gitignored
 - GitLab MCP is per user, not in the repo: `claude mcp add -s user --transport http GitLab https://gitlab.asoft-python.com/api/v4/mcp`, then `/mcp` to sign in (needs the instance's "Allow access to the MCP server" setting); personal settings go in `.claude/settings.local.json`
 
 ## Key patterns (from agentic-design.ai)
