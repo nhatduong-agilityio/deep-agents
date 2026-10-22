@@ -228,14 +228,24 @@ describe('Message input auto-grow follow-ups (#14)', () => {
   });
 
   it('keeps the message log pinned with an instant scroll, not the smooth one', () => {
-    const scrollTo = vi.fn();
-    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
-      value: scrollTo,
-      configurable: true,
+    // .message-log scrolls smoothly; the pin must jump, or a second resize mid-animation reads the
+    // log as scrolled up. scroll-behavior is read when scrollTop is set, so check the class then.
+    const classesAtScroll: boolean[] = [];
+    vi.spyOn(HTMLElement.prototype, 'scrollTop', 'set').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      if (this.classList.contains('message-log')) {
+        classesAtScroll.push(this.classList.contains('message-log--instant'));
+      }
     });
     render(<App />);
-    scrollTo.mockClear();
+    classesAtScroll.length = 0;
     fireEvent.change(getInput(), { target: { value: 'a\nb' } });
-    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'instant' }));
+    expect(classesAtScroll).toEqual([true]);
+    expect(screen.getByRole('log').classList.contains('message-log--instant')).toBe(false);
+  });
+
+  it('.message-log--instant turns smooth scrolling off', () => {
+    expect(findRule('.message-log--instant')?.style.scrollBehavior).toBe('auto');
   });
 });
