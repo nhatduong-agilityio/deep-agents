@@ -1,6 +1,6 @@
 # E1-02 — Auto-grow the message input
 
-Source: GitHub nhatduong-agilityio/deep-agents#8 (origin: GitLab nhat.duong/generative-ai#9); backlog `docs/BACKLOG.md` E1-02 · Branch: `feat/e1-02-auto-grow-input` · Status: In progress
+Source: GitHub nhatduong-agilityio/deep-agents#8 (origin: GitLab nhat.duong/generative-ai#9); backlog `docs/BACKLOG.md` E1-02 · Branch: `feat/e1-02-auto-grow-input` · Status: Done (PR TODO)
 
 ## Context
 
@@ -14,12 +14,12 @@ As a user of the policy-analyst chat, I want the message box to grow as I type m
 
 ## Acceptance criteria
 
-- [ ] **AC1** — Given an empty input, when the user adds lines (Shift+Enter or wrapping), then the box grows by one line each time, from 1 row.
-- [ ] **AC2** — Given 6 lines of text, when more lines are added, then the box stays at the 6-line height and its content scrolls (`scrollHeight > clientHeight`). The limit is a CSS `max-height` on `.input-text`.
-- [ ] **AC3** — Given a multi-line message, when it is sent, then the box goes back to 1 row.
-- [ ] **AC4** — Given a multi-line input, when lines are deleted, then the box shrinks to fit.
-- [ ] **AC5** — Given the input, when it is rendered, then it has no drag-resize corner (computed `resize: none`).
-- [ ] **AC6** — Given the input, Enter still sends and Shift+Enter still adds a line (control: true today).
+- [x] **AC1** — Given an empty input, when the user adds lines (Shift+Enter or wrapping), then the box grows by one line each time, from 1 row.
+- [x] **AC2** — Given 6 lines of text, when more lines are added, then the box stays at the 6-line height and its content scrolls (`scrollHeight > clientHeight`). The limit is a CSS `max-height` on `.chat-form .input-text` (the chat form sets the input's font size and padding, so the cap lives with them).
+- [x] **AC3** — Given a multi-line message, when it is sent, then the box goes back to 1 row.
+- [x] **AC4** — Given a multi-line input, when lines are deleted, then the box shrinks to fit.
+- [x] **AC5** — Given the input, when it is rendered, then it has no drag-resize corner (computed `resize: none`).
+- [x] **AC6** — Given the input, Enter still sends and Shift+Enter still adds a line (control: true today).
 
 ## Out of scope
 
@@ -30,7 +30,7 @@ As a user of the policy-analyst chat, I want the message box to grow as I type m
 ## Affected areas
 
 - `apps/web/src/App.tsx` — ref on the message textarea and a layout effect that sets its height from `scrollHeight`
-- `apps/web/src/theme.css` — `.input-text`: `line-height`, `resize: none`, `overflow-y: auto`, `max-height`
+- `apps/web/src/theme.css` — `.input-text`: `resize: none`; `.chat-form .input-text`: `line-height: 1.5`, `max-height`, `overflow-y: auto`
 - `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx` — new test file (kept apart from `App.test.tsx` so E1-03 never edits the same test file)
 
 ## Open questions
@@ -48,24 +48,32 @@ As a user of the policy-analyst chat, I want the message box to grow as I type m
 Session plan: Day 13 session A (approved 2026-10-22). Base `0e3e68a`.
 
 1. `test(web): add failing tests for input auto-grow` — new `ChatInputAutoGrow.test.tsx`. jsdom has no layout, so `scrollHeight` is stubbed from the line count. Verified red by `pnpm --filter web exec vitest run src/__tests__/ChatInputAutoGrow.test.tsx`.
-2. `fix(web): auto-grow the message input up to 6 lines` — `App.tsx` ref + `useLayoutEffect` on `input` (`height = auto`, then `scrollHeight` + border); `theme.css` `.input-text` rules. Verified green, plus `pnpm typecheck && pnpm test`.
-3. Browser check (Playwright, Vite dev server, no backend): heights at 1, 3, 6, 8 lines and after clearing.
+2. `fix(web): auto-grow the message input up to 6 lines` — `App.tsx` ref + `useLayoutEffect` on `input` (`height = auto`, then `scrollHeight` + border); `theme.css` rules. Verified green, plus `pnpm typecheck && pnpm test`.
+3. Browser check (Playwright MCP on the Vite dev server, no backend): heights at 1, 3, 6, 8 lines and after clearing. It found the cap too low (5 lines); fixed in `fix(web): size the input cap from the chat form's font and padding`.
+4. Code review (`devkit:code-reviewer`): 0 critical, 2 important, 5 minor. Applied in `fix(web): address E1-02 review findings`: the `scrollHeight` stub never goes below the current height (like a browser), so removing the `height = auto` reset now fails AC3/AC4 (mutation check); the message log stays at the bottom when the input grows; `line-height` moved off the shared `.input-text`, which the interrupt input also uses; the AC2 test checks the 6-line `calc`. Not applied (follow-ups): re-measure on width change (`ResizeObserver`); a token for the 1.5px border that the cap repeats as `3px`.
 
 ## Test plan
 
-| AC  | Test type                                                                                                        | Test file                                                 |
-| --- | ---------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| AC1 | unit (stubbed `scrollHeight` → inline `height`) + browser heights                                                | `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx`       |
-| AC2 | unit (computed `max-height`, `overflow-y`) + browser 6 vs 8 lines                                                | `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx`       |
-| AC3 | unit (Enter → `submit` called → 1-line height) + browser after clear                                             | `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx`       |
-| AC4 | unit (delete lines → smaller height)                                                                             | `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx`       |
-| AC5 | unit (`.input-text` rule in `theme.css`; jsdom's computed `resize` is always `none`) + browser computed `resize` | `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx`       |
-| AC6 | unit (control, existing "Multi-line input" tests; AC1/AC3 also use Shift+Enter and Enter)                        | `apps/web/src/__tests__/App.test.tsx:443-478` (unchanged) |
+| AC  | Test type                                                                                                           | Test file                                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| AC1 | unit (stubbed `scrollHeight` → inline `height`) + browser heights                                                   | `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx`       |
+| AC2 | unit (`.chat-form .input-text` `max-height` is `calc(6 * 1.5em + …)`, computed `overflow-y`) + browser 6 vs 8 lines | `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx`       |
+| AC3 | unit (Enter → `submit` called → 1-line height) + browser after clear                                                | `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx`       |
+| AC4 | unit (delete lines → smaller height)                                                                                | `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx`       |
+| AC5 | unit (`.input-text` rule in `theme.css`; jsdom's computed `resize` is always `none`) + browser computed `resize`    | `apps/web/src/__tests__/ChatInputAutoGrow.test.tsx`       |
+| AC6 | unit (control, existing "Multi-line input" tests; AC1/AC3 also use Shift+Enter and Enter)                           | `apps/web/src/__tests__/App.test.tsx:443-478` (unchanged) |
 
 jsdom does no layout: real heights and scrolling are browser-only.
 
 ## Completion evidence
 
-| AC  | Evidence (command + result, screenshot, link) |
-| --- | --------------------------------------------- |
-| All | TODO                                          |
+| AC  | Evidence (command + result, screenshot, link)                                                                                                                                                                                                                              |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| AC1 | Unit failed at `28fdef3` (`expected '' to be '37px'`), passes now. Chrome (Playwright): `offsetHeight` 51 / 99 / 171 px at 1 / 3 / 6 lines (line height 24px)                                                                                                              |
+| AC2 | Unit failed at `28fdef3`, passes now. Chrome: 7, 8 and 9 lines stay at 171px with `scrollHeight` 192 / 216 > `clientHeight` 168; computed `max-height: 171px`, `overflow-y: auto`. Screenshot `e1-02-8-lines-scrolls.png`                                                  |
+| AC3 | Unit (Enter → `submit` called → 1-line height) failed at `28fdef3`, passes now. Chrome: after clearing the value, back to 51px (a real send needs the server)                                                                                                              |
+| AC4 | Unit failed at `28fdef3`, passes now; it fails again if the `height = auto` reset is removed (mutation check). Chrome: 8 → 3 lines gives 99px                                                                                                                              |
+| AC5 | Unit (`.input-text` rule) failed at `28fdef3` (`expected '' to be 'none'`), passes now. Chrome computed `resize: none`; no corner in the screenshots                                                                                                                       |
+| AC6 | Control: `App.test.tsx` "Multi-line input" tests pass, unchanged                                                                                                                                                                                                           |
+| Log | Chrome, log filled to scroll and pinned at the bottom: the gap from the bottom stays 0 at 3, 6, 8, 9 and 1 lines; a log scrolled up to 200 stays at 200. Not measured before the fix. Known gap: two height changes within the log's ~300ms smooth scroll can miss the pin |
+| All | `pnpm typecheck` ✅ · `pnpm exec eslint apps/web/src` ✅ · `pnpm test` root 115/115, web 99/99 ✅. Screenshots: `claude-training/plans/20261022-day-13-build-parallel/evidence/e1-02-*.png`                                                                                |
