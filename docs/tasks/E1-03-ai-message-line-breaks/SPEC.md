@@ -1,6 +1,6 @@
 # E1-03 — Line breaks in AI (Markdown) messages
 
-Source: GitHub nhatduong-agilityio/deep-agents#9; backlog `docs/BACKLOG.md` E1-03 (follow-up to E1-01's open question) · Branch: `worktree-e1-03` · Status: Done (BA chose option a, 2026-10-22; PR TODO)
+Source: GitHub nhatduong-agilityio/deep-agents#9; backlog `docs/BACKLOG.md` E1-03 (follow-up to E1-01's open question) · Branch: `fix/E1-03-ai-message-line-breaks` · Status: Done (BA chose option a, 2026-10-22; PR TODO)
 
 ## Context
 
