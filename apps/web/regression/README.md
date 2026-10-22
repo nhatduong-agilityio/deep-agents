@@ -16,7 +16,7 @@ pnpm --filter web test:regression   # starts Vite on :5174 with VITE_API_URL=htt
 | ---------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------- |
 | E1-02 AC1: the input grows with each line                  | `input-auto-grow.spec.ts` | `E1-02 AC1: the box grows with each line`                                   |
 | E1-02 AC2: stops at 6 lines, then scrolls                  | `input-auto-grow.spec.ts` | `E1-02 AC2: it stops at 6 lines, then scrolls`                              |
-| E1-02 AC3: back to one row when cleared (after a send)     | `input-auto-grow.spec.ts` | `E1-02 AC3: clearing the box resets it to one row`                          |
+| E1-02 AC3: back to one row when cleared                    | `input-auto-grow.spec.ts` | `E1-02 AC3: clearing the box resets it to one row`                          |
 | E1-02 AC4: shrinks when lines are deleted                  | `input-auto-grow.spec.ts` | `E1-02 AC4: deleting lines shrinks the box`                                 |
 | E1-02 AC5: no drag-resize corner                           | `input-auto-grow.spec.ts` | `E1-02 AC5: there is no drag-resize corner`                                 |
 | #14: re-fits on width change, no ResizeObserver errors     | `input-auto-grow.spec.ts` | `#14: a long line re-fits when the window width changes, …`                 |
@@ -32,3 +32,6 @@ Each test was checked against the code before its change:
 - With the `App.tsx` from `a4618da` (before E1-03), the E1-03 AC1 test fails.
 
 Assertions compare heights instead of pixels, so they hold across machines and fonts.
+
+Not covered here: the reset after an actual send (Enter → submit). That path needs a mocked streaming run; it is
+covered by the unit test `AC3: the box resets to 1 row after a send` in `src/__tests__/ChatInputAutoGrow.test.tsx`.
