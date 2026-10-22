@@ -21,7 +21,7 @@ Each input was rendered with `renderToStaticMarkup(<Markdown>{input}</Markdown>)
 
 Runs of blank lines (`\n\n\n\n`) collapse to a single paragraph gap, as CommonMark requires. TODO: this was not rendered separately; it is out of scope (see below).
 
-Not checked: a real model reply in the browser. The table above is a static render, not a screenshot.
+A real model reply was checked in the browser later (#13, 2026-10-22); see Completion evidence.
 
 ## User story
 
@@ -73,4 +73,4 @@ Side effect of (a), accepted with it: any single `\n` inside inline text now bec
 - `pnpm --filter web exec tsc --noEmit -p tsconfig.json` and `pnpm exec eslint apps/web/src`: exit 0. Root `pnpm typecheck && pnpm lint && pnpm test`: exit 0 (the root typecheck and lint do not cover `apps/web`).
 - Dependency: `remark-breaks` `4.0.0` exact pin; the lockfile adds only it, `mdast-util-newline-to-break@2.0.0`, `mdast-util-find-and-replace@3.0.3` and `escape-string-regexp@5.0.0`, and reuses the existing `unified`.
 - Code review (devkit:code-reviewer, 2026-10-22): 0 critical; warning 1 (AC1 did not prove the `<br>` sits between the lines) fixed by asserting `innerHTML`; optional 1 (no `<br>` in a list) applied; optional 2 recorded above.
-- Not checked: a real browser render (jsdom only). TODO.
+- Real browser (#13, 2026-10-22): one real reply from the primary model through `pnpm dev:server` + `pnpm dev:web`, rendered in Chromium (Playwright). After (`main`): `<p>Line one<br>\nLine two<br>\nLine three</p>`, 2 `<br>`; the list (`<ul>`) and code block (`<pre><code>`) unchanged. Before (same thread, `App.tsx` from `a4618da`): `<p>Line one\nLine two\nLine three</p>`, 0 `<br>`, shown on one row. Screenshots: `claude-training/plans/20261022-day-13-build-parallel/evidence/followups/e1-03-{before-same-reply,after-real-reply}.png`.
