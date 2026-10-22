@@ -33,3 +33,7 @@ CLAUDE.local.md
 
 # devkit security scan reports
 security-scan/
+
+# Playwright output (regression suite)
+test-results/
+playwright-report/

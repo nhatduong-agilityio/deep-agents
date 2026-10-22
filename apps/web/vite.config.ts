@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       globals: true,
-      exclude: ['e2e/**', 'node_modules/**'],
+      exclude: ['e2e/**', 'regression/**', 'node_modules/**'],
       // Process theme.css so tests can assert computed styles; other CSS stays stubbed.
       css: { include: [/theme\.css$/] },
     },
