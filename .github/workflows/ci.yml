@@ -10,7 +10,8 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Cancel superseded PR runs only; every commit on main keeps a finished run.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   gate:
@@ -47,7 +48,7 @@ jobs:
       - run: pnpm --filter web exec playwright install --with-deps chromium firefox
       - run: pnpm --filter web test:regression # LangGraph API mocked; no backend, no keys
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: ${{ !cancelled() }}
         with:
           name: playwright-report
           path: apps/web/playwright-report
