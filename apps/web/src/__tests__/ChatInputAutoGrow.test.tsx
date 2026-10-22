@@ -181,6 +181,25 @@ describe('Message input auto-grow follow-ups (#14)', () => {
     expect(input.style.height).toBe(expectedHeight(input, 3));
   });
 
+  it('re-fits in the next animation frame, not inside the observer callback', () => {
+    // Changing the height inside the callback makes the browser report
+    // "ResizeObserver loop completed with undelivered notifications".
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => frames.push(cb));
+    render(<App />);
+    const input = getInput();
+    fireEvent.change(input, { target: { value: 'a long line' } });
+    fireResize(input, 600);
+    frames.splice(0).forEach((cb) => cb(0));
+    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockReturnValue(
+      scrollHeightFor(3),
+    );
+    fireResize(input, 200);
+    expect(input.style.height).toBe(expectedHeight(input, 1));
+    frames.splice(0).forEach((cb) => cb(0));
+    expect(input.style.height).toBe(expectedHeight(input, 3));
+  });
+
   it('does not re-measure when only the height changes (no resize loop)', () => {
     render(<App />);
     const input = getInput();
