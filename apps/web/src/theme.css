@@ -68,6 +68,9 @@
   --sp-5: 1.25rem;
   --sp-6: 1.5rem;
 
+  /* Inputs */
+  --input-border-width: 1.5px;
+
   /* Radius */
   --r-sm: 4px;
   --r-md: 8px;
@@ -819,7 +822,7 @@ details[open] .tool-calls-summary::before {
 .input-text {
   width: 100%;
   padding: var(--sp-2) var(--sp-3);
-  border: 1.5px solid var(--c-border);
+  border: var(--input-border-width) solid var(--c-border);
   border-radius: var(--r-md);
   font-family: var(--font-sans);
   font-size: var(--text-base);
@@ -859,9 +862,9 @@ details[open] .tool-calls-summary::before {
   padding: var(--sp-3) var(--sp-4);
   min-height: 44px;
   /* E1-02: App.tsx grows the height to fit the content; CSS owns the cap:
-     6 lines (line-height 1.5em) + vertical padding + 1.5px border on each side, then it scrolls. */
+     6 lines (line-height 1.5em) + vertical padding + the border on each side, then it scrolls. */
   line-height: 1.5;
-  max-height: calc(6 * 1.5em + 2 * var(--sp-3) + 3px);
+  max-height: calc(6 * 1.5em + 2 * var(--sp-3) + 2 * var(--input-border-width));
   overflow-y: auto;
 }
 
