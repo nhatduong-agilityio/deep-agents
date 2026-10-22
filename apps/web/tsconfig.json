@@ -13,6 +13,6 @@
     "types": ["vite/client"],
     "isolatedModules": true
   },
-  "include": ["src", "e2e"],
+  "include": ["src", "e2e", "regression"],
   "exclude": ["node_modules", "dist"]
 }

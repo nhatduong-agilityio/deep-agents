@@ -113,9 +113,11 @@ export function App() {
   const fitMessageInput = useCallback(() => {
     const el = messageInputRef.current;
     if (!el) return;
-    // The growing input takes height from the message log; keep the log at the bottom if it was there.
+    // The growing input takes height from the message log; keep the log at the bottom if it was there,
+    // else where the reader left it (the 'auto' reset below briefly grows the log and clamps scrollTop).
     const log = messageLogRef.current;
     const pinned = !!log && log.scrollHeight - log.scrollTop - log.clientHeight < 2;
+    const scrollTop = log?.scrollTop ?? 0;
     el.style.height = 'auto';
     // border-box: scrollHeight excludes the border, so add it back or a scrollbar appears.
     const style = getComputedStyle(el);
@@ -124,11 +126,10 @@ export function App() {
     // Instant, not the log's smooth scroll: a second resize mid-animation would read the log as
     // scrolled up and lose the pin. A class, not scrollTo({ behavior: 'instant' }), which throws
     // where 'instant' is unsupported.
-    if (pinned) {
-      log.classList.add('message-log--instant');
-      log.scrollTop = log.scrollHeight;
-      log.classList.remove('message-log--instant');
-    }
+    if (!log) return;
+    log.classList.add('message-log--instant');
+    log.scrollTop = pinned ? log.scrollHeight : scrollTop;
+    log.classList.remove('message-log--instant');
   }, []);
   useLayoutEffect(fitMessageInput, [input, fitMessageInput]);
 
