@@ -831,7 +831,6 @@ details[open] .tool-calls-summary::before {
   box-sizing: border-box;
   outline: none;
   min-height: 38px;
-  line-height: 1.5;
   resize: none;
 }
 .input-text::placeholder {
@@ -861,6 +860,7 @@ details[open] .tool-calls-summary::before {
   min-height: 44px;
   /* E1-02: App.tsx grows the height to fit the content; CSS owns the cap:
      6 lines (line-height 1.5em) + vertical padding + 1.5px border on each side, then it scrolls. */
+  line-height: 1.5;
   max-height: calc(6 * 1.5em + 2 * var(--sp-3) + 3px);
   overflow-y: auto;
 }

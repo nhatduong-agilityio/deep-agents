@@ -42,7 +42,9 @@ const mockUseStream = vi.mocked(useStream);
 // ─── layout stub ──────────────────────────────────────────────────────────────
 
 // jsdom does no layout, so scrollHeight is always 0. Stub it as a 21px line height
-// plus 16px vertical padding per the value's line count, like a real textarea.
+// plus 16px vertical padding per the value's line count. Like a real textarea, it is never
+// less than the current height, so the box can only shrink if the code resets it first.
+// (jsdom's computed border is 0px, so the inline height equals the box's inner height.)
 const LINE = 21;
 const PADDING_Y = 16;
 const scrollHeightFor = (lines: number) => lines * LINE + PADDING_Y;
@@ -52,7 +54,8 @@ beforeEach(() => {
   vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockImplementation(function (
     this: HTMLTextAreaElement,
   ) {
-    return scrollHeightFor(this.value.split('\n').length);
+    const current = parseFloat(this.style.height) || 0;
+    return Math.max(scrollHeightFor(this.value.split('\n').length), current);
   });
 });
 
@@ -71,6 +74,15 @@ function expectedHeight(input: HTMLTextAreaElement, lines: number) {
   return `${scrollHeightFor(lines) + borderY}px`;
 }
 
+function findRule(selector: string) {
+  return Array.from(document.styleSheets)
+    .flatMap((sheet) => Array.from(sheet.cssRules))
+    .find(
+      (rule): rule is CSSStyleRule =>
+        rule instanceof CSSStyleRule && rule.selectorText === selector,
+    );
+}
+
 describe('Message input auto-grow (E1-02)', () => {
   it('AC1: the box grows with each added line', async () => {
     const user = userEvent.setup();
@@ -84,11 +96,11 @@ describe('Message input auto-grow (E1-02)', () => {
     expect(input.style.height).toBe(expectedHeight(input, 3));
   });
 
-  it('AC2: CSS caps the height and the content scrolls past it', () => {
+  it('AC2: CSS caps the height at 6 lines and the content scrolls past it', () => {
     render(<App />);
-    const style = getComputedStyle(getInput());
-    expect(['', 'none']).not.toContain(style.maxHeight);
-    expect(style.overflowY).toBe('auto');
+    expect(getComputedStyle(getInput()).overflowY).toBe('auto');
+    // The cap is 6 lines of 1.5em plus padding and border (BA decision, 2026-10-22).
+    expect(findRule('.chat-form .input-text')?.style.maxHeight).toMatch(/^calc\(6 \* 1\.5em \+/);
   });
 
   it('AC3: the box resets to 1 row after a send', async () => {
@@ -120,11 +132,7 @@ describe('Message input auto-grow (E1-02)', () => {
   // jsdom has no browser default stylesheet, so computed `resize` is always 'none' there
   // (browsers default textareas to 'both'). Read the .input-text rule itself instead.
   it('AC5: there is no drag-resize corner', () => {
-    const rules = Array.from(document.styleSheets).flatMap((sheet) => Array.from(sheet.cssRules));
-    const inputRule = rules.find(
-      (rule): rule is CSSStyleRule =>
-        rule instanceof CSSStyleRule && rule.selectorText === '.input-text',
-    );
+    const inputRule = findRule('.input-text');
     expect(inputRule, '.input-text rule must be loaded from theme.css').toBeDefined();
     expect(inputRule?.style.resize).toBe('none');
   });

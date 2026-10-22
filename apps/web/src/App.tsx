@@ -106,16 +106,21 @@ export function App() {
   }, [interrupt]);
 
   // Auto-grow the message input to fit its content (E1-02). Runs on every value change, so it also
-  // shrinks on delete and resets after a send clears the input. The 6-line cap is .input-text's max-height.
+  // shrinks on delete and resets after a send clears the input. The 6-line cap is the max-height on
+  // .chat-form .input-text. A measured runtime height can't be a class, so this is the one inline style.
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
   useLayoutEffect(() => {
     const el = messageInputRef.current;
     if (!el) return;
+    // The growing input takes height from the message log; keep the log at the bottom if it was there.
+    const log = messageLogRef.current;
+    const pinned = !!log && log.scrollHeight - log.scrollTop - log.clientHeight < 2;
     el.style.height = 'auto';
     // border-box: scrollHeight excludes the border, so add it back or a scrollbar appears.
     const style = getComputedStyle(el);
     const borderY = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
     el.style.height = `${el.scrollHeight + borderY}px`;
+    if (pinned) log.scrollTop = log.scrollHeight;
   }, [input]);
 
   const subagentList = useMemo(() => Array.from(subagents.values()), [subagents]);
