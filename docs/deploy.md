@@ -75,7 +75,7 @@ docker build -t deep-agents:$(git rev-parse --short HEAD) .
 docker tag deep-agents:$(git rev-parse --short HEAD) deep-agents:latest
 ```
 
-> **Back up first.** Rolling back the image does not roll back the database (`langgraph-data` volume). Take a
+> **Back up first.** Rolling back the image does not roll back the database (`langgraph-data` volume, named `<project>_langgraph-data` by Compose). Take a
 > backup before every deploy that may change the schema; the runbook's restore reads `langgraph-data.dump`.
 > TODO: the backup command is not agreed yet; record the team's command here.
 
