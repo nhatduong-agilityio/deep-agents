@@ -868,7 +868,7 @@ details[open] .tool-calls-summary::before {
   /* E1-02: App.tsx grows the height to fit the content; CSS owns the cap:
      6 lines (line-height 1.5em) + vertical padding + the border on each side, then it scrolls. */
   line-height: 1.5;
-  max-height: calc(5 * 1.5em + 2 * var(--sp-3) + 2 * var(--input-border-width));
+  max-height: calc(6 * 1.5em + 2 * var(--sp-3) + 2 * var(--input-border-width));
   overflow-y: auto;
 }
 
