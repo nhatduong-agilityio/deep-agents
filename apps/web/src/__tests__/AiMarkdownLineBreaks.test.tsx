@@ -53,9 +53,7 @@ describe('AI bubble Markdown line breaks (E1-03)', () => {
     const bubble = renderAi('line one\nline two');
     const paragraphs = bubble.querySelectorAll('p');
     expect(paragraphs).toHaveLength(1);
-    expect(paragraphs[0].querySelectorAll('br')).toHaveLength(1);
-    expect(paragraphs[0].textContent).toContain('line one');
-    expect(paragraphs[0].textContent).toContain('line two');
+    expect(paragraphs[0].innerHTML).toBe('line one<br>\nline two');
   });
 
   it('AC2: \\n\\n gives two paragraphs and no <br>', () => {
@@ -72,6 +70,7 @@ describe('AI bubble Markdown line breaks (E1-03)', () => {
     const items = bubble.querySelectorAll('ul > li');
     expect(Array.from(items, (li) => li.textContent)).toEqual(['one', 'two']);
     expect(bubble.querySelector('p')?.textContent).toBe('Items:');
+    expect(bubble.querySelector('br')).toBeNull();
   });
 
   it('AC3: a fenced code block keeps its lines and gets no <br>', () => {
