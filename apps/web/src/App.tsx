@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useStream } from '@langchain/react';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import Markdown from 'react-markdown';
+import remarkBreaks from 'remark-breaks';
 import { TodoPanel } from './TodoPanel.js';
 import { FilesPanel } from './FilesPanel.js';
 
@@ -214,7 +215,7 @@ export function App() {
               className={`msg-row ${isHuman ? 'msg-row--human' : 'msg-row--ai'}`}
             >
               <div className={`msg-bubble ${isHuman ? 'msg-bubble--human' : 'msg-bubble--ai'}`}>
-                {isAI ? <Markdown>{content}</Markdown> : content}
+                {isAI ? <Markdown remarkPlugins={[remarkBreaks]}>{content}</Markdown> : content}
               </div>
             </div>
           );
