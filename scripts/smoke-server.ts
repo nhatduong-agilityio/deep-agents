@@ -1,7 +1,12 @@
 import { Client } from '@langchain/langgraph-sdk';
 
 const BASE_URL = process.env['LANGGRAPH_API_URL'] ?? 'http://localhost:2024';
-const client = new Client({ apiUrl: BASE_URL });
+// The API rejects unauthenticated requests when AUTH_TOKEN is set (apps/api/src/auth.ts); never print it.
+const AUTH_TOKEN = process.env['AUTH_TOKEN'];
+const client = new Client({
+  apiUrl: BASE_URL,
+  ...(AUTH_TOKEN ? { defaultHeaders: { Authorization: `Bearer ${AUTH_TOKEN}` } } : {}),
+});
 
 process.stdout.write(`Connecting to LangGraph Server at ${BASE_URL}\n`);
 

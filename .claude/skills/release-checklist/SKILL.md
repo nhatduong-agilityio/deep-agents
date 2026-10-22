@@ -33,7 +33,7 @@ Never bake secrets into the image. **Never put a token in a `VITE_*` variable** 
 
 Ask which path: **LangSmith Deployments**, **self-hosted Docker**, and/or **frontend only** (`docs/deploy.md` table).
 
-Before a Docker deploy: back up the `langgraph-data` Postgres volume. Rolling back the image does not roll back the database (`docs/runbook.md` §3).
+Before a Docker deploy: back up the `langgraph-data` Postgres volume (Compose names it `<project>_langgraph-data`, e.g. `generative-ai_langgraph-data`; see `docs/runbook.md` §3). Rolling back the image does not roll back the database (`docs/runbook.md` §3).
 TODO (team decision, also open in `docs/deploy.md` "Build the image"): the backup command is not agreed. Ask the user how they back it up; don't improvise a `pg_dump` command as if it were the procedure.
 
 ## 4. Deploy — API first, then frontend
@@ -48,9 +48,9 @@ The frontend's origin must already be in `LANGGRAPH_ALLOW_ORIGIN` on the API bef
 
 ## 5. After deploy — health and smoke
 
-Health checks (`docs/runbook.md` §4, `docs/deploy.md` "Verify the deployment"). With `AUTH_TOKEN` set, both need the bearer token:
+Health checks (`docs/runbook.md` §4, `docs/deploy.md` "Verify the deployment"). With `AUTH_TOKEN` set, the API routes need the bearer token (`/ok` only on `langgraphjs dev`, see Liveness):
 
-- Liveness: `curl -sf <api>/ok -H "Authorization: Bearer $AUTH_TOKEN"` → `{"ok":true}` (401 without the token)
+- Liveness: `curl -sf <api>/ok -H "Authorization: Bearer $AUTH_TOKEN"` → `{"ok":true}`. Without the token `/ok` is 401 on `langgraphjs dev` but 200 on the Docker image, so prove auth with `POST <api>/threads` without the token → 401
 - Readiness: `POST <api>/assistants/search` with the token and `{"graph_id":"agent","limit":1}` → an item with `"graph_id":"agent"`. Don't use `/info` for this: it has no graph list.
 
 Smoke tests ⛔ (they read `.env` and call real APIs, which costs money): `pnpm smoke-server`, `pnpm smoke-permissions`. `pnpm test:e2e` (full adversarial + budget suite) needs a separate "go".

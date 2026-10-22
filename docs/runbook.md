@@ -17,7 +17,8 @@
 4. **Check LangGraph API health:**
    ```bash
    curl -s http://localhost:2024/ok -H "Authorization: Bearer $AUTH_TOKEN"
-   # Expected: {"ok":true} (without the token: 401 Unauthorized)
+   # Expected: {"ok":true}. Without the token: 401 on `langgraphjs dev`, but 200 on the Docker image, so check auth on a
+   # protected route (POST /threads without the token → 401).
    curl -s http://localhost:2024/info
    # Expected: {"version":"...","langgraph_js_version":"...",...} (no auth needed; no graph list)
    ```
@@ -89,12 +90,14 @@ docker tag deep-agents:<git-sha> deep-agents:latest
 To roll back to a previous image:
 
 ```bash
-# List available local images
+# List available local images (compose builds <project>-langgraph-api; see "Image names" below)
+docker images generative-ai-langgraph-api
 docker images deep-agents
 
 # Roll back
 docker compose down
-# Edit docker-compose.yml: set image: deep-agents:<previous-sha> instead of build: .
+# Edit docker-compose.yml: set image: generative-ai-langgraph-api:pre-<sha> (the image kept before the deploy)
+# or image: deep-agents:<previous-sha>, instead of build: .
 docker compose up -d
 
 # Or rebuild from a specific commit:
@@ -102,13 +105,29 @@ git checkout <previous-sha>
 docker compose up --build -d
 ```
 
-**Database state:** PostgreSQL data is in the `langgraph-data` volume. Rolling back the image does **not** roll back the database schema. If a migration is involved, restore from a backup before rolling back the image:
+**Image names:** `docker-compose.yml` uses `build: .`, so `docker compose up --build` builds and runs
+`<project>-langgraph-api` (here `generative-ai-langgraph-api`), not `deep-agents:<sha>`. The SHA tag is only used after
+switching the service to `image:` as above. Before a deploy, keep the running image with
+`docker tag generative-ai-langgraph-api:latest generative-ai-langgraph-api:pre-<sha>`.
+
+**Database state:** PostgreSQL data is in the `langgraph-data` volume, which Docker Compose names
+`<project>_langgraph-data` (here `generative-ai_langgraph-data`; check with `docker volume ls`). Rolling back the image does **not** roll back the database schema. If a migration is involved, restore from a backup before rolling back the image:
 
 ```bash
 docker compose down
-docker run --rm -v langgraph-data:/data -v $(pwd):/backup \
+# TODO: untested. pg_restore needs a running server; this command does not start one.
+docker run --rm -v generative-ai_langgraph-data:/data -v $(pwd):/backup \
   postgres:16 pg_restore -U postgres -d postgres /backup/langgraph-data.dump
 docker compose up -d
+```
+
+A file-level snapshot, taken with Postgres stopped (backup used on 2026-10-22; restore not tested yet; one option, not yet the agreed procedure):
+
+```bash
+docker run --rm -v generative-ai_langgraph-data:/data:ro -v "$PWD":/backup alpine \
+  tar czf /backup/langgraph-data-pre-<sha>.tgz -C /data .
+# Restore (Postgres stopped): docker run --rm -v generative-ai_langgraph-data:/data -v "$PWD":/backup alpine \
+#   sh -c 'rm -rf /data/* && tar xzf /backup/langgraph-data-pre-<sha>.tgz -C /data'
 ```
 
 ### LangSmith Deployments
@@ -123,15 +142,18 @@ docker compose up -d
 
 ### Expected responses
 
-| Endpoint             | Method | Expected                                                                                |
-| -------------------- | ------ | --------------------------------------------------------------------------------------- |
-| `/ok`                | GET    | `{"ok":true}` — HTTP 200 (requires `Authorization: Bearer <token>`; 401 without)        |
-| `/info`              | GET    | `{"version":"...","langgraph_js_version":"...",...}` — HTTP 200, no auth, no graph list |
-| `/assistants/search` | POST   | JSON array with an item whose `graph_id` is `agent` (requires the token)                |
-| `/threads`           | POST   | HTTP 200 with new thread ID (requires `Authorization: Bearer <token>`)                  |
+| Endpoint             | Method | Expected                                                                                       |
+| -------------------- | ------ | ---------------------------------------------------------------------------------------------- |
+| `/ok`                | GET    | `{"ok":true}` — HTTP 200. Without the token: 401 on `langgraphjs dev`, 200 on the Docker image |
+| `/info`              | GET    | `{"version":"...","langgraph_js_version":"...",...}` — HTTP 200, no auth, no graph list        |
+| `/assistants/search` | POST   | JSON array with an item whose `graph_id` is `agent` (requires the token)                       |
+| `/threads`           | POST   | HTTP 200 with new thread ID (requires `Authorization: Bearer <token>`)                         |
 
 Observed 2026-10-19 on `langgraphjs dev` (`@langchain/langgraph-api` 1.5.1) with `AUTH_TOKEN` set: `/ok` returns 401
-without the token (`auth.ts` exempts only `OPTIONS`), while the server answers `/info` without running auth. TODO: confirm on the production Docker image.
+without the token (`auth.ts` exempts only `OPTIONS`), while the server answers `/info` without running auth.
+Observed 2026-10-22 on the Docker image (`langchain/langgraphjs-api:24`, `6453964`) with `AUTH_TOKEN` set: `/ok` returns
+**200 without the token**, while `POST /threads` and `POST /assistants/search` return 401 without it or with a wrong one.
+So `/ok` proves liveness only; prove auth with a protected route.
 
 ### Automated health check
 

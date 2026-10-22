@@ -75,8 +75,9 @@ docker build -t deep-agents:$(git rev-parse --short HEAD) .
 docker tag deep-agents:$(git rev-parse --short HEAD) deep-agents:latest
 ```
 
-> **Back up first.** Rolling back the image does not roll back the database (`langgraph-data` volume). Take a
-> backup before every deploy that may change the schema; the runbook's restore reads `langgraph-data.dump`.
+> **Back up first.** Rolling back the image does not roll back the database (`langgraph-data` volume, named `<project>_langgraph-data` by Compose). Take a
+> backup before every deploy that may change the schema; `docs/runbook.md` §3 shows the file-level snapshot used on
+> 2026-10-22 (`langgraph-data-pre-<sha>.tgz`) and its restore.
 > TODO: the backup command is not agreed yet; record the team's command here.
 
 ### Configure secrets
@@ -141,14 +142,15 @@ proxy_set_header Authorization "Bearer $AUTH_TOKEN";
 ### Verify the deployment
 
 ```bash
-# Health check (docs/runbook.md §4). With AUTH_TOKEN set, /ok and the API routes need the bearer token;
+# Health check (docs/runbook.md §4). With AUTH_TOKEN set, the API routes need the bearer token. /ok needs it on
+# langgraphjs dev but answers 200 without it on the Docker image, so it proves liveness, not auth.
 # /info answers without auth but returns server version info only (no graph list).
 curl -sf http://localhost:2024/ok -H "Authorization: Bearer $AUTH_TOKEN"   # {"ok":true}
 curl -sf -X POST http://localhost:2024/assistants/search \
   -H "Authorization: Bearer $AUTH_TOKEN" -H 'Content-Type: application/json' \
   -d '{"graph_id":"agent","limit":1}' | grep -q '"graph_id":"agent"' && echo "agent graph registered"
 
-# Smoke test (requires VITE_API_URL=http://localhost:2024 and AUTH_TOKEN in env)
+# Smoke test: reads LANGGRAPH_API_URL (default http://localhost:2024) and sends AUTH_TOKEN from .env
 pnpm smoke-server
 pnpm smoke-permissions
 ```
