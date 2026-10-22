@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useStream } from '@langchain/react';
 import { AIMessage, HumanMessage } from '@langchain/core/messages';
 import Markdown from 'react-markdown';
@@ -104,6 +104,19 @@ export function App() {
   useEffect(() => {
     if (interrupt) interruptInputRef.current?.focus();
   }, [interrupt]);
+
+  // Auto-grow the message input to fit its content (E1-02). Runs on every value change, so it also
+  // shrinks on delete and resets after a send clears the input. The 6-line cap is .input-text's max-height.
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    const el = messageInputRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    // border-box: scrollHeight excludes the border, so add it back or a scrollbar appears.
+    const style = getComputedStyle(el);
+    const borderY = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
+    el.style.height = `${el.scrollHeight + borderY}px`;
+  }, [input]);
 
   const subagentList = useMemo(() => Array.from(subagents.values()), [subagents]);
   const todos = useMemo(() => (values as Record<string, unknown> | undefined)?.['todos'], [values]);
@@ -306,6 +319,7 @@ export function App() {
         <form onSubmit={handleSubmit} className="chat-form">
           {/* textarea, not input: a single-line input submits on any Enter and drops line breaks. */}
           <textarea
+            ref={messageInputRef}
             aria-label="Message input"
             rows={1}
             value={input}
