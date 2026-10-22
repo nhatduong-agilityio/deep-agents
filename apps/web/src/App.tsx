@@ -110,7 +110,7 @@ export function App() {
   // shrinks on delete and resets after a send clears the input. The 6-line cap is the max-height on
   // .chat-form .input-text. A measured runtime height can't be a class, so this is the one inline style.
   const messageInputRef = useRef<HTMLTextAreaElement>(null);
-  useLayoutEffect(() => {
+  const fitMessageInput = useCallback(() => {
     const el = messageInputRef.current;
     if (!el) return;
     // The growing input takes height from the message log; keep the log at the bottom if it was there.
@@ -121,8 +121,38 @@ export function App() {
     const style = getComputedStyle(el);
     const borderY = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
     el.style.height = `${el.scrollHeight + borderY}px`;
-    if (pinned) log.scrollTop = log.scrollHeight;
-  }, [input]);
+    // Instant, not the log's smooth scroll: a second resize mid-animation would read the log as
+    // scrolled up and lose the pin. A class, not scrollTo({ behavior: 'instant' }), which throws
+    // where 'instant' is unsupported.
+    if (pinned) {
+      log.classList.add('message-log--instant');
+      log.scrollTop = log.scrollHeight;
+      log.classList.remove('message-log--instant');
+    }
+  }, []);
+  useLayoutEffect(fitMessageInput, [input, fitMessageInput]);
+
+  // Re-fit when the input's width changes (window resize, panels opening): the same text can wrap
+  // to more or fewer lines. Width only, because fitting changes the height and would loop; in the
+  // next frame, because a resize inside the callback logs "ResizeObserver loop completed".
+  useEffect(() => {
+    const el = messageInputRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    let lastWidth: number | undefined;
+    let frame = 0;
+    const observer = new ResizeObserver(([entry]) => {
+      const width = entry?.contentRect.width;
+      if (width === undefined || width === lastWidth) return;
+      lastWidth = width;
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(fitMessageInput);
+    });
+    observer.observe(el);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, [fitMessageInput]);
 
   const subagentList = useMemo(() => Array.from(subagents.values()), [subagents]);
   const todos = useMemo(() => (values as Record<string, unknown> | undefined)?.['todos'], [values]);
