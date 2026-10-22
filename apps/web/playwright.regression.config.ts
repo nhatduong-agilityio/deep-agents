@@ -6,6 +6,8 @@ export default defineConfig({
   testDir: 'regression',
   forbidOnly: !!process.env['CI'],
   retries: process.env['CI'] ? 1 : 0,
+  // A retry that passes still fails the run in CI, so a flaky test can't hide behind the retry.
+  failOnFlakyTests: !!process.env['CI'],
   reporter: process.env['CI'] ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL: 'http://localhost:5174', trace: 'retain-on-failure' },
   projects: [
