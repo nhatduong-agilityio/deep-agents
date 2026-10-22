@@ -48,7 +48,7 @@ The frontend's origin must already be in `LANGGRAPH_ALLOW_ORIGIN` on the API bef
 
 ## 5. After deploy — health and smoke
 
-Health checks (`docs/runbook.md` §4, `docs/deploy.md` "Verify the deployment"). With `AUTH_TOKEN` set, both need the bearer token:
+Health checks (`docs/runbook.md` §4, `docs/deploy.md` "Verify the deployment"). With `AUTH_TOKEN` set, the API routes need the bearer token (`/ok` only on `langgraphjs dev`, see Liveness):
 
 - Liveness: `curl -sf <api>/ok -H "Authorization: Bearer $AUTH_TOKEN"` → `{"ok":true}`. Without the token `/ok` is 401 on `langgraphjs dev` but 200 on the Docker image, so prove auth with `POST <api>/threads` without the token → 401
 - Readiness: `POST <api>/assistants/search` with the token and `{"graph_id":"agent","limit":1}` → an item with `"graph_id":"agent"`. Don't use `/info` for this: it has no graph list.

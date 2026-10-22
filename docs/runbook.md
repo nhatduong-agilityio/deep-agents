@@ -90,12 +90,14 @@ docker tag deep-agents:<git-sha> deep-agents:latest
 To roll back to a previous image:
 
 ```bash
-# List available local images
+# List available local images (compose builds <project>-langgraph-api; see "Image names" below)
+docker images generative-ai-langgraph-api
 docker images deep-agents
 
 # Roll back
 docker compose down
-# Edit docker-compose.yml: set image: deep-agents:<previous-sha> instead of build: .
+# Edit docker-compose.yml: set image: generative-ai-langgraph-api:pre-<sha> (the image kept before the deploy)
+# or image: deep-agents:<previous-sha>, instead of build: .
 docker compose up -d
 
 # Or rebuild from a specific commit:
