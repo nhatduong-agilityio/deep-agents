@@ -128,19 +128,25 @@ export function App() {
   useLayoutEffect(fitMessageInput, [input, fitMessageInput]);
 
   // Re-fit when the input's width changes (window resize, panels opening): the same text can wrap
-  // to more or fewer lines. Width only, because fitting changes the height and would loop.
+  // to more or fewer lines. Width only, because fitting changes the height and would loop; in the
+  // next frame, because a resize inside the callback logs "ResizeObserver loop completed".
   useEffect(() => {
     const el = messageInputRef.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
     let lastWidth: number | undefined;
+    let frame = 0;
     const observer = new ResizeObserver(([entry]) => {
       const width = entry?.contentRect.width;
       if (width === undefined || width === lastWidth) return;
       lastWidth = width;
-      fitMessageInput();
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(fitMessageInput);
     });
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
   }, [fitMessageInput]);
 
   const subagentList = useMemo(() => Array.from(subagents.values()), [subagents]);

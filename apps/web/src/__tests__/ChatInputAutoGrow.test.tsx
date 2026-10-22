@@ -156,6 +156,12 @@ describe('Message input auto-grow follow-ups (#14)', () => {
         disconnect() {}
       },
     );
+    // The re-fit runs in the next frame; run frames immediately unless a test queues them.
+    vi.stubGlobal('requestAnimationFrame', (cb: FrameRequestCallback) => {
+      cb(0);
+      return 0;
+    });
+    vi.stubGlobal('cancelAnimationFrame', () => {});
   });
   afterEach(() => {
     vi.unstubAllGlobals();
