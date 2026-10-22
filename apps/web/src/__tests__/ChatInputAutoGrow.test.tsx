@@ -137,3 +137,80 @@ describe('Message input auto-grow (E1-02)', () => {
     expect(inputRule?.style.resize).toBe('none');
   });
 });
+
+// ─── #14 follow-ups ───────────────────────────────────────────────────────────
+
+describe('Message input auto-grow follow-ups (#14)', () => {
+  // jsdom has no ResizeObserver; a fake one lets the test fire a width change.
+  let observerCallback: ResizeObserverCallback | undefined;
+  beforeEach(() => {
+    observerCallback = undefined;
+    vi.stubGlobal(
+      'ResizeObserver',
+      class {
+        constructor(cb: ResizeObserverCallback) {
+          observerCallback = cb;
+        }
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function fireResize(target: HTMLTextAreaElement, width: number) {
+    const entry = { target, contentRect: { width } } as unknown as ResizeObserverEntry;
+    observerCallback?.([entry], {} as ResizeObserver);
+  }
+
+  it('re-measures the height when the input gets narrower and its text wraps to more lines', () => {
+    render(<App />);
+    const input = getInput();
+    fireEvent.change(input, { target: { value: 'a long line' } });
+    fireResize(input, 600);
+    expect(input.style.height).toBe(expectedHeight(input, 1));
+
+    // Narrower: the same text now wraps to 3 lines.
+    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockReturnValue(
+      scrollHeightFor(3),
+    );
+    fireResize(input, 200);
+    expect(input.style.height).toBe(expectedHeight(input, 3));
+  });
+
+  it('does not re-measure when only the height changes (no resize loop)', () => {
+    render(<App />);
+    const input = getInput();
+    fireEvent.change(input, { target: { value: 'a' } });
+    fireResize(input, 600);
+    const before = input.style.height;
+    vi.spyOn(HTMLTextAreaElement.prototype, 'scrollHeight', 'get').mockReturnValue(
+      scrollHeightFor(5),
+    );
+    fireResize(input, 600);
+    expect(input.style.height).toBe(before);
+  });
+
+  it('the 6-line cap uses the input border token, not a repeated 3px', () => {
+    expect(findRule(':root')?.style.getPropertyValue('--input-border-width').trim()).toBe('1.5px');
+    expect(findRule('.input-text')?.style.cssText).toContain('var(--input-border-width)');
+    const cap = findRule('.chat-form .input-text')?.style.maxHeight;
+    expect(cap).toContain('2 * var(--input-border-width)');
+    expect(cap).not.toContain('3px');
+  });
+
+  it('keeps the message log pinned with an instant scroll, not the smooth one', () => {
+    const scrollTo = vi.fn();
+    Object.defineProperty(HTMLElement.prototype, 'scrollTo', {
+      value: scrollTo,
+      configurable: true,
+    });
+    render(<App />);
+    scrollTo.mockClear();
+    fireEvent.change(getInput(), { target: { value: 'a\nb' } });
+    expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ behavior: 'instant' }));
+  });
+});
