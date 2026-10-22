@@ -125,3 +125,28 @@ test('#14: the message log stays at the bottom while the input grows', async ({ 
   await page.waitForTimeout(500);
   expect(await gap()).toBe(0);
 });
+
+test('#14: typing does not move a log the reader scrolled up a little', async ({ page }) => {
+  const log = page.getByRole('log');
+  await log.evaluate((el) => {
+    for (let i = 0; i < 60; i++) {
+      const row = document.createElement('div');
+      row.textContent = `filler ${i}`;
+      row.style.height = '24px';
+      el.appendChild(row);
+    }
+  });
+  const el = input(page);
+  await el.fill('a\nb\nc\nd');
+  // Just above the bottom: scrolled up 30px, less than the input's extra height.
+  await log.evaluate((e) => {
+    e.style.scrollBehavior = 'auto';
+    e.scrollTop = e.scrollHeight - e.clientHeight - 30;
+    e.style.scrollBehavior = '';
+  });
+  const gap = () => log.evaluate((e) => Math.round(e.scrollHeight - e.scrollTop - e.clientHeight));
+  expect(await gap()).toBe(30);
+  await el.press('End');
+  await el.pressSequentially('x');
+  expect(await gap()).toBe(30);
+});
