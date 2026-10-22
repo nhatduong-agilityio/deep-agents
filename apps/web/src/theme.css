@@ -283,6 +283,10 @@ body {
   gap: 0;
   scroll-behavior: smooth;
 }
+/* Set only while App.tsx pins the log after the input grows (E1-02 #14). */
+.message-log--instant {
+  scroll-behavior: auto;
+}
 
 /* Custom scrollbar — WebKit only */
 .message-log::-webkit-scrollbar {

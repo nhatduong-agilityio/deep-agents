@@ -122,8 +122,13 @@ export function App() {
     const borderY = parseFloat(style.borderTopWidth) + parseFloat(style.borderBottomWidth);
     el.style.height = `${el.scrollHeight + borderY}px`;
     // Instant, not the log's smooth scroll: a second resize mid-animation would read the log as
-    // scrolled up and lose the pin.
-    if (pinned) log.scrollTo({ top: log.scrollHeight, behavior: 'instant' });
+    // scrolled up and lose the pin. A class, not scrollTo({ behavior: 'instant' }), which throws
+    // where 'instant' is unsupported.
+    if (pinned) {
+      log.classList.add('message-log--instant');
+      log.scrollTop = log.scrollHeight;
+      log.classList.remove('message-log--instant');
+    }
   }, []);
   useLayoutEffect(fitMessageInput, [input, fitMessageInput]);
 

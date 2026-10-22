@@ -27,7 +27,6 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       globals: true,
       exclude: ['e2e/**', 'node_modules/**'],
-      setupFiles: ['./src/test-setup.ts'],
       // Process theme.css so tests can assert computed styles; other CSS stays stubbed.
       css: { include: [/theme\.css$/] },
     },
